@@ -13,7 +13,7 @@ contract ChainlinkPriceFeed {
     }
 
     function getLatestPrice() external view returns(int256 price) {
-    
+
         (, price,,,) = dataFeed.latestRoundData();
         return(price);
     }
@@ -36,6 +36,6 @@ contract ChainlinkPriceFeed {
         (, int price2,,,) = AggregatorV3Interface(USDC_FEED).latestRoundData();
         (, int price3,,,) = AggregatorV3Interface(DAI_FEED).latestRoundData();
         price = (price1 + price2 + price3) / 3;
-        
+
     }
 }

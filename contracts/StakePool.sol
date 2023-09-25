@@ -2,94 +2,113 @@
 
 pragma solidity 0.8.21;
 
-import "./interfaces/IERC20Helper.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./ChainlinkPriceFeed.sol";
+import {IERC20Helper} from "./NSTBLVaultStorage.sol";
 
 contract NSTBLStakePool {
-
-    address public admin;
-    address public immutable nstbl;
-    address public immutable lpToken;
-    address public immutable lUSDC;
-    address public immutable lUSDT;
-    address public immutable usdc;
-    address public immutable usdt;
-    address public immutable loanManager;
-    address public chainLinkPriceFeed;
-    uint256 initialUsdcInMapleCash;
-    uint256 initialUsdtInMapleCash;
-
-    struct StakerInfo {
-        uint256 amount;
-        int256 rewardDebt;
-    }
-
-    uint256 public accNSTBLPerShare;
-    uint256 public lastRewardTimeStamp;
-    uint256 public totalStakedAmount;
-    // uint256 public nstblToBeMinted;
+    using SafeERC20 for IERC20Helper;
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "SP::NOT ADMIN");
         _;
     }
 
-    modifier authorizedCaller {
+    modifier authorizedCaller() {
         require(authorizedCallers[msg.sender], "SP::NOT AUTHORIZED");
         _;
     }
-
-    /// @notice Info of each user that stakes NSTBL tokens.
-    mapping (address => StakerInfo) public stakerInfo;
-
-    mapping (address => bool) public authorizedCallers;
 
     function setAuthorizedCaller(address _caller, bool _isAuthorized) external onlyAdmin {
         authorizedCallers[_caller] = _isAuthorized;
     }
 
-    function init(address _nstbl, address _lpToken) external onlyAdmin {
-        require(_nstbl != address(0), "SP::INVALID NSTBL ADDRESS");
-        require(_lpToken != address(0), "SP::INVALID LP TOKEN ADDRESS");
+    constructor(
+        address _admin,
+        address _nstbl,
+        address _lpToken,
+        address _lUSDC,
+        address _lUSDT,
+        address _loanManager,
+        address _chainLinkPriceFeed
+    ) {
+        admin = _admin;
         nstbl = _nstbl;
         lpToken = _lpToken;
-        initialUsdcInMapleCash = INSTBLVault(nstblVault).usdcInMapleCash();
-        initialUsdtInMapleCash = INSTBLVault(nstblVault).usdtInMapleCash();
+        lUSDC = _lUSDC;
+        lUSDT = _lUSDT;
+        loanManager = _loanManager;
+        chainLinkPriceFeed = _chainLinkPriceFeed;
+        trancheTimePeriods[1] = 90 days;
+        trancheTimePeriods[2] = 180 days;
+        trancheTimePeriods[3] = 270 days;
+    }
+
+    function setAdmin(address _admin) external onlyAdmin {
+        admin = _admin;
+    }
+
+    function _getUnstakeFee(int8 tranche, uint256 timeStamp, uint256 amount) internal returns (uint256 fee) {
+        uint256 timeElapsed = block.timestamp - timeStamp;
+        if (timeStamp < trancheTimePeriods[tranche]) {
+            fee = amount * 5 / 100;
+        } else {
+            fee = amount;
+        }
     }
 
     function updatePool() public {
-
         //using 8 decimals for price and standard 6 decimals for amount
 
         uint256 priceLiquidAssets = ChainlinkPriceFeed(chainLinkPriceFeed).getAverageAssetsPrice();
-        uint256 priceNSTBL = (700 * 1e8 + 300 * priceLiquidAssets)/1000;
+        uint256 priceNSTBL = (700 * 1e8 + 300 * priceLiquidAssets) / 1000;
 
         uint256 tvlLiquidAssets = INSTBLVault(nstblVault).getTvlLiquidAssets(); //6 * 8 decimals
-        
-        uint256 unrealisedUsdcTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdc, lUSDCSupply) * ChainlinkPriceFeed(chainLinkPriceFeed).getUSDCPrice();
-        uint256 unrealisedUsdtTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdt, lUSDTSupply) * ChainlinkPriceFeed(chainLinkPriceFeed).getUSDTPrice();
+
+        uint256 unrealisedUsdcTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdc, lUSDCSupply)
+            * ChainlinkPriceFeed(chainLinkPriceFeed).getUSDCPrice();
+        uint256 unrealisedUsdtTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdt, lUSDTSupply)
+            * ChainlinkPriceFeed(chainLinkPriceFeed).getUSDTPrice();
 
         uint256 totalUnrealisedTvl = unrealisedUsdcTvl + unrealisedUsdtTvl + tvlLiquidAssets;
 
-        uint256 nstblToBeMinted = (totalUnrealisedTvl*1e12 - (priceNSTBL * IERC20Helper(nstbl).totalSupply()))/priceNSTBL;
+        uint256 nstblToBeMinted =
+            (totalUnrealisedTvl * 1e12 - (priceNSTBL * IERC20Helper(nstbl).totalSupply())) / priceNSTBL;
 
         IERC20Helper(nstbl).mint(address(this), nstblToBeMinted);
 
-        accNSTBLPerShare = accNSTBLPerShare.add(nstblToBeMinted.mul(1e12).div(IERC20Helper(lpToken).totalSupply()));
-        
+        accNSTBLPerShare += (nstblToBeMinted * 1e12) / (IERC20Helper(lpToken).totalSupply());
     }
 
-    function stake(uint256 _amount, address _userAddress) public authorizedCaller {
+    function stake(uint256 _amount, address _userAddress, int8 _stakeTranche) public authorizedCaller {
         require(_amount > 0, "SP::INVALID AMOUNT");
         StakerInfo storage staker = stakerInfo[_userAddress];
         updatePool();
 
-        
-        SafeERC20.safeTransferFrom(IERC20Helper(nstbl), msg.sender, address(this), _amount);
+        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), _amount);
         staker.amount += _amount;
-        staker.rewardDebt = staker.amount.mul(accNSTBLPerShare).div(1e12);
+        staker.rewardDebt += (_amount * accNSTBLPerShare) / 1e12;
+        staker.stakeTimeStamp = block.timestamp;
+        staker.stakeTranche = _stakeTranche;
         totalStaked += _amount;
+        IERC20Helper(lpToken).mint(msg.sender, _amount);
+        emit Stake(_userAddress, _amount);
     }
 
+    function unstake(uint256 _amount, address _userAddress) public authorizedCaller {
+        require(_amount > 0, "SP::INVALID AMOUNT");
+
+        StakerInfo storage staker = stakerInfo[_userAddress];
+        updatePool();
+        require(_amount <= staker.amount, "SP::INVALID AMOUNT");
+
+        uint256 pendingNSTBL = ((staker.amount * accNSTBLPerShare) / 1e12) - (staker.rewardDebt);
+        uint256 unstakeFee = _getUnstakeFee(staker.stakeTranche, staker.stakeTimeStamp, staker.amount);
+
+        staker.rewardDebt -= (_amount * accNSTBLPerShare) / 1e12;
+        staker.amount -= _amount;
+        totalStaked -= _amount;
+        IERC20Helper(lpToken).burn(msg.sender, _amount);
+        IERC20Helper(nstbl).safeTransfer(msg.sender, pendingNSTBL - unstakeFee);
+        emit UnStake(_userAddress, _amount);
+    }
 }
