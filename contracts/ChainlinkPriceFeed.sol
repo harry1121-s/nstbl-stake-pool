@@ -22,11 +22,11 @@ contract ChainlinkPriceFeed {
         decimals = dataFeed.decimals();
     }
 
-    getUSDCPrice() external view returns (int256 price) {
+    function getUSDCPrice() external view returns (int256 price) {
         (, price,,,) = AggregatorV3Interface(USDC_FEED).latestRoundData();
     }
 
-    getUSDTPrice() external view returns (int256 price) {
+    function getUSDTPrice() external view returns (int256 price) {
         (, price,,,) = AggregatorV3Interface(USDT_FEED).latestRoundData();
     }
 

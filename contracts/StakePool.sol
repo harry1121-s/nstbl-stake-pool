@@ -3,7 +3,7 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20Helper} from "./NSTBLVaultStorage.sol";
+import "./NSTBLVaultStorage.sol";
 
 contract NSTBLStakePool {
     using SafeERC20 for IERC20Helper;
@@ -89,7 +89,7 @@ contract NSTBLStakePool {
         staker.rewardDebt += (_amount * accNSTBLPerShare) / 1e12;
         staker.stakeTimeStamp = block.timestamp;
         staker.stakeTranche = _stakeTranche;
-        totalStaked += _amount;
+        totalStakedAmount += _amount;
         IERC20Helper(lpToken).mint(msg.sender, _amount);
         emit Stake(_userAddress, _amount);
     }
@@ -106,7 +106,7 @@ contract NSTBLStakePool {
 
         staker.rewardDebt -= (_amount * accNSTBLPerShare) / 1e12;
         staker.amount -= _amount;
-        totalStaked -= _amount;
+        totalStakedAmount -= _amount;
         IERC20Helper(lpToken).burn(msg.sender, _amount);
         IERC20Helper(nstbl).safeTransfer(msg.sender, pendingNSTBL - unstakeFee);
         emit UnStake(_userAddress, _amount);

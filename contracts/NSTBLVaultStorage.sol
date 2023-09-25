@@ -4,7 +4,6 @@ import "./interfaces/IERC20Helper.sol";
 import "./ChainlinkPriceFeed.sol";
 
 contract NSTBLVaultStorage {
-
     event Stake(address indexed user, uint256 amount);
     event Unstake(address indexed user, uint256 amount);
 
@@ -35,11 +34,8 @@ contract NSTBLVaultStorage {
     uint256 public accNSTBLPerShare;
     uint256 public lastRewardTimeStamp;
     uint256 public totalStakedAmount;
-    // uint256 public nstblToBeMinted;
 
     mapping(address => StakerInfo) public stakerInfo;
     mapping(address => bool) public authorizedCallers;
     mapping(int8 => uint256) public trancheTimePeriods;
-
-
 }
