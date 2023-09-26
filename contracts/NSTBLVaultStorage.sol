@@ -1,7 +1,8 @@
 pragma solidity 0.8.21;
 
 import "./interfaces/IERC20Helper.sol";
-import "./ChainlinkPriceFeed.sol";
+import "./interfaces/IChainlinkPriceFeed.sol";
+import "./interfaces/ILoanManager.sol";
 
 contract NSTBLVaultStorage {
     event Stake(address indexed user, uint256 amount);
@@ -25,6 +26,7 @@ contract NSTBLVaultStorage {
     address public chainLinkPriceFeed;
 
     struct StakerInfo {
+        bool ifATVLStaker;
         uint256 amount;
         uint256 rewardDebt;
         uint256 stakeTimeStamp;
@@ -34,8 +36,16 @@ contract NSTBLVaultStorage {
     uint256 public accNSTBLPerShare;
     uint256 public lastRewardTimeStamp;
     uint256 public totalStakedAmount;
+    uint256 public yieldThreshold;
+
+    address public atvl;
+    uint256 public atvlStakeAmount;
+    uint256 public atvlRewardDebt;
+    uint256 public atvlExtraYield;
+    uint256 public atvlSharePercent;
 
     mapping(address => StakerInfo) public stakerInfo;
     mapping(address => bool) public authorizedCallers;
     mapping(int8 => uint256) public trancheTimePeriods;
+    mapping(int8 => uint256) public trancheFee;
 }
