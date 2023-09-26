@@ -42,7 +42,7 @@ contract NSTBLStakePool is NSTBLVaultStorage{
     constructor(
         address _admin,
         address _nstbl,
-        address _lpToken,
+        address _nstblvault,
         address _lUSDC,
         address _lUSDT,
         address _loanManager,
@@ -50,11 +50,12 @@ contract NSTBLStakePool is NSTBLVaultStorage{
     ) {
         admin = _admin;
         nstbl = _nstbl;
-        lpToken = _lpToken;
+        nstblVault = _nstblvault;
         lUSDC = _lUSDC;
         lUSDT = _lUSDT;
         loanManager = _loanManager;
         chainLinkPriceFeed = _chainLinkPriceFeed;
+        lpToken = new TokenLP("NSTBL_StakePool", "NSTBL_SP", admin);
         
     }
 
@@ -83,14 +84,14 @@ contract NSTBLStakePool is NSTBLVaultStorage{
         atvl = _atvl;
     }
 
-    function _getUnstakeFee(int8 tranche, uint256 timeStamp) internal returns (uint256 fee) {
+    function _getUnstakeFee(int8 tranche, uint256 timeStamp) internal view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - timeStamp)/ 1 days;
         
         if(tranche == 0) {
-            fee = 200 + trancheFee[0]*(30-timeElapsed)/30;
+            fee = 200 + (trancheFee[0]*(30-timeElapsed))/30;
         }
         else if(tranche == 1) {
-            fee = 100 + trancheFee[1]*(90-timeElapsed)/90;
+            fee = 100 + (trancheFee[1]*(90-timeElapsed))/90;
         }
         else if(tranche == 2) {
             fee = trancheFee[2]*(180-timeElapsed)/180;
@@ -101,7 +102,7 @@ contract NSTBLStakePool is NSTBLVaultStorage{
     }
 
     function updatePool() public {
-        //using 8 decimals for price and standard 6 decimals for amount
+        // using 8 decimals for price and standard 6 decimals for amount
 
         uint256 priceLiquidAssets = IChainlinkPriceFeed(chainLinkPriceFeed).getAverageAssetsPrice();
         uint256 priceNSTBL = (700 * 1e8 + 300 * priceLiquidAssets) / 1000;
@@ -125,12 +126,43 @@ contract NSTBLStakePool is NSTBLVaultStorage{
 
         uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount/10000;
         if(nstblToBeMinted <= stakersYieldThreshold){
-            accNSTBLPerShare += (nstblToBeMinted * 1e12) / ((IERC20Helper(lpToken).totalSupply())+atvlStakeAmount);
+            accNSTBLPerShare += (nstblToBeMinted * 1e12) / (lpToken.totalSupply()+atvlStakeAmount);
         }
         else{
-            accNSTBLPerShare += (stakersYieldThreshold * 1e12) / ((IERC20Helper(lpToken).totalSupply())+atvlStakeAmount);
+            accNSTBLPerShare += (stakersYieldThreshold * 1e12) / (lpToken.totalSupply()+atvlStakeAmount);
             atvlExtraYield += (nstblToBeMinted - stakersYieldThreshold);
         }
+    }
+
+    function getPendingYield() public view returns(uint256 nstblToBeMinted, uint256 accNSTBL, uint256 atvlShare, uint256 atvlExtra) {
+        
+        uint256 priceLiquidAssets = IChainlinkPriceFeed(chainLinkPriceFeed).getAverageAssetsPrice();
+        uint256 priceNSTBL = (700 * 1e8 + 300 * priceLiquidAssets) / 1000;
+
+        uint256 tvlLiquidAssets = INSTBLVault(nstblVault).getTvlLiquidAssets(); //6 * 8 decimals
+
+        uint256 unrealisedUsdcTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdc, IERC20Helper(lUSDC).totalSupply())
+            * IChainlinkPriceFeed(chainLinkPriceFeed).getUSDCPrice();
+        uint256 unrealisedUsdtTvl = ILoanManager(loanManager).getAssetsWithUnrealisedLosses(usdt, IERC20Helper(lUSDT).totalSupply())
+            * IChainlinkPriceFeed(chainLinkPriceFeed).getUSDTPrice();
+
+        uint256 totalUnrealisedTvl = unrealisedUsdcTvl + unrealisedUsdtTvl + tvlLiquidAssets;
+
+        nstblToBeMinted =
+            (totalUnrealisedTvl * 1e12 - (priceNSTBL * IERC20Helper(nstbl).totalSupply())) / priceNSTBL;
+
+        atvlShare = atvlSharePercent * nstblToBeMinted / 10000;
+        
+
+        uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount/10000;
+        if(nstblToBeMinted <= stakersYieldThreshold){
+            accNSTBL += (nstblToBeMinted * 1e12) / (lpToken.totalSupply()+atvlStakeAmount);
+        }
+        else{
+            accNSTBL +=  accNSTBLPerShare + (stakersYieldThreshold * 1e12) / (lpToken.totalSupply()+atvlStakeAmount);
+            atvlExtra += atvlExtraYield + (nstblToBeMinted - stakersYieldThreshold);
+        }
+
     }
 
     function stake(uint256 _amount, address _userAddress, int8 _stakeTranche) public authorizedCaller {
@@ -144,7 +176,7 @@ contract NSTBLStakePool is NSTBLVaultStorage{
         staker.stakeTimeStamp = block.timestamp;
         staker.stakeTranche = _stakeTranche;
         totalStakedAmount += _amount;
-        IERC20Helper(lpToken).mint(msg.sender, _amount);
+        lpToken.mint(msg.sender, _amount);
         emit Stake(_userAddress, _amount);
     }
 
@@ -161,7 +193,7 @@ contract NSTBLStakePool is NSTBLVaultStorage{
         staker.rewardDebt -= (_amount * accNSTBLPerShare) / 1e12;
         staker.amount -= _amount;
         totalStakedAmount -= _amount;
-        IERC20Helper(lpToken).burn(msg.sender, _amount);
+        lpToken.burn(msg.sender, _amount);
         IERC20Helper(nstbl).safeTransfer(msg.sender, pendingNSTBL - unstakeFee);
         emit Unstake(_userAddress, _amount);
     }
@@ -180,6 +212,15 @@ contract NSTBLStakePool is NSTBLVaultStorage{
 
         atvlStakeAmount += _amount;
 
+    }   
+
+    function removeATVLFromStaker(uint256 _amount) public onlyATVL {
+        transferATVLYield();
+        StakerInfo storage staker = stakerInfo[atvl];
+        staker.amount -= _amount;
+        staker.rewardDebt -= (_amount * accNSTBLPerShare) / 1e12;
+        totalStakedAmount -= _amount;
+        atvlStakeAmount -= _amount;
     }
 
     //Should this be made non-reentrant?
@@ -188,7 +229,8 @@ contract NSTBLStakePool is NSTBLVaultStorage{
         updatePool();
         uint256 accAtvlNSTBL = atvlExtraYield + ((staker.amount * accNSTBLPerShare) / 1e12) - (staker.rewardDebt);
         staker.rewardDebt = (staker.amount * accNSTBLPerShare) / 1e12;
-        IERC20Helper(nstbl).safeTransfer(atvl, accAtvlNSTBL);
         atvlExtraYield = 0;
+        IERC20Helper(nstbl).safeTransfer(atvl, accAtvlNSTBL);
+
     }
 }
