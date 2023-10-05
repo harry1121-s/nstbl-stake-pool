@@ -32,6 +32,7 @@ contract TokenLPMock is ERC20 {
         require(_admin != address(0), "LP: invalid Address");
         admin = _admin;
         loanManager = msg.sender;
+        _mint(admin, 1e6 * 1e18);
         emit AdminChanged(address(0), admin);
         emit LoanManagerChanged(address(0), loanManager);
     }

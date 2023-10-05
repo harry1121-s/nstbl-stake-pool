@@ -51,10 +51,4 @@ contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    function _init_StakePool() internal {
-        stakePool.init(
-            atvl,
-            
-        )
-    }
 }

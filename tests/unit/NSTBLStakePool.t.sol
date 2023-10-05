@@ -12,10 +12,13 @@ contract StakePoolTest is BaseTest {
     }
 
     function test_contractDeployment() external {
+
         assertEq(stakePool.lUSDC(), address(loanManager.lUSDC()));
         assertEq(stakePool.lUSDT(), address(loanManager.lUSDT()));
         assertEq(nstblToken.balanceOf(admin), 1e6*1e18);
         assertEq(nstblToken.totalSupply(), 1e6*1e18);
+        assertEq(IERC20Helper(stakePool.lUSDC()).balanceOf(admin), 1e6*1e18);
+        assertEq(IERC20Helper(stakePool.lUSDT()).balanceOf(admin), 1e6*1e18);
     }
 
     function test_Stake() external {

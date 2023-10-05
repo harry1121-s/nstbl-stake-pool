@@ -6,8 +6,8 @@ import "./interfaces/ILoanManager.sol";
 import "./interfaces/INSTBLVault.sol";
 import "./TokenLP.sol";
 
-contract NSTBLVaultStorage {
-    event Stake(address indexed user, uint256 amount);
+contract StakePoolStorage {
+    event Stake(address indexed user, uint256 amount, uint256 rewards);
     event Unstake(address indexed user, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
@@ -34,7 +34,13 @@ contract NSTBLVaultStorage {
         uint256 amount;
         uint256 rewardDebt;
         uint256 stakeTimeStamp;
-        int8 stakeTranche;
+    }
+
+    struct PoolInfo {
+        uint256 accNSTBLPerShare;
+        uint64 allocPoint;
+        uint64 stakeTimePeriod;
+        uint64 earlyUnstakeFee;
     }
 
     uint256 public accNSTBLPerShare;
@@ -46,10 +52,19 @@ contract NSTBLVaultStorage {
     uint256 public atvlStakeAmount;
     uint256 public atvlRewardDebt;
     uint256 public atvlExtraYield;
-    uint256 public atvlSharePercent;
 
-    mapping(address => StakerInfo) public stakerInfo;
+    mapping(uint256 => mapping(address => StakerInfo)) public stakerInfo;
+    PoolInfo[] public poolInfo;
+    uint256 public totalAllocPoint;
+
     mapping(address => bool) public authorizedCallers;
     mapping(int8 => uint256) public trancheTimePeriods;
     mapping(int8 => uint256) public trancheFee;
+    mapping(int8 => uint256) public trancheBaseFee;
+
+    uint256 public usdcInvestedAmount;
+    uint256 public usdcMaturityAmount;
+    uint256 public precision = 1e27;
+
+
 }
