@@ -1,9 +1,7 @@
 pragma solidity 0.8.21;
 
 import "./interfaces/IERC20Helper.sol";
-import "./interfaces/IChainlinkPriceFeed.sol";
 import "./interfaces/ILoanManager.sol";
-import "./interfaces/INSTBLVault.sol";
 import "./TokenLP.sol";
 
 contract StakePoolStorage {
@@ -27,7 +25,6 @@ contract StakePoolStorage {
                         STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
     address public admin;
-    address public chainLinkPriceFeed;
 
     struct StakerInfo {
         bool ifATVLStaker;
@@ -65,6 +62,4 @@ contract StakePoolStorage {
     uint256 public usdcInvestedAmount;
     uint256 public usdcMaturityAmount;
     uint256 public precision = 1e27;
-
-
 }
