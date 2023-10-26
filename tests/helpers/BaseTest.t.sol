@@ -54,6 +54,7 @@ contract BaseTest is Test {
         stakePool.configurePool(250, 30, 500);
         stakePool.configurePool(350, 60, 300);
         stakePool.configurePool(400, 90, 100);
+        loanManager.initializeTime();
         vm.stopPrank();
     }
 

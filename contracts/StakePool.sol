@@ -121,20 +121,33 @@ contract NSTBLStakePool is StakePoolStorage {
             _usdcMaturityAmount = maturedAssets;
             //mint NSTBL = nstblYield
             _nstblYield = _usdcMaturityAmount - _usdcInvestedAmount;
+            console.log("IDHR1");
         }
         else {
             if (investedAssets > _usdcInvestedAmount) {
-                _nstblYield = maturedAssets - usdcMaturityAmount - (investedAssets - _usdcInvestedAmount);
+                console.log("Values:");
+                console.log(maturedAssets, _usdcMaturityAmount, investedAssets, _usdcInvestedAmount);
+                _nstblYield = maturedAssets - _usdcMaturityAmount - (investedAssets - _usdcInvestedAmount);
+                console.log("IDHR2");
             } else if (investedAssets < _usdcInvestedAmount) {
+                console.log("Values:");
+                console.log(maturedAssets, usdcMaturityAmount, investedAssets, _usdcInvestedAmount);
                 uint256 r = investedAssets * precision / _usdcInvestedAmount;
                 _nstblYield = maturedAssets - (r * usdcMaturityAmount / precision);
+                console.log("IDHR3");
+
+
             } else {
                 _nstblYield = maturedAssets - usdcMaturityAmount;
+                console.log("IDHR4");
             }
             _usdcMaturityAmount = maturedAssets;
             _usdcInvestedAmount = investedAssets;
+            console.log("Original Amt: ", _usdcInvestedAmount);
+            console.log("Maturity Amt: ", _usdcMaturityAmount);
 
         }
+        console.log("YIELD", _nstblYield, _usdcMaturityAmount, _usdcInvestedAmount);
     }
 
     function getUserStakedAmount(address _user, uint256 _poolId) external view returns (uint256 _stakedAmount) {
@@ -149,24 +162,29 @@ contract NSTBLStakePool is StakePoolStorage {
 
     //TODO: get user staked amount + rewards function
 
-    function updatePools() internal {
+    function updatePools() public {
         uint256 nstblYield;
         (usdcInvestedAmount, usdcMaturityAmount, nstblYield) = getUpdatedYieldParams();
         IERC20Helper(nstbl).mint(address(this), nstblYield);
 
         uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount / 10_000;
+        console.log("YIELD threshold Params", stakersYieldThreshold, totalStakedAmount, yieldThreshold);
         uint256 nstblPerShare;
         if (nstblYield <= stakersYieldThreshold) {
             nstblPerShare = (nstblYield * 1e12) / (lpToken.totalSupply() + atvlStakeAmount);
+            console.log("HERE1");
         } else {
             console.log("HERE2");
             nstblPerShare = (stakersYieldThreshold * 1e12) / (lpToken.totalSupply() + atvlStakeAmount);
             atvlExtraYield += (nstblYield - stakersYieldThreshold);
         }
         console.log("HERE3");
+        console.log("atvl extraYield", atvlExtraYield);
+        console.log("TotalNSTBL perShare", nstblPerShare);
         for (uint256 i = 0; i < poolInfo.length; i++) {
             PoolInfo storage pool = poolInfo[i];
             pool.accNSTBLPerShare += nstblPerShare * pool.allocPoint / totalAllocPoint;
+            console.log("Pool Share", pool.accNSTBLPerShare);
         }
         console.log("HERE4");
     }
