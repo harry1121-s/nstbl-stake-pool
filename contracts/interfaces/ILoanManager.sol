@@ -8,4 +8,5 @@ interface ILoanManager {
 
     function getInvestedAssets(address _assets) external view returns (uint256);
     function getMaturedAssets(address _assets) external view returns (uint256);
+    function updateRewards(uint256 _rewards) external;
 }

@@ -51,9 +51,9 @@ contract BaseTest is Test {
             );
         nstblToken.setStakePool(address(stakePool));
         stakePool.init(atvl, 900, 4000);
-        stakePool.configurePool(250, 30, 500);
-        stakePool.configurePool(350, 60, 300);
-        stakePool.configurePool(400, 90, 100);
+        stakePool.configurePool(250, 30, 5000);
+        stakePool.configurePool(350, 60, 3000);
+        stakePool.configurePool(400, 90, 1000);
         loanManager.initializeTime();
         vm.stopPrank();
     }

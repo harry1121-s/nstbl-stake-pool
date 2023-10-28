@@ -9,6 +9,7 @@ contract LoanManagerMock {
     uint256 public interest = 158_548_961;
     address public admin;
     uint256 public investedAssets;
+    uint256 public rewards;
     uint256 public extraDeposit;
     uint256 public removedAssets;
     uint256 public startTime;
@@ -41,6 +42,14 @@ contract LoanManagerMock {
 
     function getMaturedAssets(address _asset) external view returns (uint256 _value) {
         _value = extraDeposit + (investedAssets + ((investedAssets * (block.timestamp - startTime) * interest) / 1e17));
+    }
+
+    // function getMaturedAssets(address _asset) external view returns(uint256) {
+    //     return investedAssets+rewards;
+    // }
+
+    function updateRewards(uint256 _rewards) external {
+        rewards = _rewards;
     }
 
     function rebalanceInvestedAssets() external {
