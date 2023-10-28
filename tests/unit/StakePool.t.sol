@@ -181,107 +181,107 @@ contract StakePoolTest is BaseTest {
 
     // }
 
-    // function test_updateYieldParams() external {
-    //     _stakeNstbl(1e6 * 1e18, 0, user1);
+    function test_updateYieldParams() external {
+        _stakeNstbl(1e6 * 1e18, 0, user1);
 
-    //     loanManager.updateInvestedAssets(10e6 * 1e18);
+        loanManager.updateInvestedAssets(10e6 * 1e18);
 
-    //     vm.warp(block.timestamp + 30 days);
+        vm.warp(block.timestamp + 30 days);
 
-    //     console.log("-------------case 1------------");
-    //     uint256 nstblBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     uint256 a;
-    //     uint256 b1;
-    //     uint256 b2;
-    //     uint256 b3;
-    //     uint256 c;
-    //     (a, b1, c) = stakePool.getUpdatedYieldParams();
+        console.log("-------------case 1------------");
+        uint256 nstblBalBefore = nstblToken.balanceOf(address(stakePool));
+        uint256 a;
+        uint256 b1;
+        uint256 b2;
+        uint256 b3;
+        uint256 c;
+        (a, b1, c) = stakePool.getUpdatedYieldParams();
 
-    //     assertEq(a, loanManager.getInvestedAssets(usdc));
-    //     assertEq(loanManager.getMaturedAssets(usdc), b1);
-    //     console.log(b1-a, c);
+        assertEq(a, loanManager.getInvestedAssets(usdc));
+        assertEq(loanManager.getMaturedAssets(usdc), b1);
+        console.log(b1-a, c);
 
-    //     assertEq(stakePool.usdcInvestedAmount(), 0);
-    //     assertEq(stakePool.usdcMaturityAmount(), 0);
+        assertEq(stakePool.usdcInvestedAmount(), 0);
+        assertEq(stakePool.usdcMaturityAmount(), 0);
 
-    //     stakePool.updatePools();
-    //     uint256 nstblBalAfter = nstblToken.balanceOf(address(stakePool));
+        stakePool.updatePools();
+        uint256 nstblBalAfter = nstblToken.balanceOf(address(stakePool));
 
-    //     assertEq(stakePool.usdcInvestedAmount(), a);
-    //     assertEq(stakePool.usdcMaturityAmount(), b1);
-    //     assertEq(c, nstblBalAfter-nstblBalBefore);
+        assertEq(stakePool.usdcInvestedAmount(), a);
+        assertEq(stakePool.usdcMaturityAmount(), b1);
+        assertEq(c, nstblBalAfter-nstblBalBefore);
 
-    //     vm.warp(block.timestamp + 30 days);
+        vm.warp(block.timestamp + 30 days);
 
-    //     console.log("-------------case 2--------------");
-    //     (a, b2, c) = stakePool.getUpdatedYieldParams();
-    //     // loanManager.rebalanceInvestedAssets();
-    //     assertEq(a, loanManager.getInvestedAssets(usdc));
-    //     assertEq(loanManager.getMaturedAssets(usdc), b2);
-    //     assertEq(b2-stakePool.usdcMaturityAmount(), c);
+        console.log("-------------case 2--------------");
+        (a, b2, c) = stakePool.getUpdatedYieldParams();
+        // loanManager.rebalanceInvestedAssets();
+        assertEq(a, loanManager.getInvestedAssets(usdc));
+        assertEq(loanManager.getMaturedAssets(usdc), b2);
+        assertEq(b2-stakePool.usdcMaturityAmount(), c);
 
-    //     assertEq(stakePool.usdcInvestedAmount(), a);
-    //     assertEq(stakePool.usdcMaturityAmount(), b1);
-    //     nstblBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     stakePool.updatePools();
-    //     nstblBalAfter = nstblToken.balanceOf(address(stakePool));
+        assertEq(stakePool.usdcInvestedAmount(), a);
+        assertEq(stakePool.usdcMaturityAmount(), b1);
+        nstblBalBefore = nstblToken.balanceOf(address(stakePool));
+        stakePool.updatePools();
+        nstblBalAfter = nstblToken.balanceOf(address(stakePool));
 
-    //     assertEq(stakePool.usdcInvestedAmount(), a);
-    //     assertEq(stakePool.usdcMaturityAmount(), b2);
-    //     assertEq(c, nstblBalAfter-nstblBalBefore);
+        assertEq(stakePool.usdcInvestedAmount(), a);
+        assertEq(stakePool.usdcMaturityAmount(), b2);
+        assertEq(c, nstblBalAfter-nstblBalBefore);
 
-    //     loanManager.addAssets(1e6 * 1e18);
-    //     console.log("Amount Before: ", a);
+        loanManager.addAssets(1e6 * 1e18);
+        console.log("Amount Before: ", a);
 
-    //     console.log("-------------case 3--------------");
-    //     (a, b3, c) = stakePool.getUpdatedYieldParams();
+        console.log("-------------case 3--------------");
+        (a, b3, c) = stakePool.getUpdatedYieldParams();
 
-    //     console.log("Amount After: ", a);
-    //     assertEq(a, loanManager.getInvestedAssets(usdc));
-    //     assertEq(loanManager.getMaturedAssets(usdc), b3);
-    //     assertEq(b3-stakePool.usdcMaturityAmount()- (a-stakePool.usdcInvestedAmount()), c);
+        console.log("Amount After: ", a);
+        assertEq(a, loanManager.getInvestedAssets(usdc));
+        assertEq(loanManager.getMaturedAssets(usdc), b3);
+        assertEq(b3-stakePool.usdcMaturityAmount()- (a-stakePool.usdcInvestedAmount()), c);
 
-    //     assertEq(a-stakePool.usdcInvestedAmount(), 1e6*1e18);
-    //     assertEq(b3-stakePool.usdcMaturityAmount(), 1e6*1e18);
+        assertEq(a-stakePool.usdcInvestedAmount(), 1e6*1e18);
+        assertEq(b3-stakePool.usdcMaturityAmount(), 1e6*1e18);
 
-    //     nstblBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     stakePool.updatePools();
-    //     nstblBalAfter = nstblToken.balanceOf(address(stakePool));
-    //     // // loanManager.rebalanceInvestedAssets();
+        nstblBalBefore = nstblToken.balanceOf(address(stakePool));
+        stakePool.updatePools();
+        nstblBalAfter = nstblToken.balanceOf(address(stakePool));
+        // // loanManager.rebalanceInvestedAssets();
 
-    //     assertEq(stakePool.usdcInvestedAmount(), a);
-    //     assertEq(stakePool.usdcMaturityAmount(), b3);
-    //     assertEq(c, nstblBalAfter-nstblBalBefore);
+        assertEq(stakePool.usdcInvestedAmount(), a);
+        assertEq(stakePool.usdcMaturityAmount(), b3);
+        assertEq(c, nstblBalAfter-nstblBalBefore);
 
-    //     console.log("-------------case 4--------------");
+        console.log("-------------case 4--------------");
 
-    //     loanManager.rebalanceInvestedAssets();
-    //     stakePool.updatePools();
-    //     assertEq(stakePool.usdcMaturityAmount(), loanManager.getMaturedAssets(usdc));
+        loanManager.rebalanceInvestedAssets();
+        stakePool.updatePools();
+        assertEq(stakePool.usdcMaturityAmount(), loanManager.getMaturedAssets(usdc));
 
-    //     console.log("removing from rebalanced state");
-    //     loanManager.removeAssets(3e6 * 1e18);
-    //     loanManager.rebalanceInvestedAssets();
+        console.log("removing from rebalanced state");
+        loanManager.removeAssets(3e6 * 1e18);
+        loanManager.rebalanceInvestedAssets();
 
-    //     // console.log(loanManager.getMaturedAssets(usdc));
+        // console.log(loanManager.getMaturedAssets(usdc));
 
-    //     (a, b3, c) = stakePool.getUpdatedYieldParams();
+        (a, b3, c) = stakePool.getUpdatedYieldParams();
 
-    //     console.log("Before");
-    //     uint256 beforeInv = stakePool.usdcInvestedAmount();
-    //     uint256 beforeMat = stakePool.usdcMaturityAmount();
+        console.log("Before");
+        uint256 beforeInv = stakePool.usdcInvestedAmount();
+        uint256 beforeMat = stakePool.usdcMaturityAmount();
 
-    //     console.log(a,b3,c);
+        console.log(a,b3,c);
 
-    //     nstblBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     stakePool.updatePools();
-    //     nstblBalAfter = nstblToken.balanceOf(address(stakePool));
+        nstblBalBefore = nstblToken.balanceOf(address(stakePool));
+        stakePool.updatePools();
+        nstblBalAfter = nstblToken.balanceOf(address(stakePool));
 
-    //     assertEq(a, beforeInv-3e6*1e18);
-    //     assertEq(b3, beforeMat*8e24/11e24);
-    //     assertEq(c, nstblBalAfter-nstblBalBefore);
+        assertEq(a, beforeInv-3e6*1e18);
+        assertEq(b3, beforeMat*8e24/11e24);
+        assertEq(c, nstblBalAfter-nstblBalBefore);
 
-    // }
+    }
 
     // function test_updateYieldParams_fuzz(uint256 _amount1) external {
 
