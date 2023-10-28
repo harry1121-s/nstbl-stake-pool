@@ -38,12 +38,15 @@ contract StakePoolStorage {
         uint64 allocPoint;
         uint64 stakeTimePeriod;
         uint64 earlyUnstakeFee;
+        uint256 unclaimedRewards;
+        uint256 rewards;
+        uint256 stakeAmount;
     }
 
-    uint256 public accNSTBLPerShare;
     uint256 public lastRewardTimeStamp;
     uint256 public totalStakedAmount;
     uint256 public yieldThreshold;
+    uint256 public stakingThreshold;
 
     address public atvl;
     uint256 public atvlStakeAmount;

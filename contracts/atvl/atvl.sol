@@ -37,7 +37,6 @@ contract Atvl {
 
         // authorizedCallers[nstblHub] = true;
         authorizedCallers[stakePool] = true;
-
     }
 
     function setAuthorizedCaller(address _caller, bool _isAuthorized) external onlyAdmin {
@@ -65,7 +64,5 @@ contract Atvl {
         return IERC20Helper(nstblToken).balanceOf(address(this));
     }
 
-    function addATVLToStaker(uint256 _amount, uint256 _poolId) external authorizedCaller{
-        
-    }
+    function addATVLToStaker(uint256 _amount, uint256 _poolId) external authorizedCaller { }
 }

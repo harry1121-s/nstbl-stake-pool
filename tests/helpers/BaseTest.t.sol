@@ -28,7 +28,7 @@ contract BaseTest is Test {
     address public user3 = address(3);
     address public atvl = address(4);
 
-    address usdc = address(34536543);
+    address usdc = address(34_536_543);
 
     function setUp() public virtual {
         uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
@@ -50,7 +50,7 @@ contract BaseTest is Test {
             // address(priceFeed)
             );
         nstblToken.setStakePool(address(stakePool));
-        stakePool.init(atvl, 900);
+        stakePool.init(atvl, 900, 4000);
         stakePool.configurePool(250, 30, 500);
         stakePool.configurePool(350, 60, 300);
         stakePool.configurePool(400, 90, 100);
