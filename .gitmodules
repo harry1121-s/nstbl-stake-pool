@@ -7,3 +7,6 @@
 [submodule "modules/chainlink"]
 	path = modules/chainlink
 	url = https://github.com/smartcontractkit/chainlink.git
+[submodule "modules/nstbl-loan-manager"]
+	path = modules/nstbl-loan-manager
+	url = https://github.com/harry1121-s/nstbl-loan-manager.git

@@ -3,13 +3,13 @@ pragma solidity 0.8.21;
 
 import { Test, console } from "forge-std/Test.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { NSTBLStakePool } from "../../contracts/StakePool.sol";
-import { TokenLP } from "../../contracts/TokenLP.sol";
-import { LoanManagerMock } from "../../contracts/mocks/LoanManagerMock.sol";
-import { NSTBLVaultMock } from "../../contracts/mocks/NSTBLVaultMock.sol";
-import { NSTBLTokenMock } from "../../contracts/mocks/NSTBLTokenMock.sol";
-import { ChainlinkPriceFeed } from "../../contracts/chainlink/ChainlinkPriceFeed.sol";
-import { IERC20Helper } from "../../contracts/interfaces/IERC20Helper.sol";
+import { NSTBLStakePool } from "../../../contracts/StakePool.sol";
+import { TokenLP } from "../../../contracts/TokenLP.sol";
+import { LoanManager } from "@loanManager/contracts/LoanManager.sol";
+import { NSTBLVaultMock } from "../../../contracts/mocks/NSTBLVaultMock.sol";
+import { NSTBLTokenMock } from "../../../contracts/mocks/NSTBLTokenMock.sol";
+import { ChainlinkPriceFeed } from "../../../contracts/chainlink/ChainlinkPriceFeed.sol";
+import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
 
 contract BaseTest is Test {
     using SafeERC20 for IERC20Helper;
@@ -17,7 +17,7 @@ contract BaseTest is Test {
     NSTBLStakePool public stakePool;
     ChainlinkPriceFeed public priceFeed;
     TokenLP public lpToken;
-    LoanManagerMock public loanManager;
+    LoanManager public loanManager;
     NSTBLVaultMock public nstblVault;
     NSTBLTokenMock public nstblToken;
 
