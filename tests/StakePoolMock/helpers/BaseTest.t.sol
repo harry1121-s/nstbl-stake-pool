@@ -42,7 +42,7 @@ contract BaseTest is Test {
         stakePool = new NSTBLStakePool(
             admin,
             address(nstblToken),
-            address(nstblVault),
+            // address(nstblVault),
             nealthyAddr,
             // address(loanManager.lUSDC()),
             // address(loanManager.lUSDT()),

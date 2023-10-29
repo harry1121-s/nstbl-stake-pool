@@ -20,7 +20,7 @@ contract BaseTestSP is BaseTest {
     ChainlinkPriceFeed public priceFeed;
     TokenLP public lpToken;
     // LoanManager public loanManager;
-    NSTBLVaultMock public nstblVault;
+    // NSTBLVaultMock public nstblVault;
     NSTBLTokenMock public nstblToken;
     ATVL public Atvl;
 
@@ -37,16 +37,15 @@ contract BaseTestSP is BaseTest {
         super.setUp();
         
         vm.startPrank(admin);
-        priceFeed = new ChainlinkPriceFeed();
+        // priceFeed = new ChainlinkPriceFeed();
         // loanManager = new LoanManagerMock(admin);
-        nstblVault = new NSTBLVaultMock(address(priceFeed));
+        // nstblVault = new NSTBLVaultMock(address(priceFeed));
         nstblToken = new NSTBLTokenMock("NSTBL Token", "NSTBL", admin);
         Atvl = new ATVL(admin);
         atvl = address(Atvl);
         stakePool = new NSTBLStakePool(
             admin,
             address(nstblToken),
-            address(nstblVault),
             nealthyAddr,
             // address(loanManager.lUSDC()),
             // address(loanManager.lUSDT()),

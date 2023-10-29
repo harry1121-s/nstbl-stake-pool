@@ -43,7 +43,6 @@ contract NSTBLStakePool is StakePoolStorage {
     constructor(
         address _admin,
         address _nstbl,
-        address _nstblvault,
         address _nealthyAddr,
         // address _lUSDC,
         // address _lUSDT,
@@ -53,7 +52,6 @@ contract NSTBLStakePool is StakePoolStorage {
     {
         admin = _admin;
         nstbl = _nstbl;
-        nstblVault = _nstblvault;
         authorizedCallers[_nealthyAddr] = true;
         // lUSDC = _lUSDC;
         // lUSDT = _lUSDT;
