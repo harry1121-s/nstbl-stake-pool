@@ -9,7 +9,7 @@ import { LoanManager } from "@loanManager/contracts/LoanManager.sol";
 import { BaseTest} from "@loanManager/tests/helpers/BaseTest.t.sol";
 import { NSTBLVaultMock } from "../../../contracts/mocks/NSTBLVaultMock.sol";
 import { NSTBLTokenMock } from "../../../contracts/mocks/NSTBLTokenMock.sol";
-import { ChainlinkPriceFeed } from "../../../contracts/chainlink/ChainlinkPriceFeed.sol";
+// import { ChainlinkPriceFeed } from "../../../contracts/chainlink/ChainlinkPriceFeed.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
 import { ATVL } from "../../../contracts/atvl/ATVL.sol";
 
@@ -17,7 +17,7 @@ contract BaseTestSP is BaseTest {
     using SafeERC20 for IERC20Helper;
 
     NSTBLStakePool public stakePool;
-    ChainlinkPriceFeed public priceFeed;
+    // ChainlinkPriceFeed public priceFeed;
     TokenLP public lpToken;
     // LoanManager public loanManager;
     // NSTBLVaultMock public nstblVault;
