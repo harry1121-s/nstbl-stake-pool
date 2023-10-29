@@ -4,13 +4,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IERC20Helper.sol";
 import { console } from "forge-std/Test.sol";
 
-contract Atvl {
+contract ATVL {
     mapping(address => bool) public authorizedCallers;
-    address public admin;
+    address public _admin;
     uint256 public atvlThreshold;
     address public nstblToken;
-    // address public nstblHub;
-    address public stakePool;
     uint256 public totalNstblReceived;
     uint256 public totalNstblBurned;
     uint256 public pendingNstblBurn;
@@ -21,22 +19,17 @@ contract Atvl {
     }
 
     modifier onlyAdmin() {
-        require(msg.sender == admin, "ATVL::NOT ADMIN");
+        require(msg.sender == _admin, "ATVL::NOT ADMIN");
         _;
     }
 
     constructor(address _admin_) {
-        admin = _admin_;
+        _admin = _admin_;
     }
 
-    function init(address _nstblToken, address _stakePool, uint256 _atvlThreshold) external onlyAdmin {
+    function init(address _nstblToken, uint256 _atvlThreshold) external onlyAdmin {
         nstblToken = _nstblToken;
-        // nstblHub = _nstblHub;
-        stakePool = _stakePool;
         atvlThreshold = _atvlThreshold;
-
-        // authorizedCallers[nstblHub] = true;
-        authorizedCallers[stakePool] = true;
     }
 
     function setAuthorizedCaller(address _caller, bool _isAuthorized) external onlyAdmin {
@@ -63,6 +56,4 @@ contract Atvl {
     function checkDeployedATVL() external view returns (uint256) {
         return IERC20Helper(nstblToken).balanceOf(address(this));
     }
-
-    function addATVLToStaker(uint256 _amount, uint256 _poolId) external authorizedCaller { }
 }

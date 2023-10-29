@@ -11,6 +11,7 @@ import { NSTBLVaultMock } from "../../../contracts/mocks/NSTBLVaultMock.sol";
 import { NSTBLTokenMock } from "../../../contracts/mocks/NSTBLTokenMock.sol";
 import { ChainlinkPriceFeed } from "../../../contracts/chainlink/ChainlinkPriceFeed.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
+import { ATVL } from "../../../contracts/atvl/ATVL.sol";
 
 contract BaseTestSP is BaseTest {
     using SafeERC20 for IERC20Helper;
@@ -21,13 +22,14 @@ contract BaseTestSP is BaseTest {
     // LoanManager public loanManager;
     NSTBLVaultMock public nstblVault;
     NSTBLTokenMock public nstblToken;
+    ATVL public Atvl;
 
     // address public admin = address(123);
     address public nealthyAddr = address(456);
     address public user1 = address(1);
     address public user2 = address(2);
     address public user3 = address(3);
-    address public atvl = address(4);
+    address public atvl;
 
     // address usdc = address(34_536_543);
 
@@ -39,7 +41,8 @@ contract BaseTestSP is BaseTest {
         // loanManager = new LoanManagerMock(admin);
         nstblVault = new NSTBLVaultMock(address(priceFeed));
         nstblToken = new NSTBLTokenMock("NSTBL Token", "NSTBL", admin);
-
+        Atvl = new ATVL(admin);
+        atvl = address(Atvl);
         stakePool = new NSTBLStakePool(
             admin,
             address(nstblToken),
