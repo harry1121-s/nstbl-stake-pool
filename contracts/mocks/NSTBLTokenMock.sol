@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract NSTBLTokenMock is ERC20 {
     address public stakePool;
     address public admin;
+    mapping(address => bool) public authorizedCallers;
 
     event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
     event StakePoolChanged(address indexed oldStakePool, address indexed newStakePool);
@@ -15,7 +16,7 @@ contract NSTBLTokenMock is ERC20 {
     //////////////////////////////////////////////////////////////*/
 
     modifier authorizedCaller() {
-        require(msg.sender == stakePool, "Token: StakePool unAuth");
+        require(msg.sender == stakePool || authorizedCallers[msg.sender], "Token: unAuth");
         _;
     }
 
