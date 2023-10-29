@@ -15,7 +15,7 @@ testStakePoolMock:
 	forge test --match-path ./tests/StakePoolMock/unit/StakePoolMock.t.sol -vvv 
 
 testStakePool:
-	forge test --match-path ./tests/StakePool/unit/StakePool.t.sol -vvvvv 
+	forge test --match-path ./tests/StakePool/unit/StakePool.t.sol -vvv
 
 debug: 
 	forge test -vvvvv
