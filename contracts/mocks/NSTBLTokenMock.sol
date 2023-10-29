@@ -58,6 +58,10 @@ contract NSTBLTokenMock is ERC20 {
         emit StakePoolChanged(oldStakePool, stakePool);
     }
 
+    function setAuthorizedCaller(address _caller, bool _val) external onlyAdmin {
+        authorizedCallers[_caller] = _val;
+    }
+
     function setAdmin(address _admin) external onlyAdmin {
         require(_admin != address(0), "LP: invalid Address");
         address oldAdmin = admin;
