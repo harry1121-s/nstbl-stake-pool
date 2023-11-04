@@ -2,24 +2,17 @@ pragma solidity 0.8.21;
 
 import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
-import "./TokenLP.sol";
 
 contract StakePoolStorage {
-    event Stake(address indexed user, uint256 amount, uint256 rewards);
+    event Stake(address indexed user, uint256 amount, uint256 rewards, uint256 burn);
     event Unstake(address indexed user, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
                                 IMMUTABLES
     //////////////////////////////////////////////////////////////*/
     address public immutable nstbl;
-    address public immutable nstblVault;
-    address public immutable lUSDC;
-    address public immutable lUSDT;
     address public immutable usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public immutable usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address public immutable loanManager;
-
-    TokenLP public immutable lpToken;
 
     /*//////////////////////////////////////////////////////////////
                         STORAGE : Stake Pool
@@ -28,9 +21,9 @@ contract StakePoolStorage {
     address public admin;
 
     struct StakerInfo {
-        bool ifATVLStaker;
         uint256 amount;
         uint256 rewardDebt;
+        uint256 burnDebt;
         uint256 stakeTimeStamp;
     }
 
@@ -42,9 +35,9 @@ contract StakePoolStorage {
         uint256 unclaimedRewards;
         uint256 rewards;
         uint256 stakeAmount;
+        uint256 burnNSTBLPerShare;
     }
 
-    uint256 public lastRewardTimeStamp;
     uint256 public totalStakedAmount;
     uint256 public yieldThreshold;
     uint256 public stakingThreshold;
