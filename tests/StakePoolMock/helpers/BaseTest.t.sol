@@ -24,7 +24,7 @@ contract BaseTest is testToken {
 
     address usdc = address(34_536_543);
 
-    function setUp() public virtual override{
+    function setUp() public virtual override {
         super.setUp();
         // uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
         // vm.selectFork(mainnetFork);
@@ -44,9 +44,6 @@ contract BaseTest is testToken {
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
         nstblToken.setStakePoolAddress(address(stakePool));
         stakePool.init(atvl, 900, 4000);
-        stakePool.configurePool(250, 30, 5000);
-        stakePool.configurePool(350, 60, 3000);
-        stakePool.configurePool(400, 90, 1000);
         loanManager.initializeTime();
         vm.stopPrank();
     }
@@ -58,13 +55,70 @@ contract BaseTest is testToken {
         vm.stopPrank();
     }
 
-    function _stakeNstbl(uint256 _amount, uint256 _poolId, address _user) internal {
-        // erc20_transfer(address(nstblToken), owner, NSTBL_HUB, _amount);
+    function _stakeNSTBL(uint256 _amount, bytes11 _stakeId, uint8 _trancheId) internal {
+        // Add nSTBL balance to NSTBL_HUB
         deal(address(nstblToken), NSTBL_HUB, _amount);
-        console.log("Balance of NSTBL_HUB: ", IERC20Helper(address(nstblToken)).balanceOf(NSTBL_HUB));
+        assertEq(IERC20Helper(address(nstblToken)).balanceOf(NSTBL_HUB), _amount);
+
+        // Action = Stake
         vm.startPrank(NSTBL_HUB);
         IERC20Helper(address(nstblToken)).safeIncreaseAllowance(address(stakePool), _amount);
-        stakePool.stake(_amount, _user, _poolId);
+        stakePool.stake(_amount, _trancheId, _stakeId);
         vm.stopPrank();
+    }
+
+    function _checkStakePostCondition(
+        bytes11 _stakeId,
+        uint8 _trancheId,
+        address _owner,
+        uint256 _amount,
+        uint256 _rewardDebt,
+        uint256 _burnDebt,
+        uint256 _stakeTimeStamp
+    ) internal {
+        (
+            bytes11 stakeId,
+            uint8 trancheId,
+            address owner,
+            uint256 amount,
+            uint256 rewardDebt,
+            uint256 burnDebt,
+            uint256 stakeTimeStamp
+        ) = stakePool.stakerInfo(_stakeId);
+
+        assertEq(stakeId, _stakeId, "check stakeId");
+        assertEq(trancheId, _trancheId, "check trancheId");
+        assertEq(owner, _owner, "check _owner");
+        assertEq(amount, _amount, "check _amount");
+        assertEq(rewardDebt, _rewardDebt, "check _rewardDebt");
+        assertEq(burnDebt, _burnDebt,  "check _burnDebt" );
+        assertEq(stakeTimeStamp, _stakeTimeStamp, "check _stakeTimeStamp");
+    }
+
+    function _printStakePostCondition(bytes11 _stakeId) internal {
+        (
+            bytes11 stakeId,
+            uint8 trancheId,
+            address owner,
+            uint256 amount,
+            uint256 rewardDebt,
+            uint256 burnDebt,
+            uint256 stakeTimeStamp
+        ) = stakePool.stakerInfo(_stakeId);
+
+        console.logBytes11(stakeId);
+        console.log("trancheId:-      ", trancheId);
+        console.log("owner:-          ", owner);
+        console.log("amount:-         ", amount);
+        console.log("rewardDebt:-     ", rewardDebt);
+        console.log("burnDebt:-       ", burnDebt);
+        console.log("stakeTimeStamp:- ", stakeTimeStamp);
+    }
+    
+    function _randomizeStakeIdAndIndex(bytes11 _stakeId, uint256 len) internal view returns (bytes11 randomStakeId, uint256 index) {
+        bytes32 hashedVal = keccak256(abi.encodePacked(_stakeId, block.timestamp));
+        randomStakeId = bytes11(hashedVal);
+        index = uint256(hashedVal) % len;
+        return (randomStakeId, index);
     }
 }
