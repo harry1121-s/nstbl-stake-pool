@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { console } from "forge-std/Test.sol";
-import "./StakePoolStorage.sol";
+import {IERC20Helper, ILoanManager, IACLManager, StakePoolStorage } from "./StakePoolStorage.sol";
 
 contract NSTBLStakePool is StakePoolStorage {
     using SafeERC20 for IERC20Helper;
@@ -21,36 +21,25 @@ contract NSTBLStakePool is StakePoolStorage {
         _locked = 1;
     }
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "SP::NOT ADMIN");
-        _;
-    }
-
-    modifier onlyATVL() {
-        require(msg.sender == atvl, "SP::NOT ATVL");
+     modifier onlyAdmin() {
+        require(msg.sender == IACLManager(aclManager).admin(), "SP: unAuth Admin");
         _;
     }
 
     modifier authorizedCaller() {
-        require(authorizedCallers[msg.sender], "SP::NOT AUTHORIZED");
+        require(IACLManager(aclManager).authorizedCallersStakePool(msg.sender), "SP: unAuth Hub");
         _;
     }
 
-    function setAuthorizedCaller(address _caller, bool _isAuthorized) external onlyAdmin {
-        authorizedCallers[_caller] = _isAuthorized;
-    }
-
     constructor(
-        address _admin,
+        address _aclManager,
         address _nstbl,
-        address _nealthyAddr,
         address _loanManager
     ) 
     // address _chainLinkPriceFeed
     {
-        admin = _admin;
+        aclManager = _aclManager;
         nstbl = _nstbl;
-        authorizedCallers[_nealthyAddr] = true;
         loanManager = _loanManager;
     }
 
@@ -58,10 +47,6 @@ contract NSTBLStakePool is StakePoolStorage {
         atvl = _atvl;
         yieldThreshold = _yieldThreshold;
         stakingThreshold = _stakingThreshold;
-    }
-
-    function setAdmin(address _admin) external onlyAdmin {
-        admin = _admin;
     }
 
     function setATVL(address _atvl) external onlyAdmin {
@@ -344,7 +329,8 @@ contract NSTBLStakePool is StakePoolStorage {
             console.log(staker.burnDebt, (staker.amount * pool.accNSTBLPerShare / 1e18));
             console.log((staker.amount * pool.burnNSTBLPerShare / 1e18), (staker.rewardDebt));
             console.log(pool.stakeAmount, a1, a2);
-            // pool.stakeAmount += ((staker.amount * pool.accNSTBLPerShare / 1e18)-staker.rewardDebt);
+            pool.stakeAmount += ((staker.amount * pool.accNSTBLPerShare / 1e18)-staker.rewardDebt);
+            totalStakedAmount += ((staker.amount * pool.accNSTBLPerShare / 1e18)-staker.rewardDebt);
             // pool.stakeAmount = (pool.stakeAmount + a1)-a2;
             console.log(staker.amount, a1, a2);
             staker.amount = (staker.amount + a1)-a2;
@@ -368,7 +354,7 @@ contract NSTBLStakePool is StakePoolStorage {
 
     function unstake(address _userAddress, uint256 _poolId, bool _depeg) public authorizedCaller {
         require(_poolId < poolInfo.length, "SP::INVALID POOL");
-
+        console.log("UNSTAKING--------------");
         StakerInfo storage staker = stakerInfo[_poolId][_userAddress];
         PoolInfo storage pool = poolInfo[_poolId];
         uint256 unstakeFee;
@@ -378,15 +364,18 @@ contract NSTBLStakePool is StakePoolStorage {
         uint256 a1 = staker.burnDebt + (staker.amount * pool.accNSTBLPerShare / 1e18);
         uint256 a2 = (staker.amount * pool.burnNSTBLPerShare / 1e18) + (staker.rewardDebt);
         uint256 tokensAvailable = staker.amount + a1 - a2;
-
+        console.log(staker.amount, a1, a2);
+        console.log("Tokens Available: ", tokensAvailable);
+        console.log("TIMES: ", timeElapsed, pool.stakeTimePeriod);
         if (!_depeg) {
-            if (timeElapsed <= pool.stakeTimePeriod + 1 days) {
-
+            if (timeElapsed <= pool.stakeTimePeriod + 1 ) {
+                console.log("Early Unstakingggggg");
                 unstakeFee = _getUnstakeFee(pool.stakeTimePeriod, staker.stakeTimeStamp, pool.earlyUnstakeFee)
                     * (tokensAvailable) / 100_000;
 
             } else {
                 //restake
+                console.log("Restakingggggg");
                 pool.stakeAmount -= staker.amount;
                 totalStakedAmount -= staker.amount;
                 staker.amount = tokensAvailable;
@@ -401,8 +390,9 @@ contract NSTBLStakePool is StakePoolStorage {
             unstakeFee = 0;
         }
 
-        if(_depeg || timeElapsed <= pool.stakeTimePeriod + 1 days)
-        {
+        if(_depeg || timeElapsed <= pool.stakeTimePeriod + 1 )
+        {   
+            console.log("Final Unstakingggggg");
             pool.stakeAmount -= staker.amount;
             totalStakedAmount -= staker.amount;
             staker.amount = 0;

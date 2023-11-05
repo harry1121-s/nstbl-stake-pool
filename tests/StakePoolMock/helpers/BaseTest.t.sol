@@ -4,6 +4,7 @@ pragma solidity 0.8.21;
 import { Test, console } from "forge-std/Test.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { NSTBLStakePool } from "../../../contracts/StakePool.sol";
+import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { TokenLP } from "../../../contracts/TokenLP.sol";
 import { LoanManagerMock } from "../../../contracts/mocks/LoanManagerMock.sol";
 import { NSTBLVaultMock } from "../../../contracts/mocks/NSTBLVaultMock.sol";
@@ -15,6 +16,7 @@ contract BaseTest is Test {
     using SafeERC20 for IERC20Helper;
 
     NSTBLStakePool public stakePool;
+    ACLManager public aclManager;
     ChainlinkPriceFeed public priceFeed;
     TokenLP public lpToken;
     LoanManagerMock public loanManager;
@@ -22,7 +24,7 @@ contract BaseTest is Test {
     NSTBLTokenMock public nstblToken;
 
     address public admin = address(123);
-    address public nealthyAddr = address(456);
+    address public NSTBL_HUB = address(456);
     address public user1 = address(1);
     address public user2 = address(2);
     address public user3 = address(3);
@@ -34,20 +36,19 @@ contract BaseTest is Test {
         uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
         vm.selectFork(mainnetFork);
         vm.startPrank(admin);
+
+        aclManager = new ACLManager();
+        aclManager.setAuthorizedCallerStakePool(NSTBL_HUB, true);
+
         priceFeed = new ChainlinkPriceFeed();
         loanManager = new LoanManagerMock(admin);
         nstblVault = new NSTBLVaultMock(address(priceFeed));
         nstblToken = new NSTBLTokenMock("NSTBL Token", "NSTBL", admin);
 
         stakePool = new NSTBLStakePool(
-            admin,
+            address(aclManager),
             address(nstblToken),
-            // address(nstblVault),
-            nealthyAddr,
-            // address(loanManager.lUSDC()),
-            // address(loanManager.lUSDT()),
             address(loanManager)
-            // address(priceFeed)
             );
         nstblToken.setStakePool(address(stakePool));
         stakePool.init(atvl, 900, 4000);
@@ -65,8 +66,8 @@ contract BaseTest is Test {
     }
 
     function _stakeNstbl(uint256 _amount, uint256 _poolId, address _user) internal {
-        erc20_transfer(address(nstblToken), admin, nealthyAddr, _amount);
-        vm.startPrank(nealthyAddr);
+        erc20_transfer(address(nstblToken), admin, NSTBL_HUB, _amount);
+        vm.startPrank(NSTBL_HUB);
         nstblToken.approve(address(stakePool), _amount);
         stakePool.stake(_amount, _user, _poolId);
         vm.stopPrank();

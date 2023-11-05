@@ -2,6 +2,8 @@ pragma solidity 0.8.21;
 
 import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
+import "@nstbl-acl-manager//contracts/ACLManager.sol";
+
 
 contract StakePoolStorage {
     event Stake(address indexed user, uint256 amount, uint256 rewards, uint256 burn);
@@ -13,12 +15,12 @@ contract StakePoolStorage {
     address public immutable nstbl;
     address public immutable usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public immutable loanManager;
-
     /*//////////////////////////////////////////////////////////////
                         STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
 
     address public admin;
+    address public aclManager;
 
     struct StakerInfo {
         uint256 amount;
@@ -51,7 +53,6 @@ contract StakePoolStorage {
     PoolInfo[] public poolInfo;
     uint256 public totalAllocPoint;
 
-    mapping(address => bool) public authorizedCallers;
     mapping(int8 => uint256) public trancheTimePeriods;
     mapping(int8 => uint256) public trancheFee;
     mapping(int8 => uint256) public trancheBaseFee;

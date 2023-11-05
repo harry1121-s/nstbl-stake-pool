@@ -3,3 +3,5 @@ forge-std/=modules/forge-std/src/
 @openzeppelin/=modules/openzeppelin-contracts/
 @chainlink/=modules/chainlink/
 @loanManager/=modules/nstbl-loan-manager
+@nstbl-acl-manager/=modules/nstbl-acl-manager
+@nstbl-token/=modules/nstbl-token

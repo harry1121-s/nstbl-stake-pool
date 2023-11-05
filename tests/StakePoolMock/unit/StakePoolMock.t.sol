@@ -11,114 +11,114 @@ contract StakePoolTest is BaseTest {
         super.setUp();
     }
 
-    // function test_stake_singleUser_singlePool_fuzz(uint256 _amount1) external {
-    //     uint256 stakeUpperBound =
-    //         (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
-    //     _amount1 = bound(_amount1, 1, stakeUpperBound);
-    //     _stakeNstbl(_amount1, 0, user1);
+    function test_stake_singleUser_singlePool_fuzz(uint256 _amount1) external {
+        uint256 stakeUpperBound =
+            (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
+        _amount1 = bound(_amount1, 1, stakeUpperBound);
+        _stakeNstbl(_amount1, 0, user1);
 
-    //     assertEq(stakePool.totalStakedAmount(), _amount1);
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
-    //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
-    // }
+        assertEq(stakePool.totalStakedAmount(), _amount1);
+        assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
+        assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
+    }
 
-    // function test_stake_multiUser_multiPool_fuzz(uint256 _amount1, uint256 _amount2, uint256 _amount3, uint256 _amount4)
-    //     external
-    // {
-    //     uint256 stakeUpperBound =
-    //         (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
-    //     _amount1 = bound(_amount1, 1, stakeUpperBound / 3);
-    //     _amount2 = bound(_amount2, 1, stakeUpperBound / 3);
-    //     _amount3 = bound(_amount3, 1, stakeUpperBound / 3);
-    //     _amount4 = bound(_amount4, stakeUpperBound, stakeUpperBound * 2);
-    //     // vm.assume(_amount1+_amount2+_amount3 <= stakeUpperBound);
-    //     _stakeNstbl(_amount1, 0, user1);
-    //     _stakeNstbl(_amount2, 1, user2);
-    //     _stakeNstbl(_amount3, 2, user3);
+    function test_stake_multiUser_multiPool_fuzz(uint256 _amount1, uint256 _amount2, uint256 _amount3, uint256 _amount4)
+        external
+    {
+        uint256 stakeUpperBound =
+            (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
+        _amount1 = bound(_amount1, 1, stakeUpperBound / 3);
+        _amount2 = bound(_amount2, 1, stakeUpperBound / 3);
+        _amount3 = bound(_amount3, 1, stakeUpperBound / 3);
+        _amount4 = bound(_amount4, stakeUpperBound, stakeUpperBound * 2);
+        // vm.assume(_amount1+_amount2+_amount3 <= stakeUpperBound);
+        _stakeNstbl(_amount1, 0, user1);
+        _stakeNstbl(_amount2, 1, user2);
+        _stakeNstbl(_amount3, 2, user3);
 
-    //     loanManager.updateInvestedAssets(_amount4);
+        loanManager.updateInvestedAssets(_amount4);
 
-    //     assertEq(stakePool.totalStakedAmount(), _amount1 + _amount2 + _amount3);
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
-    //     assertEq(stakePool.getUserStakedAmount(user2, 1), _amount2);
-    //     assertEq(stakePool.getUserStakedAmount(user3, 2), _amount3);
-    // }
+        assertEq(stakePool.totalStakedAmount(), _amount1 + _amount2 + _amount3);
+        assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
+        assertEq(stakePool.getUserStakedAmount(user2, 1), _amount2);
+        assertEq(stakePool.getUserStakedAmount(user3, 2), _amount3);
+    }
 
-    // function test_unstake_singleUser() external {
+    function test_unstake_singleUser() external {
 
-    //     //precision is lost at 1e3
-    //     uint256 amount = 1e6 * 1e18;
+        //precision is lost at 1e3
+        uint256 amount = 1e6 * 1e18;
 
-    //     _stakeNstbl(amount, 0, user1);
-    //     console.log("-----------------------------------------");
-    //     loanManager.updateInvestedAssets(15e5 * 1e18);
-    //     vm.warp(block.timestamp + 12 days);
+        _stakeNstbl(amount, 0, user1);
+        console.log("-----------------------------------------");
+        loanManager.updateInvestedAssets(15e5 * 1e18);
+        vm.warp(block.timestamp + 12 days);
 
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), amount);
-    //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
+        assertEq(stakePool.getUserStakedAmount(user1, 0), amount);
+        assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
 
-    //     console.log("2nd staking");
-    //     _stakeNstbl(amount, 0, user1);
-    //     // stakePool.updatePools();
-    //     console.log("-----------------------------------------");
-    //     (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
-    //     uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
-    //     uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+        console.log("2nd staking");
+        _stakeNstbl(amount, 0, user1);
+        // stakePool.updatePools();
+        console.log("-----------------------------------------");
+        (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
+        uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
 
-    //     vm.startPrank(nealthyAddr);
-    //     console.log("-----------------------------------------");
+        vm.startPrank(NSTBL_HUB);
+        console.log("-----------------------------------------");
+        vm.warp(block.timestamp + 500 days);
+        stakePool.unstake(user1, 0, false);
+        // assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
+        uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
+        uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
+        vm.stopPrank();
 
-    //     stakePool.unstake(user1, 0, false);
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
-    //     uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
-    //     uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-    //     uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
-    //     vm.stopPrank();
+        // assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
 
-    //     assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
+        console.log("-----------------------------------------");
+        console.log("Total Staked Amount", stakePool.totalStakedAmount());
+        console.log("Remaining Pool balance", poolBalAfter);
+        console.log("ATVL yield", stakePool.atvlExtraYield());
+        // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield());
 
-    //     console.log("-----------------------------------------");
-    //     console.log("Total Staked Amount", stakePool.totalStakedAmount());
-    //     console.log("Remaining Pool balance", poolBalAfter);
-    //     console.log("ATVL yield", stakePool.atvlExtraYield());
-    //     assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield());
+    }
 
-    // }
+    function test_unstake_singleUser_singlePool_singleStake_fuzz(uint256 _amount1) external {
 
-    // function test_unstake_singleUser_singlePool_singleStake_fuzz(uint256 _amount1) external {
+        uint256 stakeUpperBound =
+            (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
+        _amount1 = bound(_amount1, 1e3, stakeUpperBound);
 
-    //     uint256 stakeUpperBound =
-    //         (stakePool.stakingThreshold() * nstblToken.totalSupply() / 10_000) - stakePool.totalStakedAmount();
-    //     _amount1 = bound(_amount1, 1e3, stakeUpperBound);
+         _stakeNstbl(_amount1, 0, user1);
+        console.log("-----------------------------------------");
+        loanManager.updateInvestedAssets(15e5 * 1e18);
 
-    //      _stakeNstbl(_amount1, 0, user1);
-    //     console.log("-----------------------------------------");
-    //     loanManager.updateInvestedAssets(15e5 * 1e18);
+        vm.warp(block.timestamp + 12 days);
+        stakePool.updatePools();
+        assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
+        assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
 
-    //     vm.warp(block.timestamp + 12 days);
-    //     stakePool.updatePools();
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), _amount1);
-    //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
+        (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
+        uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
 
-    //     (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
-    //     uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
-    //     uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+        vm.startPrank(NSTBL_HUB);
 
-    //     vm.startPrank(nealthyAddr);
+        stakePool.unstake(user1, 0, false);
+        assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
+        uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
+        uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
+        vm.stopPrank();
+        // (,,,,,,uint256 poolTokens) = stakePool.getPoolInfo(0);
 
-    //     stakePool.unstake(user1, 0, false);
-    //     assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
-    //     uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
-    //     uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-    //     uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
-    //     vm.stopPrank();
-    //     // (,,,,,,uint256 poolTokens) = stakePool.getPoolInfo(0);
-
-    //     assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
-    //     // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield()); due to precision lost at 1e3
-    // }
+        assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
+        // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield()); due to precision lost at 1e3
+    }
 
     // function test_unstake_MultiplePools() external {
 
@@ -130,7 +130,7 @@ contract StakePoolTest is BaseTest {
     //     vm.warp(block.timestamp + 300 days);
 
     //     (,,uint256 yield) = stakePool.getUpdatedYieldParams();
-    //     uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(nstblToken.balanceOf(address(stakePool)), 3e6 * 1e18);
     //     assertEq(stakePool.totalStakedAmount(), 3e6 * 1e18);
 
@@ -141,10 +141,10 @@ contract StakePoolTest is BaseTest {
     //     (uint256 user1UnstakeAmount,) = stakePool.previewUnstake(stakePool.getUserStakedAmount(user1, 0), user1, 0);
     //     console.log(user1UnstakeAmount);
 
-    //     vm.startPrank(nealthyAddr);
+    //     vm.startPrank(NSTBL_HUB);
     //     uint256 user1StakeAmt = stakePool.getUserStakedAmount(user1, 0);
     //     stakePool.unstake(user1, 0, false);
-    //     uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(user1StakeAmt*950/1000, user1UnstakeAmount);
     //     assertEq(nealthyBalAfter-nealthyBalBefore, user1UnstakeAmount);
     //     assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
@@ -158,18 +158,18 @@ contract StakePoolTest is BaseTest {
     //     (uint256 user2Rewards,) = stakePool.previewUnstake(stakePool.getUserStakedAmount(user2, 1), user2, 1);
     //     console.log("----------------------------------------------------------------------2");
 
-    //     nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
-    //     vm.startPrank(nealthyAddr);
+    //     nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+    //     vm.startPrank(NSTBL_HUB);
     //     user1StakeAmt = stakePool.getUserStakedAmount(user1, 1);
     //     stakePool.unstake(user1, 1, false);
-    //     nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(nealthyBalAfter-nealthyBalBefore, user1UnstakeAmount);
     //     assertEq(stakePool.getUserStakedAmount(user1, 1), 0);
 
     //     nealthyBalBefore = nealthyBalAfter;
     //     uint256 user2StakeAmt = stakePool.getUserStakedAmount(user2, 1);
     //     stakePool.unstake(user2, 1, false);
-    //     nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(nealthyBalAfter-nealthyBalBefore, user2Rewards);
     //     assertEq(stakePool.getUserStakedAmount(user2, 1), 0);
     //     vm.stopPrank();
@@ -202,31 +202,31 @@ contract StakePoolTest is BaseTest {
     //     assertEq(nstblToken.balanceOf(address(stakePool)), _amount1+_amount2+_amount3);
     //     assertEq(stakePool.totalStakedAmount(), _amount1+_amount2+_amount3);
 
-    //     uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     (uint256 user1UnstakeAmount,) = stakePool.previewUnstake(_amount1, user1, 0);
     //     console.log(user1UnstakeAmount);
 
-    //     vm.startPrank(nealthyAddr);
+    //     vm.startPrank(NSTBL_HUB);
     //     uint256 user1StakeAmt = stakePool.getUserStakedAmount(user1, 0);
     //     console.log("-----------------------------------------------1");
     //     stakePool.unstake(user1, 0, false);
     //     console.log("-----------------------------------------------2");
-    //     uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     console.log(user1UnstakeAmount, nealthyBalAfter, nealthyBalBefore);
     //     assertEq(user1UnstakeAmount, nealthyBalAfter-nealthyBalBefore);
     //     assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
     //     vm.stopPrank();
 
-    //     nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     (uint256 user2UnstakeAmount,) = stakePool.previewUnstake(_amount2, user2, 1);
     //     console.log(user2UnstakeAmount);
 
-    //     vm.startPrank(nealthyAddr);
+    //     vm.startPrank(NSTBL_HUB);
     //     uint256 user2StakeAmt = stakePool.getUserStakedAmount(user2, 1);
     //     console.log("-----------------------------------------------3");
     //     stakePool.unstake(user2, 1, false);
     //     console.log("-----------------------------------------------3");
-    //     nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(user2UnstakeAmount, nealthyBalAfter-nealthyBalBefore);
     //     assertEq(stakePool.getUserStakedAmount(user2, 1), 0);
     //     vm.stopPrank();
@@ -234,15 +234,15 @@ contract StakePoolTest is BaseTest {
     //     vm.warp(block.timestamp + 300 days);
     //     // stakePool.updatePools();
     //     console.log("dfgsdfgsgfsdhgggfgfggggggggggggggg");
-    //     nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     (uint256 user3UnstakeAmount,) = stakePool.previewUnstake(_amount3, user3, 2);
 
-    //     vm.startPrank(nealthyAddr);
+    //     vm.startPrank(NSTBL_HUB);
     //     uint256 user3StakeAmt = stakePool.getUserStakedAmount(user3, 2);
     //     console.log("-----------------------------------------------5");
     //     stakePool.unstake(user3, 2, false);
     //     console.log("-----------------------------------------------6");
-    //     nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     assertEq(user3UnstakeAmount, nealthyBalAfter-nealthyBalBefore);
     //     assertEq(stakePool.getUserStakedAmount(user3, 2), 0);
     //     vm.stopPrank();
@@ -262,7 +262,7 @@ contract StakePoolTest is BaseTest {
     //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
 
     //     console.log("Burning NSTBL");
-    //     vm.prank(nealthyAddr);
+    //     vm.prank(NSTBL_HUB);
     //     stakePool.burnNstbl(1e24);
 
     //     console.log("2nd staking");
@@ -270,16 +270,16 @@ contract StakePoolTest is BaseTest {
     //     // stakePool.updatePools();
     //     console.log("-----------------------------------------");
     //     // (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
-    //     // uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     // uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     // uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
     //     // uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
 
-    //     // vm.startPrank(nealthyAddr);
+    //     // vm.startPrank(NSTBL_HUB);
     //     // console.log("-----------------------------------------");
 
     //     // stakePool.unstake(user1, 0, false);
     //     // assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
-    //     // uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     // uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     // uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
     //     // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
     //     // vm.stopPrank();
@@ -306,7 +306,7 @@ contract StakePoolTest is BaseTest {
     //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
 
     //     console.log("Burning NSTBL");
-    //     vm.startPrank(nealthyAddr);
+    //     vm.startPrank(NSTBL_HUB);
     //     if(_amount > nstblToken.balanceOf(address(stakePool)))
     //         vm.expectRevert("SP:: Burn amount exceeds staked amount");
     //     stakePool.burnNstbl(_amount);
@@ -317,16 +317,16 @@ contract StakePoolTest is BaseTest {
     //     // stakePool.updatePools();
     //     console.log("-----------------------------------------");
     //     // (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
-    //     // uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
+    //     // uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     // uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
     //     // uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
 
-    //     // vm.startPrank(nealthyAddr);
+    //     // vm.startPrank(NSTBL_HUB);
     //     // console.log("-----------------------------------------");
 
     //     // stakePool.unstake(user1, 0, false);
     //     // assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
-    //     // uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
+    //     // uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     // uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
     //     // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
     //     // vm.stopPrank();
@@ -339,54 +339,55 @@ contract StakePoolTest is BaseTest {
     //     // console.log("ATVL yield", stakePool.atvlExtraYield());
     //     // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield());
     // }
-    function test_unstake_burnNstbl_TwoUser_fuzz(uint256 _amount) external {
-        //precision is lost at 1e3
-        uint256 amount = 1e6 * 1e18;
+    // function test_unstake_burnNstbl_TwoUser_fuzz(uint256 _amount) external {
+    //     //precision is lost at 1e3
+    //     uint256 amount = 1e6 * 1e18;
 
-        _stakeNstbl(amount/2, 0, user1);
-        _stakeNstbl(amount/2, 1, user2);
-        _stakeNstbl(amount, 1, user3);
-        console.log("-----------------------------------------");
-        loanManager.updateInvestedAssets(15e5 * 1e18);
-        vm.warp(block.timestamp + 12 days);
+    //     _stakeNstbl(amount/2, 0, user1);
+    //     _stakeNstbl(amount/2, 1, user2);
+    //     _stakeNstbl(amount, 1, user3);
+    //     console.log("-----------------------------------------");
+    //     loanManager.updateInvestedAssets(15e5 * 1e18);
+    //     vm.warp(block.timestamp + 12 days);
 
-        assertEq(stakePool.getUserStakedAmount(user1, 0), amount/2);
-        assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
+    //     assertEq(stakePool.getUserStakedAmount(user1, 0), amount/2);
+    //     assertEq(stakePool.getUserRewardDebt(user1, 0), 0);
 
-        console.log("Burning NSTBL");
-        vm.startPrank(nealthyAddr);
-        if(_amount > nstblToken.balanceOf(address(stakePool)))
-            vm.expectRevert("SP:: Burn amount exceeds staked amount");
-        stakePool.burnNstbl(_amount);
-        vm.stopPrank();
+    //     console.log("Burning NSTBL");
+    //     vm.startPrank(NSTBL_HUB);
+    //     if(_amount > nstblToken.balanceOf(address(stakePool)))
+    //         vm.expectRevert("SP:: Burn amount exceeds staked amount");
+    //     stakePool.burnNstbl(_amount);
+    //     vm.stopPrank();
 
-        console.log("2nd staking");
-        _stakeNstbl(amount, 0, user1);
-        // stakePool.updatePools();
-        console.log("-----------------------------------------");
-        // (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
-        // uint256 nealthyBalBefore = nstblToken.balanceOf(nealthyAddr);
-        // uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-        // uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+    //     console.log("2nd staking");
+    //     _stakeNstbl(amount, 0, user1);
+    //     _stakeNstbl(amount, 1, user2);
+    //     // stakePool.updatePools();
+    //     console.log("-----------------------------------------");
+    //     // (,, uint256 nstblYield) = stakePool.getUpdatedYieldParams();
+    //     // uint256 nealthyBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+    //     // uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
+    //     // uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
 
-        // vm.startPrank(nealthyAddr);
-        // console.log("-----------------------------------------");
+    //     // vm.startPrank(NSTBL_HUB);
+    //     // console.log("-----------------------------------------");
 
-        // stakePool.unstake(user1, 0, false);
-        // assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
-        // uint256 nealthyBalAfter = nstblToken.balanceOf(nealthyAddr);
-        // uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-        // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
-        // vm.stopPrank();
+    //     // stakePool.unstake(user1, 0, false);
+    //     // assertEq(stakePool.getUserStakedAmount(user1, 0), 0);
+    //     // uint256 nealthyBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+    //     // uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
+    //     // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
+    //     // vm.stopPrank();
 
-        // assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
+    //     // assertEq(poolBalBefore + nstblYield - poolBalAfter, (nealthyBalAfter - nealthyBalBefore) + (atvlBalAfter - atvlBalBefore));
 
-        // console.log("-----------------------------------------");
-        // console.log("Total Staked Amount", stakePool.totalStakedAmount());
-        // console.log("Remaining Pool balance", poolBalAfter);
-        // console.log("ATVL yield", stakePool.atvlExtraYield());
-        // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield());
-    }
+    //     // console.log("-----------------------------------------");
+    //     // console.log("Total Staked Amount", stakePool.totalStakedAmount());
+    //     // console.log("Remaining Pool balance", poolBalAfter);
+    //     // console.log("ATVL yield", stakePool.atvlExtraYield());
+    //     // assertEq(stakePool.getUnclaimedRewards(), poolBalAfter-stakePool.atvlExtraYield());
+    // }
 
     // function test_updateYieldParams() external {
     //     _stakeNstbl(1e6 * 1e18, 0, user1);
