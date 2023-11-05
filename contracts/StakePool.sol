@@ -135,35 +135,37 @@ contract NSTBLStakePool is StakePoolStorage {
 
     //TODO: get user staked amount + rewards function
 
-    // function getAvailableTokens(address _staker, uint256 _poolId)
-    //     public
-    //     view
-    //     returns (uint256 _stakerRewards, uint256 _atvlExtraYield)
-    // {
-    //     StakerInfo memory staker = stakerInfo[_poolId][_staker];
-    //     PoolInfo memory pool = poolInfo[_poolId];
-    //     require(staker.amount > 0, "SP::INVALID STAKER");
-    //     require(_amount <= staker.amount, "SP::INVALID AMOUNT");
+    function getUserAvailableTokensDepeg(address _staker, uint256 _poolId)
+        public
+        view
+        returns (uint256 _availableTokens, uint256 _atvlExtraYield)
+    {
+        StakerInfo memory staker = stakerInfo[_poolId][_staker];
+        PoolInfo memory pool = poolInfo[_poolId];
+        require(staker.amount > 0, "SP::INVALID STAKER");
 
-    //     (,, uint256 nstblYield) = getUpdatedYieldParams();
+        (,, uint256 nstblYield) = getUpdatedYieldParams();
 
-    //     nstblYield *= 1e18;
-    //     uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount * 1e18 / 10_000;
-    //     uint256 rewards;
-    //     if (nstblYield <= stakersYieldThreshold) {
-    //         rewards = (nstblYield);
-    //     } else {
-    //         rewards = (stakersYieldThreshold);
-    //         _atvlExtraYield = (nstblYield - stakersYieldThreshold);
-    //     }
+        uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+        _atvlExtraYield += nstblYield * atvlBal / (totalStakedAmount + atvlBal);
 
-    //     pool.accNSTBLPerShare += rewards * pool.allocPoint / (totalAllocPoint * pool.stakeAmount);
+        nstblYield -= _atvlExtraYield;
+        nstblYield *= 1e18;
+        uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount * 1e18 / 10_000;
+        uint256 rewards;
+        if (nstblYield <= stakersYieldThreshold) {
+            rewards = (nstblYield);
+        } else {
+            rewards = (stakersYieldThreshold);
+            _atvlExtraYield += (nstblYield - stakersYieldThreshold);
+        }
 
-    //     _stakerRewards = _amount + ((staker.amount * pool.accNSTBLPerShare) / 1e18) - staker.rewardDebt;
-    //     _stakerRewards -= (
-    //         _getUnstakeFee(pool.stakeTimePeriod, staker.stakeTimeStamp, pool.earlyUnstakeFee) * _stakerRewards / 100_000
-    //     );
-    // }
+        pool.accNSTBLPerShare += rewards * pool.allocPoint / (totalAllocPoint * pool.stakeAmount);
+        uint256 a1 = staker.burnDebt + ((staker.amount * pool.accNSTBLPerShare) / 1e18);
+        uint256 a2 = ((staker.amount * pool.burnNSTBLPerShare) / 1e18) + (staker.rewardDebt);
+        _availableTokens = (staker.amount + a1) - a2;
+        
+    }
 
     // function getAvailableUserRewardsAfterFee(address _staker, uint256 _poolId)
     //     external

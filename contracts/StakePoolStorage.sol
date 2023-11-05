@@ -19,7 +19,6 @@ contract StakePoolStorage {
                         STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
 
-    address public admin;
     address public aclManager;
 
     struct StakerInfo {
@@ -52,10 +51,6 @@ contract StakePoolStorage {
     mapping(uint256 => mapping(address => StakerInfo)) public stakerInfo;
     PoolInfo[] public poolInfo;
     uint256 public totalAllocPoint;
-
-    mapping(int8 => uint256) public trancheTimePeriods;
-    mapping(int8 => uint256) public trancheFee;
-    mapping(int8 => uint256) public trancheBaseFee;
 
     uint256 public usdcInvestedAmount;
     uint256 public usdcMaturityAmount;
