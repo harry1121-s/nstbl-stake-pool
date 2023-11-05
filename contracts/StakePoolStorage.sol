@@ -2,7 +2,7 @@ pragma solidity 0.8.21;
 
 import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
-import "@nstbl-acl-manager//contracts/ACLManager.sol";
+import "@nstbl-acl-manager/contracts/IACLManager.sol";
 
 
 contract StakePoolStorage {
