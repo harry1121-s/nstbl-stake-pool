@@ -8,4 +8,5 @@ interface ILoanManager {
 
     function getInvestedAssets(address _assets) external view returns (uint256);
     function getMaturedAssets(address _assets) external view returns (uint256);
+    function getAwaitingRedemptionStatus(address _asset) external view returns (bool);
 }

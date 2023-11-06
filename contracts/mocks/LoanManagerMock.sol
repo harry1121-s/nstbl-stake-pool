@@ -15,6 +15,7 @@ contract LoanManagerMock {
     uint256 public startTime;
     TokenLPMock public lUSDC;
     TokenLPMock public lUSDT;
+    mapping(address => bool) awaitingRedemption;
 
     constructor(address _admin) {
         admin = _admin;
@@ -26,6 +27,18 @@ contract LoanManagerMock {
 
     function addAssets(uint256 _assets) external {
         extraDeposit = _assets;
+    }
+
+    function deposit(address _asset, uint256 _amount) external {
+
+    }
+
+    function getAwaitingRedemptionStatus(address _asset) external view returns (bool) {
+        return awaitingRedemption[_asset];
+    }
+
+    function updateAwaitingRedemption(address _asset, bool _value) external {
+        awaitingRedemption[_asset] = _value;
     }
 
     function removeAssets(uint256 _assets) external {

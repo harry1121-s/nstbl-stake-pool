@@ -38,7 +38,6 @@ contract StakePoolStorage is IStakePool {
 
     mapping(bytes11 => StakerInfo) public stakerInfo;
 
-    uint256 public usdcInvestedAmount;
-    uint256 public usdcMaturityAmount;
+    uint256 public oldMaturityVal;
     uint256 public precision = 1e27;
 }
