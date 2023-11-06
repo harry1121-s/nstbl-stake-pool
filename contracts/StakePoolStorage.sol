@@ -6,7 +6,7 @@ import "@nstbl-acl-manager/contracts/IACLManager.sol";
 import "./IStakePool.sol";
 
 contract StakePoolStorage is IStakePool {
-
+    
     /*//////////////////////////////////////////////////////////////
     IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -21,23 +21,26 @@ contract StakePoolStorage is IStakePool {
     address public aclManager;
     address public atvl;
 
-    uint64 public earlyUnstakeFee1;
-    uint64 public earlyUnstakeFee2;
-    uint64 public earlyUnstakeFee3;
+    // uint64 public earlyUnstakeFee1;
+    // uint64 public earlyUnstakeFee2;
+    // uint64 public earlyUnstakeFee3;
 
     // uint256 public accNSTBLPerShare;
     // uint256 public burnNSTBLPerShare;
-    uint256 public unclaimedRewards;
     // uint256 rewards;
+
+    mapping(address => StakerInfo) public stakerInfo;
     uint256 public poolProduct = 1e18;
-    uint256 public totalStakedAmount;
+    uint256 public poolBalance;
+    uint256 public unclaimedRewards;
+
     uint256 public yieldThreshold;
-    uint256 public stakingThreshold;
+    // uint256 public stakingThreshold;
 
     uint256 public atvlExtraYield;
 
-    mapping(bytes11 => StakerInfo) public stakerInfo;
+    // mapping(bytes11 => StakerInfo) public stakerInfo;
 
     uint256 public oldMaturityVal;
-    uint256 public precision = 1e27;
+    // uint256 public precision = 1e27;
 }

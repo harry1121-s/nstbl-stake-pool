@@ -1,14 +1,17 @@
 pragma solidity 0.8.21;
 
 interface IStakePool {
-    event Stake(bytes11 indexed stakeId, uint8 trancheId, uint256 amount);
-    event Unstake(address indexed user, uint256 amount);
+    /*//////////////////////////////////////////////////////////////
+    EVENTS
+    //////////////////////////////////////////////////////////////*/
 
-    struct StakerInfo {
-        bytes11 stakeId;
-        uint8 trancheId;
-        address owner;
+    event Stake(address indexed user, uint256 stakeAmount, uint256 poolDebt, uint8 trancheId);
+    event Unstake(address indexed user, uint256 tokensAvailable, uint8 trancheId);
+
+    struct StakerInfo{
         uint256 amount;
-        uint256 
+        uint256 poolDebt;
+        uint256 stakeTimeStamp;
+        uint8 trancheId;
     }
 }

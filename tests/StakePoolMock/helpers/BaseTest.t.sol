@@ -43,7 +43,7 @@ contract BaseTest is testToken {
             );
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
         nstblToken.setStakePoolAddress(address(stakePool));
-        stakePool.init(atvl, 900, 4000);
+        stakePool.init(atvl, 900);
         loanManager.initializeTime();
         vm.stopPrank();
     }
@@ -55,7 +55,7 @@ contract BaseTest is testToken {
         vm.stopPrank();
     }
 
-    function _stakeNSTBL(uint256 _amount, bytes11 _stakeId, uint8 _trancheId) internal {
+    function _stakeNSTBL(address _user, uint256 _amount, uint8 _trancheId) internal {
         // Add nSTBL balance to NSTBL_HUB
         deal(address(nstblToken), NSTBL_HUB, _amount);
         assertEq(IERC20Helper(address(nstblToken)).balanceOf(NSTBL_HUB), _amount);
@@ -63,57 +63,57 @@ contract BaseTest is testToken {
         // Action = Stake
         vm.startPrank(NSTBL_HUB);
         IERC20Helper(address(nstblToken)).safeIncreaseAllowance(address(stakePool), _amount);
-        stakePool.stake(_amount, _trancheId, _stakeId);
+        stakePool.stake(_user, _amount, _trancheId);
         vm.stopPrank();
     }
 
-    function _checkStakePostCondition(
-        bytes11 _stakeId,
-        uint8 _trancheId,
-        address _owner,
-        uint256 _amount,
-        uint256 _rewardDebt,
-        uint256 _burnDebt,
-        uint256 _stakeTimeStamp
-    ) internal {
-        (
-            bytes11 stakeId,
-            uint8 trancheId,
-            address owner,
-            uint256 amount,
-            uint256 rewardDebt,
-            uint256 burnDebt,
-            uint256 stakeTimeStamp
-        ) = stakePool.stakerInfo(_stakeId);
+    // function _checkStakePostCondition(
+    //     bytes11 _stakeId,
+    //     uint8 _trancheId,
+    //     address _owner,
+    //     uint256 _amount,
+    //     uint256 _rewardDebt,
+    //     uint256 _burnDebt,
+    //     uint256 _stakeTimeStamp
+    // ) internal {
+    //     (
+    //         bytes11 stakeId,
+    //         uint8 trancheId,
+    //         address owner,
+    //         uint256 amount,
+    //         uint256 rewardDebt,
+    //         uint256 burnDebt,
+    //         uint256 stakeTimeStamp
+    //     ) = stakePool.stakerInfo(_stakeId);
 
-        assertEq(stakeId, _stakeId, "check stakeId");
-        assertEq(trancheId, _trancheId, "check trancheId");
-        assertEq(owner, _owner, "check _owner");
-        assertEq(amount, _amount, "check _amount");
-        assertEq(rewardDebt, _rewardDebt, "check _rewardDebt");
-        assertEq(burnDebt, _burnDebt,  "check _burnDebt" );
-        assertEq(stakeTimeStamp, _stakeTimeStamp, "check _stakeTimeStamp");
-    }
+    //     assertEq(stakeId, _stakeId, "check stakeId");
+    //     assertEq(trancheId, _trancheId, "check trancheId");
+    //     assertEq(owner, _owner, "check _owner");
+    //     assertEq(amount, _amount, "check _amount");
+    //     assertEq(rewardDebt, _rewardDebt, "check _rewardDebt");
+    //     assertEq(burnDebt, _burnDebt,  "check _burnDebt" );
+    //     assertEq(stakeTimeStamp, _stakeTimeStamp, "check _stakeTimeStamp");
+    // }
 
-    function _printStakePostCondition(bytes11 _stakeId) internal {
-        (
-            bytes11 stakeId,
-            uint8 trancheId,
-            address owner,
-            uint256 amount,
-            uint256 rewardDebt,
-            uint256 burnDebt,
-            uint256 stakeTimeStamp
-        ) = stakePool.stakerInfo(_stakeId);
+    // function _printStakePostCondition(bytes11 _stakeId) internal {
+    //     (
+    //         bytes11 stakeId,
+    //         uint8 trancheId,
+    //         address owner,
+    //         uint256 amount,
+    //         uint256 rewardDebt,
+    //         uint256 burnDebt,
+    //         uint256 stakeTimeStamp
+    //     ) = stakePool.stakerInfo(_stakeId);
 
-        console.logBytes11(stakeId);
-        console.log("trancheId:-      ", trancheId);
-        console.log("owner:-          ", owner);
-        console.log("amount:-         ", amount);
-        console.log("rewardDebt:-     ", rewardDebt);
-        console.log("burnDebt:-       ", burnDebt);
-        console.log("stakeTimeStamp:- ", stakeTimeStamp);
-    }
+    //     console.logBytes11(stakeId);
+    //     console.log("trancheId:-      ", trancheId);
+    //     console.log("owner:-          ", owner);
+    //     console.log("amount:-         ", amount);
+    //     console.log("rewardDebt:-     ", rewardDebt);
+    //     console.log("burnDebt:-       ", burnDebt);
+    //     console.log("stakeTimeStamp:- ", stakeTimeStamp);
+    // }
     
     function _randomizeStakeIdAndIndex(bytes11 _stakeId, uint256 len) internal view returns (bytes11 randomStakeId, uint256 index) {
         bytes32 hashedVal = keccak256(abi.encodePacked(_stakeId, block.timestamp));

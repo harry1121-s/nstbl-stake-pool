@@ -6,6 +6,7 @@ import { console } from "forge-std/Test.sol";
 
 contract LoanManagerMock {
     address public usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    // uint256 public interest = 158_548_961;
     uint256 public interest = 158_548_961;
     address public admin;
     uint256 public investedAssets;
@@ -58,7 +59,7 @@ contract LoanManagerMock {
     }
 
     // function getMaturedAssets(address _asset) external view returns(uint256) {
-    //     return investedAssets+rewards;
+    //     return investedAssets;
     // }
 
     function updateRewards(uint256 _rewards) external {
