@@ -25,11 +25,11 @@ contract StakePoolStorage is IStakePool {
     uint64 public earlyUnstakeFee2;
     uint64 public earlyUnstakeFee3;
 
-    uint256 public accNSTBLPerShare;
-    uint256 public burnNSTBLPerShare;
+    // uint256 public accNSTBLPerShare;
+    // uint256 public burnNSTBLPerShare;
     uint256 public unclaimedRewards;
     // uint256 rewards;
-
+    uint256 public poolProduct = 1e18;
     uint256 public totalStakedAmount;
     uint256 public yieldThreshold;
     uint256 public stakingThreshold;

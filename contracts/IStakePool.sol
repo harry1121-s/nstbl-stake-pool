@@ -9,8 +9,6 @@ interface IStakePool {
         uint8 trancheId;
         address owner;
         uint256 amount;
-        uint256 rewardDebt;
-        uint256 burnDebt;
-        uint256 stakeTimeStamp;
+        uint256 
     }
 }

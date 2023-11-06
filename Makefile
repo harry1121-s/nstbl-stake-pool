@@ -5,6 +5,11 @@ profile ?=default
 build:
 	@FOUNDRY_PROFILE=production forge build
 
+install:
+	cd modules && \
+	git submodule update --remote nstbl-token nstbl-acl-manager nstbl-loan-manager && \
+	cd ..
+
 test:
 	forge test
 

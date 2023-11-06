@@ -60,92 +60,8 @@ contract NSTBLStakePool is StakePoolStorage {
             : 0;
     }
 
-    // function getUpdatedYieldParams()
-    //     public
-    //     view
-    //     returns (uint256 _usdcInvestedAmount, uint256 _usdcMaturityAmount, uint256 _nstblYield)
-    // {
-    //     uint256 investedAssets = ILoanManager(loanManager).getInvestedAssets(usdc);
-    //     uint256 maturedAssets = ILoanManager(loanManager).getMaturedAssets(usdc);
-
-    //     _usdcInvestedAmount = usdcInvestedAmount;
-    //     _usdcMaturityAmount = usdcMaturityAmount;
-
-    //     if (_usdcInvestedAmount == 0) {
-    //         _nstblYield = maturedAssets - investedAssets;
-    //     } else {
-    //         if (investedAssets > _usdcInvestedAmount) {
-    //             _nstblYield = maturedAssets - _usdcMaturityAmount - (investedAssets - _usdcInvestedAmount);
-    //         } else if (investedAssets < _usdcInvestedAmount) {
-    //             uint256 r = investedAssets * precision / _usdcInvestedAmount;
-    //             _nstblYield = maturedAssets - (r * usdcMaturityAmount / precision);
-    //         } else {
-    //             _nstblYield = maturedAssets - usdcMaturityAmount;
-    //         }
-    //     }
-    //     _usdcMaturityAmount = maturedAssets;
-    //     _usdcInvestedAmount = investedAssets;
-    // }
-
-    //TODO: get user staked amount + rewards function
-
-    // function getAvailableYield() external view returns (uint256 _totalYield) {
-    //     (,, uint256 nstblYield) = getUpdatedYieldParams();
-    //     uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-    //     uint256 atvlYield = nstblYield * atvlBal / (totalStakedAmount + atvlBal);
-
-    //     nstblYield -= atvlYield;
-    //     uint256 stakersYieldThreshold = yieldThreshold * totalStakedAmount / 10_000;
-
-    //     if (nstblYield <= stakersYieldThreshold) {
-    //         _totalYield = nstblYield;
-    //     } else {
-    //         _totalYield = stakersYieldThreshold;
-    //     }
-    // }
-
-    // function burnNstbl(uint256 _amount) external authorizedCaller nonReentrant {
-    //     console.log("BURN AMOUNT: ", _amount);
-    //     updatePool();
-    //     PoolInfo storage pool;
-    //     uint256 removeFromStakeAmount;
-    //     uint256 stakePoolBal = IERC20Helper(nstbl).balanceOf(address(this));
-    //     console.log("BURNING");
-    //     console.log("Stake Pool Balance: ", stakePoolBal);
-
-    //     require(_amount <= stakePoolBal, "SP:: Burn amount exceeds staked amount");
-    //     IERC20Helper(nstbl).burn(address(this), _amount);
-    //     console.log("Rewards: ", stakePoolBal-totalStakedAmount);
-    //     if(_amount >= stakePoolBal-totalStakedAmount)
-    //     {
-    //         removeFromStakeAmount = (_amount - (stakePoolBal-totalStakedAmount));
-    //         for(uint256 i = 0; i < poolInfo.length; i++)
-    //         {
-    //             poolInfo[i].unclaimedRewards = 0;
-    //         }
-
-    //     }
-    //     else {
-    //         removeFromStakeAmount = 0;
-    //     }
-    //     console.log("Remove From Stake Amount: ", removeFromStakeAmount);
-
-    //     for (uint256 i = 0; i < poolInfo.length; i++) {
-    //         pool = poolInfo[i];
-    //         pool.stakeAmount -= (removeFromStakeAmount) * pool.stakeAmount / totalStakedAmount;
-    //         pool.burnNSTBLPerShare += (_amount * 1e18 / totalStakedAmount);
-    //         console.log("Burn NSTBL Per Share: ", pool.burnNSTBLPerShare);
-    //         console.log("Stake Amount: ", pool.stakeAmount);
-    //     }
-    //     totalStakedAmount -= removeFromStakeAmount;
-    //     console.log("Total Staked Amount: ", totalStakedAmount);
-    //     console.log("Pool Balance", IERC20Helper(nstbl).balanceOf(address(this)));
-    //     console.log("END BURNING");
-
-    // }
-
     //@TODO:retrieve function for unclaimed Rewards
-
+    // TODO: manual add function hub
     function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller{
         if(ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem){
             return;
@@ -188,8 +104,7 @@ contract NSTBLStakePool is StakePoolStorage {
             atvlExtraYield += (nstblYield - stakersYieldThreshold);
         }
 
-        accNSTBLPerShare = rewards / totalStakedAmount;
-
+        accNSTBLPerShare += rewards / totalStakedAmount;
 
     }
 
@@ -222,13 +137,14 @@ contract NSTBLStakePool is StakePoolStorage {
                 atvlExtraYield += (nstblYield - stakersYieldThreshold);
             }
 
-            accNSTBLPerShare = rewards / totalStakedAmount;
+            accNSTBLPerShare += rewards / totalStakedAmount;
 
             oldMaturityVal = newMaturityVal;
         }
 
     }
 
+    // TODO: accessControl
     function updateMaturyValue() external {
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
         console.log("Old Maturity val: ", oldMaturityVal);
@@ -254,6 +170,36 @@ contract NSTBLStakePool is StakePoolStorage {
     //     unclaimedRewards /= 1e18;
     //     IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
     // }
+
+    function burnNSTBL(uint256 _amount) external authorizedCaller nonReentrant {
+        console.log("BURN AMOUNT: ", _amount);
+        updatePool();
+        transferATVLYield();
+
+        uint256 removeFromStakeAmount;
+        uint256 stakePoolBal = IERC20Helper(nstbl).balanceOf(address(this));
+
+        require(_amount <= stakePoolBal, "SP: Burn > SP_BALANCE");
+        IERC20Helper(nstbl).burn(address(this), _amount);
+        // console.log("BURNING");
+        // console.log("Stake Pool Balance: ", stakePoolBal);
+        // console.log("Rewards: ", stakePoolBal-totalStakedAmount);
+
+        if(_amount >= stakePoolBal-totalStakedAmount) {
+            removeFromStakeAmount = (_amount - (stakePoolBal-totalStakedAmount));
+        }
+        else {
+            removeFromStakeAmount = 0;
+        }
+        console.log("Remove From Stake Amount: ", removeFromStakeAmount);
+
+        burnNSTBLPerShare += (_amount * 1e18 / totalStakedAmount);
+        totalStakedAmount -= removeFromStakeAmount;
+
+        // console.log("Total Staked Amount: ", totalStakedAmount);
+        // console.log("Pool Balance", IERC20Helper(nstbl).balanceOf(address(this)));
+        // console.log("END BURNING");
+    }
 
     function stake(uint256 amount, uint8 trancheId, bytes11 stakeId) public authorizedCaller nonReentrant {
         console.log("Stake AMount: ", amount);
@@ -342,7 +288,7 @@ contract NSTBLStakePool is StakePoolStorage {
 
     // }
 
-    function transferATVLYield(uint256 _poolId) public nonReentrant {
+    function transferATVLYield() public nonReentrant {
         IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
         atvlExtraYield = 0;
     }
