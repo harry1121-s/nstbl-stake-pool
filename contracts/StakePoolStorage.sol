@@ -21,15 +21,17 @@ contract StakePoolStorage is IStakePool {
     address public aclManager;
     address public atvl;
 
-    // uint64 public earlyUnstakeFee1;
-    // uint64 public earlyUnstakeFee2;
-    // uint64 public earlyUnstakeFee3;
+    uint64 public trancheFee1;
+    uint64 public trancheFee2;
+    uint64 public trancheFee3;
 
     // uint256 public accNSTBLPerShare;
     // uint256 public burnNSTBLPerShare;
     // uint256 rewards;
 
     mapping(address => StakerInfo) public stakerInfo;
+    mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
+
     uint256 public poolProduct = 1e18;
     uint256 public poolBalance;
     uint256 public unclaimedRewards;
