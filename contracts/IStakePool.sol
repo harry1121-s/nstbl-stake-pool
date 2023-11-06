@@ -12,5 +12,6 @@ interface IStakePool {
         uint256 amount;
         uint256 poolDebt;
         uint256 stakeTimeStamp;
+        uint256 epochId;
     }
 }

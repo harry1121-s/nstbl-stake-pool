@@ -29,11 +29,11 @@ contract StakePoolStorage is IStakePool {
     // uint256 public burnNSTBLPerShare;
     // uint256 rewards;
 
-    mapping(address => StakerInfo) public stakerInfo;
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 
     uint256 public poolProduct = 1e18;
     uint256 public poolBalance;
+    uint256 public poolEpochId;
     uint256 public unclaimedRewards;
 
     uint256 public yieldThreshold;
