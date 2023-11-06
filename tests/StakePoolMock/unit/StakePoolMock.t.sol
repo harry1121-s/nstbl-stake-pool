@@ -263,9 +263,6 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal, oldVal, "No reward update due to Maple devalue");
         vm.stopPrank();
 
-        
-
-
     }
     // function test_unstake_singleUser() external {
 
