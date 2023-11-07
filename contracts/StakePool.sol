@@ -105,11 +105,11 @@ contract NSTBLStakePool is StakePoolStorage {
         }
 
         if(poolBalance == 0){
-            unclaimedRewards += rewards/1e18;
+            unclaimedRewards += (rewards/1e18);
             return;
         }
         poolProduct = poolProduct*(1e18 + rewards/poolBalance)/1e18;
-        poolBalance += rewards/1e18;
+        poolBalance += (rewards/1e18);
 
     }
 
@@ -130,6 +130,13 @@ contract NSTBLStakePool is StakePoolStorage {
             uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
             console.log("fgsdgdf", atvlBal, poolBalance);
             console.log("ATVL YIELD PARAMS", nstblYield);
+
+             if(poolBalance == 0){
+                IERC20Helper(nstbl).mint(atvl, nstblYield);
+                oldMaturityVal = newMaturityVal;
+                return;
+            }
+
             uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
             console.log("ATVL YIELD", atvlYield);
             
@@ -152,10 +159,6 @@ contract NSTBLStakePool is StakePoolStorage {
                 console.log("ATVL EXTRA YIELD", atvlExtraYield);
             }
 
-            if(poolBalance == 0){
-                unclaimedRewards += rewards/1e18;
-                return;
-            }
             console.log("Rewards before: ", rewards, poolBalance, poolProduct);
 
             poolProduct = (poolProduct*(1e18 + rewards/poolBalance))/1e18;
@@ -163,8 +166,8 @@ contract NSTBLStakePool is StakePoolStorage {
 
             console.log("Rewards: ", rewards, poolBalance, poolProduct);
             oldMaturityVal = newMaturityVal;
-        }
 
+        }
     }
 
     function updateMaturyValue() external {
@@ -230,7 +233,7 @@ contract NSTBLStakePool is StakePoolStorage {
         require(staker.amount > 0, "SP: NO STAKE");
         console.log("STAKER AMOUNT: ", staker.amount);
         updatePool();
-
+        console.log(staker.epochId, poolEpochId);
         if(staker.epochId != poolEpochId){
             staker.amount = 0;
             return;
@@ -290,11 +293,11 @@ contract NSTBLStakePool is StakePoolStorage {
         emit Unstake(user, tokensAvailable);
     }
 
-    function getStakerInfo(address user, uint8 trancheId) external view returns (uint256 _amount, uint256 _poolDebt, uint256 _stakeTimeStamp) {
+    function getStakerInfo(address user, uint8 trancheId) external view returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId) {
         StakerInfo memory staker = stakerInfo[trancheId][user];
         _amount = staker.amount;
         _poolDebt = staker.poolDebt;
-        _stakeTimeStamp = staker.stakeTimeStamp;
+        _epochId = staker.epochId;
     }
 
     function transferATVLYield() public nonReentrant {

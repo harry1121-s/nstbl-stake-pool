@@ -27,132 +27,200 @@ contract StakePoolTest is BaseTest {
     //     // _checkStakePostCondition(_stakeId, _trancheId, NSTBL_HUB, _amount, rewardDebt, rewardDebt, block.timestamp);
     // }
 
-    function test_stake_TwoUser(uint256 _amount1, uint256 _amount2, uint256 _investAmount) external {
+    // function test_stake_TwoUser(uint256 _amount1, uint256 _amount2, uint256 _investAmount) external {
         
-        uint256 lowerBound = 10 * 1e18;
-        _amount1 = bound(_amount1, lowerBound, type(uint256).max / 1e32);
-        _amount1 = _amount1/1e5 * 1e5;
-        _amount2 = bound(_amount2, lowerBound, type(uint256).max / 1e32);
-        _amount2 = _amount2/1e5 * 1e5;
-        _investAmount = bound(_investAmount, lowerBound*2, type(uint256).max / 1e32);
-        _investAmount = _investAmount/1e5 * 1e5;
-        uint8 _trancheId = 1;
-
-        // Action
-        _stakeNSTBL(user1, _amount1, _trancheId);
-
-        // Post-condition
-        assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
-        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, _trancheId);
-        assertEq(amount, _amount1, "check stakerInfo.amount");
-        assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
-
-        loanManager.updateInvestedAssets(_investAmount);
-        stakePool.updateMaturyValue();
-
-        vm.warp(block.timestamp + 12 days);
-        uint8 _trancheId2 = 2;
-        // Action
-        _stakeNSTBL(user2, _amount2, _trancheId2);
-
-        // Post-condition
-        if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1)*90/1000)
-        {
-            assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), "check poolBalance1");
-        }
-        else {
-            assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (_amount1)*9*1e12/1e14, "check poolBalance2");
-        }
-        (amount, poolDebt,) = stakePool.getStakerInfo(user2, _trancheId2);
-        assertEq(amount, _amount2, "check stakerInfo.amount");
-
-        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-        uint256 poolProductBefore = stakePool.poolProduct();
-        uint256 poolEpochIdBefore = stakePool.poolEpochId();
-
-        vm.startPrank(NSTBL_HUB);
-        stakePool.unstake(user1, _trancheId, false);
-        stakePool.unstake(user2, _trancheId2, false);
-        vm.stopPrank();
-
-        uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-        uint256 poolProductAfter = stakePool.poolProduct();
-        uint256 poolEpochIdAfter = stakePool.poolEpochId();
-
-        console.log("dgdfsghjgfdfdg");
-        assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter, "dfsgfg");
-        console.log(poolBalAfter, stakePool.atvlExtraYield(), "checking");
-        // assertEq(poolProductAfter, 1e18);
-
-
-        // assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
-    }
-
-    // function test_sequence1() public {
-    //     uint256 _amount = 40 * 1e18;
+    //     uint256 lowerBound = 10 * 1e18;
+    //     _amount1 = bound(_amount1, lowerBound, type(uint256).max / 1e32);
+    //     _amount1 = _amount1/1e5 * 1e5;
+    //     _amount2 = bound(_amount2, lowerBound, type(uint256).max / 1e32);
+    //     _amount2 = _amount2/1e5 * 1e5;
+    //     _investAmount = bound(_investAmount, lowerBound*2, type(uint256).max / 1e32);
+    //     _investAmount = _investAmount/1e5 * 1e5;
     //     uint8 _trancheId = 1;
-    //     uint256 _amount2 = 60 * 1e18;
-    //     uint8 _trancheId2 = 2;
 
-    //     _stakeNSTBL(user1, _amount, _trancheId);
+    //     // Action
+    //     _stakeNSTBL(user1, _amount1, _trancheId);
+
+    //     // Post-condition
+    //     assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
+    //     assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+    //     (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, _trancheId);
+    //     assertEq(amount, _amount1, "check stakerInfo.amount");
+    //     assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
+
+    //     loanManager.updateInvestedAssets(_investAmount);
+    //     stakePool.updateMaturyValue();
+
+    //     vm.warp(block.timestamp + 12 days);
+    //     uint8 _trancheId2 = 2;
+    //     // Action
     //     _stakeNSTBL(user2, _amount2, _trancheId2);
 
-    //     loanManager.updateInvestedAssets(100 * 1e18);
-    //     stakePool.updateMaturyValue();
-    //     vm.warp(block.timestamp + 365 days);
-    //     stakePool.updatePool();
-    //     assertEq(stakePool.poolBalance(), _amount+_amount2+(loanManager.getMaturedAssets(usdc)-100*1e18), "check poolBalance");
-    //     assertEq(stakePool.poolProduct(), (1e18*(1e18+(loanManager.getMaturedAssets(usdc)*1e18-100*1e36)/1e20))/1e18);
+    //     // Post-condition
+    //     if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1)*90/1000)
+    //     {
+    //         assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), "check poolBalance1");
+    //     }
+    //     else {
+    //         assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (_amount1)*9*1e12/1e14, "check poolBalance2");
+    //     }
+    //     (amount, poolDebt,) = stakePool.getStakerInfo(user2, _trancheId2);
+    //     assertEq(amount, _amount2, "check stakerInfo.amount");
 
-    //     vm.startPrank(NSTBL_HUB);
-    //     stakePool.burnNSTBL(10 * 1e18);
-    //     vm.stopPrank();
-
-    //     vm.startPrank(NSTBL_HUB);
     //     uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
     //     uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-    //     stakePool.unstake(user1, _trancheId, false); //  only user1 unstakes
+    //     uint256 poolProductBefore = stakePool.poolProduct();
+    //     uint256 poolEpochIdBefore = stakePool.poolEpochId();
+
+    //     vm.startPrank(NSTBL_HUB);
+    //     stakePool.unstake(user1, _trancheId, false);
+    //     stakePool.unstake(user2, _trancheId2, false);
+    //     vm.stopPrank();
+
     //     uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
     //     uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-    //     vm.stopPrank();
+    //     uint256 poolProductAfter = stakePool.poolProduct();
+    //     uint256 poolEpochIdAfter = stakePool.poolEpochId();
 
-    //     (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user2, _trancheId2);
-    //     assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter);
-    //     assertEq(stakePool.poolBalance(), amount*stakePool.poolProduct()/1e18, "check poolBalance");
-
-    //     (amount, poolDebt,) = stakePool.getStakerInfo(user1, _trancheId);
-    //     assertEq(amount, 0, "check stakerInfo.amount");
-    //     assertEq(poolDebt, 0, "check stakerInfo.poolDebt");
-    //     console.log("poolBalance after", stakePool.poolBalance());
-    //     console.log("poolProduct after", stakePool.poolProduct());
-    //     //user3 new yield event
-    //     vm.warp(block.timestamp + 100 days);
-
-    //     _stakeNSTBL(user3, 10 * 1e18, 0);
-    //     ( amount, poolDebt,) = stakePool.getStakerInfo(user3, 0);
-    //     assertEq(stakePool.poolProduct(), poolDebt, "check stakerInfo.poolDebt"); // user3 gets 0 yield
-    //     ( uint256 amountUser2, uint256 poolDebtUser2,) = stakePool.getStakerInfo(user2, _trancheId2);
-    //     assertTrue(stakePool.poolBalance()-(amountUser2*stakePool.poolProduct()/poolDebtUser2 + amount) < 1e2, "check poolBalance"); //all the yield goes to user 2; creates a 10^-2 precision error
-
-    //     console.log("poolBalance before ustake-------------", stakePool.poolBalance());
-    //     //unstaking both user2 and user3
-    //     vm.startPrank(NSTBL_HUB);
-    //     stakePool.unstake(user2, _trancheId2, false);
-    //     stakePool.unstake(user3, 0, false);
-    //     vm.stopPrank();
-        
-    //     //the pool is drained, so system values should reset
-    //     assertEq(stakePool.poolBalance(), 0, "check poolBalance");
-    //     assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        
+    //     console.log("dgdfsghjgfdfdg");
+    //     assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter, "dfsgfg");
+    //     console.log(poolBalAfter, stakePool.atvlExtraYield(), "checking");
+    //     // assertEq(poolProductAfter, 1e18);
 
 
-
-
+    //     // assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
     // }
+
+    function test_sequence1() public {
+        uint256 _amount = 40 * 1e18;
+        uint8 _trancheId = 1;
+        uint256 _amount2 = 60 * 1e18;
+        uint8 _trancheId2 = 2;
+
+        _stakeNSTBL(user1, _amount, _trancheId);
+        _stakeNSTBL(user2, _amount2, _trancheId2);
+
+        loanManager.updateInvestedAssets(100 * 1e18);
+        stakePool.updateMaturyValue();
+        vm.warp(block.timestamp + 365 days);
+        stakePool.updatePool();
+        assertEq(stakePool.poolBalance(), _amount+_amount2+(loanManager.getMaturedAssets(usdc)-100*1e18), "check poolBalance");
+        assertEq(stakePool.poolProduct(), (1e18*(1e18+(loanManager.getMaturedAssets(usdc)*1e18-100*1e36)/1e20))/1e18);
+
+        uint256 epochBefore = stakePool.poolEpochId();
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(stakePool.poolBalance()); //burning all tokens from the pool
+        vm.stopPrank();
+
+        assertEq(stakePool.poolBalance(), 0, "check poolBalance");
+        assertEq(stakePool.poolBalance(), nstblToken.balanceOf(address(stakePool)));
+        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+        assertEq(stakePool.poolEpochId(), epochBefore+1, "check poolEpochId");
+
+
+
+        vm.startPrank(NSTBL_HUB);
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        stakePool.unstake(user1, _trancheId, false); //  only user1 unstakes
+        uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
+        vm.stopPrank();
+
+        assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter);
+        assertEq(hubBalAfter-hubBalBefore, 0, "no tokens transferred");
+
+        //user2 has not unstaked yet, and pool is emplty
+        // (uint256 amount, uint256 poolDebt, uint256 epochId) = stakePool.getStakerInfo(user2, _trancheId2);
+       
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+        uint256 maturityValBefore = stakePool.oldMaturityVal();
+        
+        vm.warp(block.timestamp + 100 days);
+        _stakeNSTBL(user3, 20 * 1e18, 0);
+        
+        //all the yield goes to ATVL since pool is empty
+        assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, loanManager.getMaturedAssets(usdc) - maturityValBefore, "check atvl yield");
+        assertEq(stakePool.poolBalance(), 20* 1e18, "check poolBalance");
+        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+
+        ( uint256 amount, uint256 poolDebt, uint256 epochId) = stakePool.getStakerInfo(user3, 0);
+        assertEq(stakePool.poolProduct(), poolDebt, "check stakerInfo.poolDebt"); // user3 also gets 0 yield
+        assertEq(epochId, stakePool.poolEpochId(), "check epochId");
+        assertEq(stakePool.poolBalance(), amount, "check poolBalance");
+
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(1e18); //another burn event
+        vm.stopPrank();
+
+        assertEq(stakePool.poolBalance(), 19*1e18, "check poolBalance");
+        assertEq(stakePool.poolProduct(), 95*1e16, "check poolProduct");
+
+        vm.warp(block.timestamp + 100 days); //another yield event
+        maturityValBefore = stakePool.oldMaturityVal();
+        atvlBalBefore = nstblToken.balanceOf(atvl);
+        _stakeNSTBL(user4, 100 * 1e18, 0);
+        uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
+
+        uint256 poolBal = 19*1e18 + 100*1e18 + (loanManager.getMaturedAssets(usdc) - maturityValBefore) - (atvlBalAfter-atvlBalBefore);
+        assertEq(stakePool.poolBalance(), poolBal);
+
+        (, poolDebt,) = stakePool.getStakerInfo(user4, 0);
+        assertEq(stakePool.poolProduct(), poolDebt);
+
+        //unstaking all: user2 should get 0 tokens, user4 should get his stake amount back, and user3 should get his stake amount back + yield
+
+        //unstaking user2
+        hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        vm.startPrank(NSTBL_HUB);
+        stakePool.unstake(user2, _trancheId2, false);
+        vm.stopPrank();
+        hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalAfter = nstblToken.balanceOf(address(stakePool));
+
+        assertEq(hubBalAfter-hubBalBefore, 0, "no tokens transferred");
+        assertEq(poolBalBefore-poolBalAfter, 0, "no tokens transferred");
+
+        //unstaking user4
+        hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        vm.startPrank(NSTBL_HUB);
+        stakePool.unstake(user4, 0, false);
+        vm.stopPrank();
+        hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalAfter = nstblToken.balanceOf(address(stakePool));
+
+        assertEq(hubBalAfter-hubBalBefore, 100 * 1e18, "only user4 stake amount transferred");
+        assertEq(poolBalBefore-poolBalAfter, 100 * 1e18, "only user4 stake amount transferred");
+
+        //unstaking user3
+        hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        vm.startPrank(NSTBL_HUB);
+        stakePool.unstake(user3, 0, false);
+        vm.stopPrank();
+        hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        poolBalAfter = nstblToken.balanceOf(address(stakePool));
+
+        console.log(hubBalAfter-hubBalBefore, "only user3 stake amount transferred");
+        console.log(poolBalBefore-poolBalAfter, "only user3 stake amount transferred");
+
+
+        (amount,,) = stakePool.getStakerInfo(user2, _trancheId2);
+        assertEq(amount, 0, "check stakerInfo2.amount");
+        (amount,,) = stakePool.getStakerInfo(user3, 0);
+        assertEq(amount, 0, "check stakerInfo3.amount");
+        (amount,,) = stakePool.getStakerInfo(user4, 0);
+        assertEq(amount, 0, "check stakerInfo3.amount");
+
+
+
+        //the pool is drained, so system values should reset
+        assertEq(stakePool.poolBalance(), 0, "check poolBalance");
+        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+
+    }
 
     // function test_sequence1_fuzz(uint256 _amount1, uint256 _amount2, uint256 _amount3, uint256 _investAmount, uint256 _burnAmount) public {
     //     uint256 lowerBound = 10 * 1e18;

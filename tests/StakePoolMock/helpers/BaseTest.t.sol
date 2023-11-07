@@ -21,7 +21,7 @@ contract BaseTest is testToken {
     NSTBLToken public nstblToken;
 
     address public atvl = address(4);
-
+    address public user4 = vm.addr(123443);
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     function setUp() public virtual override {
