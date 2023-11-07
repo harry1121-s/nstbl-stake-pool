@@ -57,12 +57,12 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user2, _amount2, _trancheId2);
 
         // Post-condition
-        if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1+_amount2)*90/1000)
+        if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1)*90/1000)
         {
-            assertApproxEqAbs(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e8, "check poolBalance1");
+            assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), "check poolBalance1");
         }
         else {
-            assertApproxEqAbs(stakePool.poolBalance(), _amount1 + _amount2 + (_amount1)*9*1e12/1e14, 1e8, "check poolBalance2");
+            assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (_amount1)*9*1e12/1e14, "check poolBalance2");
         }
         (amount, poolDebt,) = stakePool.getStakerInfo(user2, _trancheId2);
         assertEq(amount, _amount2, "check stakerInfo.amount");
@@ -83,8 +83,8 @@ contract StakePoolTest is BaseTest {
         uint256 poolEpochIdAfter = stakePool.poolEpochId();
 
         console.log("dgdfsghjgfdfdg");
-        assertApproxEqAbs(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter, 1e8, "dfsgfg");
-        assertApproxEqAbs(poolBalAfter, stakePool.atvlExtraYield(), 1e8);
+        assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter, "dfsgfg");
+        console.log(poolBalAfter, stakePool.atvlExtraYield(), "checking");
         // assertEq(poolProductAfter, 1e18);
 
 

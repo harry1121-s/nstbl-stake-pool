@@ -149,6 +149,7 @@ contract NSTBLStakePool is StakePoolStorage {
                 rewards = stakersYieldThreshold*1e18;
                 atvlExtraYield += (nstblYield - stakersYieldThreshold);
                 console.log("HERE2");
+                console.log("ATVL EXTRA YIELD", atvlExtraYield);
             }
 
             if(poolBalance == 0){
@@ -158,7 +159,8 @@ contract NSTBLStakePool is StakePoolStorage {
             console.log("Rewards before: ", rewards, poolBalance, poolProduct);
 
             poolProduct = (poolProduct*(1e18 + rewards/poolBalance))/1e18;
-            poolBalance += rewards/1e18;
+            poolBalance += (rewards/1e18);
+
             console.log("Rewards: ", rewards, poolBalance, poolProduct);
             oldMaturityVal = newMaturityVal;
         }

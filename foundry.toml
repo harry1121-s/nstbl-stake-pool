@@ -13,7 +13,7 @@ gas_reports = ["*"]
 optimizer = true
 
 [fuzz]
-runs = 1000 
+runs = 10000 
 
 [fmt]
 line_length = 120
