@@ -126,26 +126,33 @@ contract NSTBLStakePool is StakePoolStorage {
         if(newMaturityVal > oldMaturityVal){ //in case Maple devalues T-bills
             console.log("HEREEEEEE", newMaturityVal, oldMaturityVal);
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
+            if(nstblYield <= 1e18){
+                return; //to maintain precision 
+            }
             console.log("NSTBL YIELD", nstblYield);
             uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
             console.log("fgsdgdf", atvlBal, poolBalance);
             console.log("ATVL YIELD PARAMS", nstblYield);
-
+            console.log("NSTBL Supply: ", IERC20Helper(nstbl).totalSupply());
              if(poolBalance == 0){
                 IERC20Helper(nstbl).mint(atvl, nstblYield);
                 oldMaturityVal = newMaturityVal;
                 return;
             }
+            console.log("ATVL YIELD PARAMS2", nstblYield);
 
             uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
             console.log("ATVL YIELD", atvlYield);
             
             nstblYield -= atvlYield;
+            console.log("HERE");
+            console.log("NSTBL Supply: ", IERC20Helper(nstbl).totalSupply());
+
             IERC20Helper(nstbl).mint(address(this), nstblYield);
-            IERC20Helper(nstbl).mint(atvl, atvlYield);
+            if(atvlYield != 0)
+                IERC20Helper(nstbl).mint(atvl, atvlYield);
 
             console.log("NSTBL YIELD", nstblYield);
-            nstblYield = nstblYield; //to maintain precision for accNSTBLPerShare
             uint256 stakersYieldThreshold = yieldThreshold * poolBalance / 10_000;
             uint256 rewards;
             console.log("NSTBL YIELD", nstblYield, stakersYieldThreshold);
@@ -161,8 +168,10 @@ contract NSTBLStakePool is StakePoolStorage {
 
             console.log("Rewards before: ", rewards, poolBalance, poolProduct);
 
-            poolProduct = (poolProduct*(1e18 + rewards/poolBalance))/1e18;
+            // uint256 poolBalbefore = poolBalance*1e18 + rewards;
+            poolProduct = (poolProduct*((poolBalance*1e18 + rewards)/poolBalance))/1e18;
             poolBalance += (rewards/1e18);
+            // uint256 nstblLoss = poolBalbefore - poolBalance*1e18;
 
             console.log("Rewards: ", rewards, poolBalance, poolProduct);
             oldMaturityVal = newMaturityVal;
@@ -189,9 +198,12 @@ contract NSTBLStakePool is StakePoolStorage {
         IERC20Helper(nstbl).burn(address(this), _amount);
 
         console.log("STATES BEFORE: ",_amount, poolBalance, poolProduct);
-        poolProduct = (poolProduct* (1e18 - _amount*1e18 / poolBalance))/1e18;
+        console.log("PRECOMPUTE: ", (poolProduct * ((poolBalance*1e18 - _amount*1e18) / poolBalance)));
+        poolProduct = (poolProduct * ((poolBalance*1e18 - _amount*1e18) / poolBalance))/1e18;
+        console.log("STATES after: ",_amount, poolBalance, poolProduct);
 
-        if(poolProduct == 0){
+        if(poolProduct == 0 ||  poolBalance - _amount <= 1e18){ //because of loss of precision
+            IERC20Helper(nstbl).safeTransfer(atvl, poolBalance - _amount);
             poolProduct = 1e18;
             poolBalance = 0;
             poolEpochId += 1;
@@ -245,10 +257,17 @@ contract NSTBLStakePool is StakePoolStorage {
         console.log("Pool Balance: ", poolBalance);
         staker.amount = 0;
 
+        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable);
+
         poolBalance -= tokensAvailable;
-        if(poolBalance == 0){
+
+        //resetting system
+        if(poolBalance <= 1e3){
             poolProduct = 1e18;
             poolEpochId += 1;
+            poolBalance = 0;
+            // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
+
         }
     //      if (!_depeg) {
     //         if (timeElapsed <= pool.stakeTimePeriod + 1 ) {
@@ -287,9 +306,6 @@ contract NSTBLStakePool is StakePoolStorage {
         //     IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
         //     IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         // }
-
-        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable);
-
         emit Unstake(user, tokensAvailable);
     }
 

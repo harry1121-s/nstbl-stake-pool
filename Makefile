@@ -17,7 +17,7 @@ testToken:
 	forge test --match-path ./tests/unit/Token.t.sol
 
 testStakePoolMock:
-	forge test --match-path ./tests/StakePoolMock/unit/StakePoolMock.t.sol -vvv 
+	forge test --match-path ./tests/StakePoolMock/unit/StakePoolMock.t.sol -vvv --via-ir
 
 testStakePool:
 	forge test --match-path ./tests/StakePool/unit/StakePool.t.sol -vvv
