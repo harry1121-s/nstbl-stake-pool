@@ -243,7 +243,7 @@ contract NSTBLStakePool is StakePoolStorage {
     function unstake(address user, uint8 trancheId, bool depeg) external authorizedCaller nonReentrant {
         StakerInfo storage staker = stakerInfo[trancheId][user];
         require(staker.amount > 0, "SP: NO STAKE");
-        console.log("STAKER AMOUNT: ", staker.amount);
+        console.log("STAKER AMOUNT: ", staker.amount, staker.poolDebt);
         updatePool();
         console.log(staker.epochId, poolEpochId);
         if(staker.epochId != poolEpochId){
@@ -262,7 +262,7 @@ contract NSTBLStakePool is StakePoolStorage {
         poolBalance -= tokensAvailable;
 
         //resetting system
-        if(poolBalance <= 1e3){
+        if(poolBalance <= 1e18){
             poolProduct = 1e18;
             poolEpochId += 1;
             poolBalance = 0;
