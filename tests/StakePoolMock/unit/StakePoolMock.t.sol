@@ -120,6 +120,71 @@ contract StakePoolTest is BaseTest {
         
     }
 
+    function test_stake_burn_noYield(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _burnAmount) external {
+         uint256 lowerBound = 10 * 1e18;
+        _amount1 = bound(_amount1, lowerBound, 1e15 * 1e18);
+        _amount2 = bound(_amount2, lowerBound, 1e15 * 1e18);
+        _investAmount = bound(_investAmount, lowerBound*2, 2 * 1e15 * 1e18);
+
+        loanManager.updateInvestedAssets(_investAmount);
+        stakePool.updateMaturyValue();
+
+        // Action
+        _stakeNSTBL(user1, _amount1, 1);
+
+        // Post-condition
+        assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
+        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, 1);
+        assertEq(amount, _amount1, "check stakerInfo.amount");
+        assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
+
+        _burnAmount = bound(_burnAmount, 0, stakePool.poolBalance());
+        uint256 epochIdBefore = stakePool.poolEpochId();
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        vm.prank(NSTBL_HUB);
+        stakePool.burnNSTBL(_burnAmount);
+
+        if(poolBalanceBefore - _burnAmount <= 1e18){
+            assertEq(stakePool.poolBalance(), 0, "check poolBalance");
+            assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+            assertEq(stakePool.poolEpochId()-epochIdBefore , 1, "check poolEpochId");
+        }
+        _stakeNSTBL(user2, _amount2, 2);
+
+       
+
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
+        uint256 poolProductBefore = stakePool.poolProduct();
+        uint256 poolEpochIdBefore = stakePool.poolEpochId();
+
+        console.log("  ----------------------------- unstaking alllll ]-------------------------");
+        vm.startPrank(NSTBL_HUB);
+        hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        stakePool.unstake(user1, 1, false);
+        uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+
+        if(poolBalanceBefore - _burnAmount <= 1e18){ //user 1 should receive 0 tokens
+            assertEq(hubBalAfter-hubBalBefore, 0, "no tokens transferred");
+        }
+        hubBalBefore = hubBalAfter;
+        stakePool.unstake(user2, 2, false);
+        vm.stopPrank();
+        hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+
+        //user 2 should receive all his tokens
+        assertEq(hubBalAfter-hubBalBefore, _amount2, "no tokens transferred");
+        
+        //checking for pool empty state
+        assertEq(stakePool.atvlExtraYield(), 0, "check atvlExtraYield");
+        assertEq(stakePool.poolBalance(), 0, "check poolBalance");
+        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+
+        assertTrue(nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) <= 1e18, "check available tokens");
+    
+    }
+
     
 
     // function test_sequence1() public {

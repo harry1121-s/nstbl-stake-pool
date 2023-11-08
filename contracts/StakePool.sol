@@ -203,7 +203,7 @@ contract NSTBLStakePool is StakePoolStorage {
         console.log("STATES after: ",_amount, poolBalance, poolProduct);
 
         if(poolProduct == 0 ||  poolBalance - _amount <= 1e18){ //because of loss of precision
-            IERC20Helper(nstbl).safeTransfer(atvl, poolBalance - _amount);
+            // IERC20Helper(nstbl).safeTransfer(atvl, poolBalance - _amount);
             poolProduct = 1e18;
             poolBalance = 0;
             poolEpochId += 1;
