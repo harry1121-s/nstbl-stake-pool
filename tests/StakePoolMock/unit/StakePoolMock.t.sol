@@ -27,37 +27,33 @@ contract StakePoolTest is BaseTest {
     //     // _checkStakePostCondition(_stakeId, _trancheId, NSTBL_HUB, _amount, rewardDebt, rewardDebt, block.timestamp);
     // }
 
-    function test_stake_updatePool(uint256 _amount1, uint256 _amount2, uint256 _investAmount) external {
+    function test_stake_updatePool(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _time) external {
         
         uint256 lowerBound = 10 * 1e18;
         _amount1 = bound(_amount1, lowerBound, 1e15 * 1e18);
-        // _amount1 = _amount1/1e5 * 1e5;
         _amount2 = bound(_amount2, lowerBound, 1e15 * 1e18);
-        // _amount2 = _amount2/1e5 * 1e5;
         _investAmount = bound(_investAmount, lowerBound*2, 2 * 1e15 * 1e18);
-        // _investAmount = _investAmount/1e5 * 1e5;
-        uint8 _trancheId = 1;
+        _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
         stakePool.updateMaturyValue();
 
         // Action
-        _stakeNSTBL(user1, _amount1, _trancheId);
+        _stakeNSTBL(user1, _amount1, 1);
 
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, _trancheId);
+        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, 1);
         assertEq(amount, _amount1, "check stakerInfo.amount");
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 
         
 
-        vm.warp(block.timestamp + 12 days);
-        uint8 _trancheId2 = 2;
+        vm.warp(block.timestamp + _time);
         console.log("----------------------------staking after time warp--------------------------");
         // Action
-        _stakeNSTBL(user2, _amount2, _trancheId2);
+        _stakeNSTBL(user2, _amount2, 2);
 
         // Post-condition
         if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
@@ -74,7 +70,7 @@ contract StakePoolTest is BaseTest {
             assertEq(stakePool.poolBalance(), _amount1 + _amount2, "check poolBalance3");
         }
         
-        (amount, poolDebt,) = stakePool.getStakerInfo(user2, _trancheId2);
+        (amount, poolDebt,) = stakePool.getStakerInfo(user2, 2);
         assertEq(amount, _amount2, "check stakerInfo.amount");
 
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
@@ -85,7 +81,7 @@ contract StakePoolTest is BaseTest {
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        stakePool.unstake(user1, _trancheId, false);
+        stakePool.unstake(user1, 1, false);
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
 
         // Post-condition; stakeAmount + all yield transferred
@@ -103,7 +99,7 @@ contract StakePoolTest is BaseTest {
             assertEq(hubBalAfter-hubBalBefore, _amount1);
         }
 
-        stakePool.unstake(user2, _trancheId2, false);
+        stakePool.unstake(user2, 2, false);
         vm.stopPrank();
 
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
@@ -124,7 +120,7 @@ contract StakePoolTest is BaseTest {
         
     }
 
-    function test_stake_burn()
+    
 
     // function test_sequence1() public {
     //     uint256 _amount = 40 * 1e18;
