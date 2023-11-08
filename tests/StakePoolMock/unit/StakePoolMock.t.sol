@@ -57,14 +57,8 @@ contract StakePoolTest is BaseTest {
 
         // Post-condition
         if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
-        {
-            if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1)*90/1000)
-            {
-                assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), "check poolBalance1");
-            }
-            else {
-                assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (_amount1)*9*1e12/1e14, "check poolBalance2");
-            }
+        {           
+            assertEq(stakePool.poolBalance(), _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc)-_investAmount), "check poolBalance1");  
         }
         else {
             assertEq(stakePool.poolBalance(), _amount1 + _amount2, "check poolBalance3");
@@ -87,13 +81,7 @@ contract StakePoolTest is BaseTest {
         // Post-condition; stakeAmount + all yield transferred
         if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
         {
-            if((loanManager.getMaturedAssets(usdc)-_investAmount) <= (_amount1)*90/1000)
-            {
-                assertApproxEqAbs(hubBalAfter-hubBalBefore, _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
-            }
-            else {
-                assertApproxEqAbs(hubBalAfter-hubBalBefore, _amount1 + (_amount1)*9*1e12/1e14, 1e18);
-            }
+            assertApproxEqAbs(hubBalAfter-hubBalBefore, _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
         }
         else {
             assertEq(hubBalAfter-hubBalBefore, _amount1);

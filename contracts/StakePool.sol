@@ -153,27 +153,28 @@ contract NSTBLStakePool is StakePoolStorage {
                 IERC20Helper(nstbl).mint(atvl, atvlYield);
 
             console.log("NSTBL YIELD", nstblYield);
-            uint256 stakersYieldThreshold = yieldThreshold * poolBalance / 10_000;
-            uint256 rewards;
-            console.log("NSTBL YIELD", nstblYield, stakersYieldThreshold);
-            if (nstblYield <= stakersYieldThreshold) {
-                console.log("HERE");
-                rewards = nstblYield*1e18;
-            } else {
-                rewards = stakersYieldThreshold*1e18;
-                atvlExtraYield += (nstblYield - stakersYieldThreshold);
-                console.log("HERE2");
-                console.log("ATVL EXTRA YIELD", atvlExtraYield);
-            }
+            // uint256 stakersYieldThreshold = yieldThreshold * poolBalance / 10_000;
+            // uint256 rewards;
+            nstblYield *= 1e18; //to maintain precision
+            console.log("NSTBL YIELD", nstblYield);
+            // if (nstblYield <= stakersYieldThreshold) {
+            //     console.log("HERE");
+            //     rewards = nstblYield*1e18;
+            // } else {
+            //     rewards = stakersYieldThreshold*1e18;
+            //     atvlExtraYield += (nstblYield - stakersYieldThreshold);
+            //     console.log("HERE2");
+            //     console.log("ATVL EXTRA YIELD", atvlExtraYield);
+            // }
 
-            console.log("Rewards before: ", rewards, poolBalance, poolProduct);
+            console.log("Rewards before: ", nstblYield, poolBalance, poolProduct);
 
             // uint256 poolBalbefore = poolBalance*1e18 + rewards;
-            poolProduct = (poolProduct*((poolBalance*1e18 + rewards)/poolBalance))/1e18;
-            poolBalance += (rewards/1e18);
+            poolProduct = (poolProduct*((poolBalance*1e18 + nstblYield)/poolBalance))/1e18;
+            poolBalance += (nstblYield/1e18);
             // uint256 nstblLoss = poolBalbefore - poolBalance*1e18;
 
-            console.log("Rewards: ", rewards, poolBalance, poolProduct);
+            console.log("Rewards: ", nstblYield, poolBalance, poolProduct);
             oldMaturityVal = newMaturityVal;
 
         }
