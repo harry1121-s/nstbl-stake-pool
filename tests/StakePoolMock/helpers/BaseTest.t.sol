@@ -21,9 +21,9 @@ contract BaseTest is testToken {
     NSTBLToken public nstblToken;
 
     address public atvl = address(4);
-    address public user4 = vm.addr(123443);
+    address public user4 = vm.addr(123_443);
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public destinationAddress = vm.addr(123444);
+    address public destinationAddress = vm.addr(123_444);
 
     function setUp() public virtual override {
         super.setUp();
@@ -44,7 +44,7 @@ contract BaseTest is testToken {
             );
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
         nstblToken.setStakePoolAddress(address(stakePool));
-        stakePool.init(atvl, 285388127, [300,200,100], [700,500,300], [30,90,180]);
+        stakePool.init(atvl, 285_388_127, [300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();
     }
@@ -115,8 +115,12 @@ contract BaseTest is testToken {
     //     console.log("burnDebt:-       ", burnDebt);
     //     console.log("stakeTimeStamp:- ", stakeTimeStamp);
     // }
-    
-    function _randomizeStakeIdAndIndex(bytes11 _stakeId, uint256 len) internal view returns (bytes11 randomStakeId, uint256 index) {
+
+    function _randomizeStakeIdAndIndex(bytes11 _stakeId, uint256 len)
+        internal
+        view
+        returns (bytes11 randomStakeId, uint256 index)
+    {
         bytes32 hashedVal = keccak256(abi.encodePacked(_stakeId, block.timestamp));
         randomStakeId = bytes11(hashedVal);
         index = uint256(hashedVal) % len;

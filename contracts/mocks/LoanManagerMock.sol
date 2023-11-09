@@ -30,9 +30,7 @@ contract LoanManagerMock {
         extraDeposit = _assets;
     }
 
-    function deposit(address _asset, uint256 _amount) external {
-
-    }
+    function deposit(address _asset, uint256 _amount) external { }
 
     function getAwaitingRedemptionStatus(address _asset) external view returns (bool) {
         return awaitingRedemption[_asset];

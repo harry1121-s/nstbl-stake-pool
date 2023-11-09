@@ -8,7 +8,7 @@ interface IStakePool {
     event Stake(address indexed user, uint256 stakeAmount, uint256 poolDebt);
     event Unstake(address indexed user, uint256 tokensAvailable);
 
-    struct StakerInfo{
+    struct StakerInfo {
         uint256 amount;
         uint256 poolDebt;
         uint256 stakeTimeStamp;

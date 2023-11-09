@@ -7,7 +7,6 @@ import "./IStakePool.sol";
 import "./TokenLP.sol";
 
 contract StakePoolStorage is IStakePool {
-    
     /*//////////////////////////////////////////////////////////////
     IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -19,6 +18,7 @@ contract StakePoolStorage is IStakePool {
     STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
 
+    address public versionSlot;
     address public aclManager;
     address public atvl;
 
@@ -44,13 +44,15 @@ contract StakePoolStorage is IStakePool {
 
     uint256 public oldMaturityVal;
     // uint256 public precision = 1e27;
-    uint256 public trancheBaseFee1;
-    uint256 public trancheBaseFee2;
-    uint256 public trancheBaseFee3;
+    uint32 public trancheBaseFee1;
+    uint32 public trancheBaseFee2;
+    uint32 public trancheBaseFee3;
 
-    uint256 public earlyUnstakeFee1;
-    uint256 public earlyUnstakeFee2;
-    uint256 public earlyUnstakeFee3;
+    uint32 public earlyUnstakeFee1;
+    uint32 public earlyUnstakeFee2;
+    uint32 public earlyUnstakeFee3;
 
     mapping(uint8 => uint64) public trancheStakeTimePeriod;
+
+    uint256[49] __gap;
 }
