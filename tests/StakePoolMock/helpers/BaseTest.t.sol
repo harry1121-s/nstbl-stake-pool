@@ -43,7 +43,7 @@ contract BaseTest is testToken {
             );
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
         nstblToken.setStakePoolAddress(address(stakePool));
-        stakePool.init(atvl, 900);
+        stakePool.init(atvl, 285388127, [0,0,0], [0,0,0], [30,90,180]);
         loanManager.initializeTime();
         console.log("Total supply at setup: ", nstblToken.totalSupply());
         vm.stopPrank();

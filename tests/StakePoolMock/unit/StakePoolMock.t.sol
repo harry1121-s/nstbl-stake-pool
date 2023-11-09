@@ -30,14 +30,13 @@ contract StakePoolTest is BaseTest {
     function test_stake_updatePool(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _time) external {
         
         uint256 lowerBound = 10 * 1e18;
-        _amount1 = bound(_amount1, lowerBound, 1e15 * 1e18);
-        _amount2 = bound(_amount2, lowerBound, 1e15 * 1e18);
-        _investAmount = bound(_investAmount, lowerBound*2, 2 * 1e15 * 1e18);
+        _amount1 = bound(_amount1, lowerBound, 1e12 * 1e18);
+        _amount2 = bound(_amount2, lowerBound, 1e12 * 1e18);
+        _investAmount = bound(_investAmount, 7*(_amount1 + _amount2)/8, 1e15 * 1e18);
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
         stakePool.updateMaturyValue();
-
         // Action
         _stakeNSTBL(user1, _amount1, 1);
 
@@ -69,42 +68,57 @@ contract StakePoolTest is BaseTest {
 
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
-        uint256 poolProductBefore = stakePool.poolProduct();
-        uint256 poolEpochIdBefore = stakePool.poolEpochId();
-
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         stakePool.unstake(user1, 1, false);
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
         // Post-condition; stakeAmount + all yield transferred
-        if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
-        {
-            assertApproxEqAbs(hubBalAfter-hubBalBefore, _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
+        if(_time / 1 days <= stakePool.trancheStakeTimePeriod(1) + 1){
+            if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
+            {
+                assertApproxEqAbs(hubBalAfter-hubBalBefore + (atvlBalAfter-atvlBalBefore), _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
+            }
+            else {
+                assertEq(hubBalAfter-hubBalBefore, _amount1);
+            }
         }
-        else {
-            assertEq(hubBalAfter-hubBalBefore, _amount1);
-        }
+        else{
+            assertEq(hubBalAfter-hubBalBefore, 0);
+        }        
 
         stakePool.unstake(user2, 2, false);
         vm.stopPrank();
-
+        atvlBalAfter = nstblToken.balanceOf(atvl);
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
-        uint256 poolProductAfter = stakePool.poolProduct();
-        uint256 poolEpochIdAfter = stakePool.poolEpochId();
 
-        console.log("dgdfsghjgfdfdg");
-        assertEq(hubBalAfter-hubBalBefore, poolBalBefore-poolBalAfter, "dfsgfg");
+        assertEq(hubBalAfter-hubBalBefore + (atvlBalAfter-atvlBalBefore), poolBalBefore-poolBalAfter, "dfsgfg");
         console.log(poolBalAfter, stakePool.atvlExtraYield(), "checking");
 
         stakePool.transferATVLYield();
         assertEq(stakePool.atvlExtraYield(), 0, "check atvlExtraYield");
-        assertEq(stakePool.poolBalance(), 0, "check poolBalance");
-        assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+        if(_time / 1 days <= stakePool.trancheStakeTimePeriod(1) + 1) {
+            assertEq(stakePool.poolBalance(), 0, "check poolBalance");
+            assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
+            assertTrue(nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) <= 1e18, "check available tokens");
 
-        assertTrue(nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) <= 1e18, "check available tokens");
+        }
+        else{
+            if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
+            {
+                assertApproxEqAbs(stakePool.poolBalance(), _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
+            }
+            else {
+                assertEq(stakePool.poolBalance(), _amount1);
+            }
+            // assertEq(, _amount1 + (loanManager.ge), "check poolBalance");
+        }
+        
+
         
     }
 

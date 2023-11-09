@@ -39,9 +39,21 @@ contract NSTBLStakePool is StakePoolStorage {
         loanManager = _loanManager;
     }
 
-    function init(address _atvl, uint256 _yieldThreshold) external onlyAdmin {
+    function init(address _atvl, uint256 _yieldThreshold, uint8[3] memory trancheBaseFee, uint8[3] memory earlyUnstakeFee, uint8[3] memory stakeTimePeriods) external onlyAdmin {
+        require(trancheBaseFee.length == 3, "SP: INVALID_TRANCHE_FEE");
+        require(earlyUnstakeFee.length == 3, "SP: INVALID_EARLY_UNSTAKE_FEE");
+        require(stakeTimePeriods.length == 3, "SP: INVALID_STAKE_TIME_PERIODS");
         atvl = _atvl;
         yieldThreshold = _yieldThreshold;
+        trancheBaseFee1 = trancheBaseFee[0];
+        trancheBaseFee2 = trancheBaseFee[1];
+        trancheBaseFee3 = trancheBaseFee[2];
+        earlyUnstakeFee1 = earlyUnstakeFee[0];
+        earlyUnstakeFee2 = earlyUnstakeFee[1];
+        earlyUnstakeFee3 = earlyUnstakeFee[2];
+        trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
+        trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
+        trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
     }
 
     function setATVL(address _atvl) external onlyAdmin {
@@ -49,16 +61,25 @@ contract NSTBLStakePool is StakePoolStorage {
     }
 
 
-    // function _getUnstakeFee(uint64 _stakeTimePeriod, uint256 _stakeTimeStamp, uint64 _earlyUnstakeFee, uint8)
-    //     internal
-    //     view
-    //     returns (uint256 fee)
-    // {
-    //     uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
-    //     fee = (timeElapsed < _stakeTimePeriod)
-    //         ? (_earlyUnstakeFee * (_stakeTimePeriod - timeElapsed) / _stakeTimePeriod)
-    //         : 0;
-    // }
+    function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp)
+        internal
+        view
+        returns (uint256 fee)
+    {
+        uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
+        if(_trancheId == 0){
+            fee = (timeElapsed > 30 days) ? trancheBaseFee1 :
+            trancheBaseFee1 + (earlyUnstakeFee1 * (timeElapsed / 30 days));
+        }
+        else if( _trancheId == 1) {
+            fee = (timeElapsed > 90 days) ? trancheBaseFee2 :
+            trancheBaseFee2 + (earlyUnstakeFee2 * (timeElapsed / 90 days));
+        }
+        else {
+            fee = (timeElapsed > 180 days) ? trancheBaseFee3 :
+            trancheBaseFee3 + (earlyUnstakeFee3 * (timeElapsed / 180 days));
+        }
+    }
 
     //@TODO:retrieve function for unclaimed Rewards
     // TODO: manual add function hub
@@ -122,57 +143,36 @@ contract NSTBLStakePool is StakePoolStorage {
         }
 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
-
+        console.log("VAL:", newMaturityVal, oldMaturityVal);
         if(newMaturityVal > oldMaturityVal){ //in case Maple devalues T-bills
-            console.log("HEREEEEEE", newMaturityVal, oldMaturityVal);
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
+
             if(nstblYield <= 1e18){
-                return; //to maintain precision 
+                return; 
             }
-            console.log("NSTBL YIELD", nstblYield);
             uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-            console.log("fgsdgdf", atvlBal, poolBalance);
-            console.log("ATVL YIELD PARAMS", nstblYield);
-            console.log("NSTBL Supply: ", IERC20Helper(nstbl).totalSupply());
+  
              if(poolBalance == 0){
                 IERC20Helper(nstbl).mint(atvl, nstblYield);
                 oldMaturityVal = newMaturityVal;
                 return;
             }
-            console.log("ATVL YIELD PARAMS2", nstblYield);
 
             uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-            console.log("ATVL YIELD", atvlYield);
             
             nstblYield -= atvlYield;
-            console.log("HERE");
-            console.log("NSTBL Supply: ", IERC20Helper(nstbl).totalSupply());
 
             IERC20Helper(nstbl).mint(address(this), nstblYield);
-            if(atvlYield != 0)
-                IERC20Helper(nstbl).mint(atvl, atvlYield);
+            IERC20Helper(nstbl).mint(atvl, atvlYield);
 
-            console.log("NSTBL YIELD", nstblYield);
-            // uint256 stakersYieldThreshold = yieldThreshold * poolBalance / 10_000;
-            // uint256 rewards;
             nstblYield *= 1e18; //to maintain precision
             console.log("NSTBL YIELD", nstblYield);
-            // if (nstblYield <= stakersYieldThreshold) {
-            //     console.log("HERE");
-            //     rewards = nstblYield*1e18;
-            // } else {
-            //     rewards = stakersYieldThreshold*1e18;
-            //     atvlExtraYield += (nstblYield - stakersYieldThreshold);
-            //     console.log("HERE2");
-            //     console.log("ATVL EXTRA YIELD", atvlExtraYield);
-            // }
+            
 
             console.log("Rewards before: ", nstblYield, poolBalance, poolProduct);
 
-            // uint256 poolBalbefore = poolBalance*1e18 + rewards;
             poolProduct = (poolProduct*((poolBalance*1e18 + nstblYield)/poolBalance))/1e18;
             poolBalance += (nstblYield/1e18);
-            // uint256 nstblLoss = poolBalbefore - poolBalance*1e18;
 
             console.log("Rewards: ", nstblYield, poolBalance, poolProduct);
             oldMaturityVal = newMaturityVal;
@@ -191,17 +191,13 @@ contract NSTBLStakePool is StakePoolStorage {
     }
 
     function burnNSTBL(uint256 _amount) external authorizedCaller {
-        console.log("BURN AMOUNT: ", _amount);
         updatePool();
         transferATVLYield();
 
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
         IERC20Helper(nstbl).burn(address(this), _amount);
 
-        console.log("STATES BEFORE: ",_amount, poolBalance, poolProduct);
-        console.log("PRECOMPUTE: ", (poolProduct * ((poolBalance*1e18 - _amount*1e18) / poolBalance)));
         poolProduct = (poolProduct * ((poolBalance*1e18 - _amount*1e18) / poolBalance))/1e18;
-        console.log("STATES after: ",_amount, poolBalance, poolProduct);
 
         if(poolProduct == 0 ||  poolBalance - _amount <= 1e18){ //because of loss of precision
             // IERC20Helper(nstbl).safeTransfer(atvl, poolBalance - _amount);
@@ -219,7 +215,6 @@ contract NSTBLStakePool is StakePoolStorage {
     }
 
     function stake(address user, uint256 stakeAmount, uint8 trancheId) external authorizedCaller nonReentrant {
-        console.log("Stake AMount: ", stakeAmount);
         require(stakeAmount != 0, "SP: ZERO_AMOUNT");
         require(trancheId < 3, "SP: INVALID_TRANCHE");
         StakerInfo storage staker = stakerInfo[trancheId][user];
@@ -252,64 +247,95 @@ contract NSTBLStakePool is StakePoolStorage {
             return;
         }
 
+        uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp)/1 days;
+        uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-        console.log("IDHR");
-        console.log("Tokens Available: ", tokensAvailable);
-        console.log("Pool Balance: ", poolBalance);
-        staker.amount = 0;
+        uint256 maturityTokens = _getMaturityTokens(tokensAvailable, staker.amount, staker.stakeTimeStamp);
+        console.log("Tokens ::::::::", tokensAvailable, maturityTokens);
+        if (!depeg) {
+            if (timeElapsed <= trancheStakeTimePeriod[trancheId] + 1 ) {
+                console.log("Early Unstakingggggg");
+                unstakeFee = maturityTokens <= tokensAvailable ? 0 : _getUnstakeFee(trancheId , staker.stakeTimeStamp) * maturityTokens / 10_000;
+            }
+            // } else {
+            //     //restake
+            //     console.log("Restakingggggg");
+            //     pool.stakeAmount -= staker.amount;
+            //     poolBalance -= staker.amount;
+            //     staker.amount = tokensAvailable;
+            //     pool.stakeAmount += tokensAvailable;
+            //     poolBalance += tokensAvailable;
+            //     staker.rewardDebt = (staker.amount * pool.accNSTBLPerShare) / 1e18;
+            //     staker.burnDebt = (staker.amount * pool.burnNSTBLPerShare) / 1e18;
+            //     staker.stakeTimeStamp = block.timestamp;
+            //     return;
+            // }
+        } else {
+            unstakeFee = 0;
+        }
 
-        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable);
+        if(depeg || timeElapsed <= trancheStakeTimePeriod[trancheId] + 1 )
+        {           
+            
+            staker.amount = 0;
+            poolBalance -= tokensAvailable;
 
-        poolBalance -= tokensAvailable;
+            console.log("HEREeeeeeeeeeeee");
+            console.log(maturityTokens - unstakeFee);
+            console.log(tokensAvailable - maturityTokens + unstakeFee);
 
-        //resetting system
-        if(poolBalance <= 1e18){
-            poolProduct = 1e18;
-            poolEpochId += 1;
-            poolBalance = 0;
-            // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
+            IERC20Helper(nstbl).safeTransfer(msg.sender, maturityTokens - unstakeFee);
+            IERC20Helper(nstbl).safeTransfer(atvl, (tokensAvailable - maturityTokens) + unstakeFee);
+
+             //resetting system
+            if(poolBalance <= 1e18){
+                poolProduct = 1e18;
+                poolEpochId += 1;
+                poolBalance = 0;
+                // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
+
+            }
+            emit Unstake(user, tokensAvailable);
 
         }
-    //      if (!_depeg) {
-    //         if (timeElapsed <= pool.stakeTimePeriod + 1 ) {
-    //             console.log("Early Unstakingggggg");
-    //             unstakeFee = _getUnstakeFee(pool.stakeTimePeriod, staker.stakeTimeStamp, tranchearlyUnstakeFee)
-    // //                 * (tokensAvailable) / 100_000;
 
-    //         } else {
-    //             //restake
-    //             console.log("Restakingggggg");
-    //             pool.stakeAmount -= staker.amount;
-    //             poolBalance -= staker.amount;
-    //             staker.amount = tokensAvailable;
-    //             pool.stakeAmount += tokensAvailable;
-    //             poolBalance += tokensAvailable;
-    //             staker.rewardDebt = (staker.amount * pool.accNSTBLPerShare) / 1e18;
-    //             staker.burnDebt = (staker.amount * pool.burnNSTBLPerShare) / 1e18;
-    //             staker.stakeTimeStamp = block.timestamp;
-    //             return;
-    //         }
-    //     } else {
-    //         unstakeFee = 0;
-    //     }
 
-        // if(_depeg || timeElapsed <= pool.stakeTimePeriod + 1 )
-        // {   
-            
 
-        //     console.log("Final Unstakingggggg");
-        //     pool.stakeAmount -= staker.amount;
-        //     poolBalance -= staker.amount;
-        //     staker.amount = 0;
-        //     staker.rewardDebt = 0;
-        //     staker.burnDebt = 0;
 
-        //     IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
-        //     IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-        // }
-        emit Unstake(user, tokensAvailable);
+
+
+
+
+
+////////////////////////////////////////do not touch this code////////////////////////////////////////
+        // console.log("IDHR");
+        // console.log("Tokens Available: ", tokensAvailable);
+        // console.log("Pool Balance: ", poolBalance);
+        // staker.amount = 0;
+
+        // IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable);
+
+        // poolBalance -= tokensAvailable;
+
     }
 
+    function _getMaturityTokens(uint256 tokensAvailable, uint256 stakeAmount, uint256 stakeTimeStamp) internal view returns(uint256){
+        uint256 timeElapsed = (block.timestamp - stakeTimeStamp);
+        console.log("In getMaturity Tokens");
+        console.log("Time Elapsed: ", timeElapsed);
+        console.log("Tokens Available: ", tokensAvailable);
+        console.log("Stake Amount: ", stakeAmount);
+        if(tokensAvailable <= stakeAmount){
+            return tokensAvailable;
+        }  
+        else {
+            console.log("APY params:", stakeAmount, timeElapsed, yieldThreshold);
+            console.log("APY earned", stakeAmount*timeElapsed*yieldThreshold/1e17);
+            uint256 maturityTokens = stakeAmount + (stakeAmount*timeElapsed*yieldThreshold/1e17);
+            return maturityTokens <= tokensAvailable ? maturityTokens : tokensAvailable;
+        }
+
+    }
     function getStakerInfo(address user, uint8 trancheId) external view returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId) {
         StakerInfo memory staker = stakerInfo[trancheId][user];
         _amount = staker.amount;

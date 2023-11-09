@@ -36,7 +36,7 @@ contract StakePoolStorage is IStakePool {
     uint256 public poolEpochId;
     uint256 public unclaimedRewards;
 
-    uint256 public yieldThreshold;
+    uint256 public yieldThreshold = 285_388_127; //9% APY
     // uint256 public stakingThreshold;
 
     uint256 public atvlExtraYield;
@@ -45,4 +45,13 @@ contract StakePoolStorage is IStakePool {
 
     uint256 public oldMaturityVal;
     // uint256 public precision = 1e27;
+    uint256 public trancheBaseFee1;
+    uint256 public trancheBaseFee2;
+    uint256 public trancheBaseFee3;
+
+    uint256 public earlyUnstakeFee1;
+    uint256 public earlyUnstakeFee2;
+    uint256 public earlyUnstakeFee3;
+
+    mapping(uint8 => uint64) public trancheStakeTimePeriod;
 }
