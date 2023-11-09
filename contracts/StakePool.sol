@@ -220,6 +220,7 @@ contract NSTBLStakePool is StakePoolStorage {
 
     function unstake(address user, uint8 trancheId, bool depeg, address lpOwner) external authorizedCaller nonReentrant {
         StakerInfo storage staker = stakerInfo[trancheId][user];
+        require(lpToken.balanceOf(lpOwner) >= staker.lpTokens);
         require(staker.amount > 0, "SP: NO STAKE");
         updatePool();
         if(staker.epochId != poolEpochId){
@@ -249,13 +250,15 @@ contract NSTBLStakePool is StakePoolStorage {
 
         if(depeg || timeElapsed <= trancheStakeTimePeriod[trancheId] + 1 )
         {           
-            
+            lpToken.burn(lpOwner, staker.lpTokens);
             staker.amount = 0;
+            staker.lpTokens = 0;
             poolBalance -= tokensAvailable;
 
             IERC20Helper(nstbl).safeTransfer(msg.sender, maturityTokens - unstakeFee);
             IERC20Helper(nstbl).safeTransfer(atvl, (tokensAvailable - maturityTokens) + unstakeFee);
 
+            
              //resetting system
             if(poolBalance <= 1e18){
                 poolProduct = 1e18;
@@ -281,11 +284,12 @@ contract NSTBLStakePool is StakePoolStorage {
         }
 
     }
-    function getStakerInfo(address user, uint8 trancheId) external view returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId) {
+    function getStakerInfo(address user, uint8 trancheId) external view returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens) {
         StakerInfo memory staker = stakerInfo[trancheId][user];
         _amount = staker.amount;
         _poolDebt = staker.poolDebt;
         _epochId = staker.epochId;
+        _lpTokens = staker.lpTokens;
     }
 
     function transferATVLYield() public nonReentrant {

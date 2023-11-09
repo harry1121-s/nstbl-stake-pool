@@ -210,7 +210,8 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, _amount1, 0);
         _stakeNSTBL(user2, _amount2, 1);
         _stakeNSTBL(user3, _amount3, 2);
-
+        address lp = address(stakePool.lpToken());
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), _amount1 + _amount2 + _amount3, "check LP balance");
         assertEq(stakePool.poolBalance(), _amount1+_amount2+_amount3, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
 
@@ -246,6 +247,8 @@ contract StakePoolTest is BaseTest {
 
         _stakeNSTBL(user1, _amount1, 0);
         _stakeNSTBL(user2, _amount2, 1);
+        address lp = address(stakePool.lpToken());
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), _amount1 + _amount2, "check LP balance");
 
         vm.warp(block.timestamp + _time);
 
@@ -257,6 +260,8 @@ contract StakePoolTest is BaseTest {
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
+        (,,,uint256 stakerLP1) = stakePool.getStakerInfo(user1, 0);
+        (,,,uint256 stakerLP2) = stakePool.getStakerInfo(user2, 1);
         if(_time / 1 days <= stakePool.trancheStakeTimePeriod(0) + 1){
             if((loanManager.getMaturedAssets(usdc)-_investAmount) >1e18)
             {
@@ -265,7 +270,15 @@ contract StakePoolTest is BaseTest {
             else {
                 assertEq(hubBalAfter-hubBalBefore + (atvlBalAfter-atvlBalBefore), _amount1 + _amount2, "without yield");
             }
-        }  
+            assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 0, "check LP balance");
+            assertEq(stakerLP1, 0);
+            
+        } 
+        else{
+            assertEq(IERC20Helper(lp).balanceOf(destinationAddress), _amount1, "check LP balance");
+
+        } 
+        assertEq(stakerLP2, 0);
 
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
@@ -291,7 +304,7 @@ contract StakePoolTest is BaseTest {
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, 1);
+        (uint256 amount, uint256 poolDebt,,) = stakePool.getStakerInfo(user1, 1);
         assertEq(amount, _amount1, "check stakerInfo.amount");
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 
@@ -311,7 +324,7 @@ contract StakePoolTest is BaseTest {
             assertEq(stakePool.poolBalance(), _amount1 + _amount2, "check poolBalance3");
         }
         
-        (amount, poolDebt,) = stakePool.getStakerInfo(user2, 2);
+        (amount, poolDebt,,) = stakePool.getStakerInfo(user2, 2);
         assertEq(amount, _amount2, "check stakerInfo.amount");
 
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
@@ -384,7 +397,7 @@ contract StakePoolTest is BaseTest {
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,) = stakePool.getStakerInfo(user1, 1);
+        (uint256 amount, uint256 poolDebt,,) = stakePool.getStakerInfo(user1, 1);
         assertEq(amount, _amount1, "check stakerInfo.amount");
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 
