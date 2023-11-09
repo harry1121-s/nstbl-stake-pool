@@ -4,6 +4,7 @@ import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
 import "@nstbl-acl-manager/contracts/IACLManager.sol";
 import "./IStakePool.sol";
+import "./TokenLP.sol";
 
 contract StakePoolStorage is IStakePool {
     
@@ -25,9 +26,7 @@ contract StakePoolStorage is IStakePool {
     uint64 public trancheFee2;
     uint64 public trancheFee3;
 
-    // uint256 public accNSTBLPerShare;
-    // uint256 public burnNSTBLPerShare;
-    // uint256 rewards;
+    TokenLP public lpToken;
 
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 

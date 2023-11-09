@@ -4,7 +4,7 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { console } from "forge-std/Test.sol";
-import { IERC20Helper, ILoanManager, IACLManager, StakePoolStorage } from "./StakePoolStorage.sol";
+import { IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
 
 contract NSTBLStakePool is StakePoolStorage {
     using SafeERC20 for IERC20Helper;
@@ -32,11 +32,11 @@ contract NSTBLStakePool is StakePoolStorage {
     }
 
     constructor(address _aclManager, address _nstbl, address _loanManager) 
-    // address _chainLinkPriceFeed
     {
         aclManager = _aclManager;
         nstbl = _nstbl;
         loanManager = _loanManager;
+        lpToken = new TokenLP("Maple LP Token", "MPL", IACLManager(aclManager).admin());
     }
 
     function init(address _atvl, uint256 _yieldThreshold, uint16[3] memory trancheBaseFee, uint16[3] memory earlyUnstakeFee, uint8[3] memory stakeTimePeriods) external onlyAdmin {
@@ -84,8 +84,6 @@ contract NSTBLStakePool is StakePoolStorage {
 
     }
 
-    //@TODO:retrieve function for unclaimed Rewards
-    // TODO: manual add function hub
     function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller{
         if(ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem){
             return;
@@ -191,7 +189,7 @@ contract NSTBLStakePool is StakePoolStorage {
         }
     }
 
-    function stake(address user, uint256 stakeAmount, uint8 trancheId) external authorizedCaller nonReentrant {
+    function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress) external authorizedCaller nonReentrant {
         require(stakeAmount != 0, "SP: ZERO_AMOUNT");
         require(trancheId < 3, "SP: INVALID_TRANCHE");
         StakerInfo storage staker = stakerInfo[trancheId][user];
@@ -207,7 +205,6 @@ contract NSTBLStakePool is StakePoolStorage {
             staker.amount = maturityToken - unstakeFee + stakeAmount;
             IERC20Helper(nstbl).safeTransfer(atvl, (tokensAvailable - maturityToken) + unstakeFee);
 
-
         } else {
             staker.amount = stakeAmount;
             staker.epochId = poolEpochId;
@@ -215,11 +212,13 @@ contract NSTBLStakePool is StakePoolStorage {
         staker.poolDebt = poolProduct;
         staker.stakeTimeStamp = block.timestamp;
         poolBalance += stakeAmount;
-    
+        staker.lpTokens += stakeAmount;
+        lpToken.mint(destinationAddress, stakeAmount);
+
         emit Stake(user, staker.amount, staker.poolDebt);
     }
 
-    function unstake(address user, uint8 trancheId, bool depeg) external authorizedCaller nonReentrant {
+    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner) external authorizedCaller nonReentrant {
         StakerInfo storage staker = stakerInfo[trancheId][user];
         require(staker.amount > 0, "SP: NO STAKE");
         updatePool();

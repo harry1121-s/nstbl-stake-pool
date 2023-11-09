@@ -252,8 +252,8 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
-        stakePool.unstake(user1, 0, false);
-        stakePool.unstake(user2, 1, true);
+        stakePool.unstake(user1, 0, false, destinationAddress);
+        stakePool.unstake(user2, 1, true, destinationAddress);
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
@@ -269,7 +269,7 @@ contract StakePoolTest is BaseTest {
 
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
-        stakePool.unstake(user3, 0, false); 
+        stakePool.unstake(user3, 0, false, destinationAddress); 
         vm.stopPrank();
     }
     
@@ -320,7 +320,7 @@ contract StakePoolTest is BaseTest {
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        stakePool.unstake(user1, 1, false);
+        stakePool.unstake(user1, 1, false, destinationAddress);
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
@@ -338,7 +338,7 @@ contract StakePoolTest is BaseTest {
             assertEq(hubBalAfter-hubBalBefore, 0);
         }        
 
-        stakePool.unstake(user2, 2, false);
+        stakePool.unstake(user2, 2, false, destinationAddress);
         vm.stopPrank();
         atvlBalAfter = nstblToken.balanceOf(atvl);
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
@@ -407,7 +407,7 @@ contract StakePoolTest is BaseTest {
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        stakePool.unstake(user1, 1, false);
+        stakePool.unstake(user1, 1, false, destinationAddress);
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
 
         if(poolBalanceBefore - _burnAmount <= 1e18){ //user 1 should receive 0 tokens
@@ -415,7 +415,7 @@ contract StakePoolTest is BaseTest {
         }
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         hubBalBefore = hubBalAfter;
-        stakePool.unstake(user2, 2, false);
+        stakePool.unstake(user2, 2, false, destinationAddress);
         vm.stopPrank();
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);

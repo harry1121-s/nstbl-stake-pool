@@ -23,6 +23,7 @@ contract BaseTest is testToken {
     address public atvl = address(4);
     address public user4 = vm.addr(123443);
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public destinationAddress = vm.addr(123444);
 
     function setUp() public virtual override {
         super.setUp();
@@ -63,7 +64,7 @@ contract BaseTest is testToken {
         // Action = Stake
         vm.startPrank(NSTBL_HUB);
         IERC20Helper(address(nstblToken)).safeIncreaseAllowance(address(stakePool), _amount);
-        stakePool.stake(_user, _amount, _trancheId);
+        stakePool.stake(_user, _amount, _trancheId, destinationAddress);
         vm.stopPrank();
     }
 
