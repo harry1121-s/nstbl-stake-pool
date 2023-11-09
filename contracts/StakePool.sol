@@ -67,18 +67,26 @@ contract NSTBLStakePool is StakePoolStorage {
         returns (uint256 fee)
     {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
+        console.log("Time Elapsed: ", timeElapsed);
+
         if(_trancheId == 0){
+            console.log("FEE params0: ", timeElapsed, trancheBaseFee1, earlyUnstakeFee1);
             fee = (timeElapsed > 30 days) ? trancheBaseFee1 :
             trancheBaseFee1 + (earlyUnstakeFee1 * (timeElapsed / 30 days));
+
         }
         else if( _trancheId == 1) {
+            console.log("FEE params1: ", timeElapsed, trancheBaseFee2, earlyUnstakeFee2);
             fee = (timeElapsed > 90 days) ? trancheBaseFee2 :
             trancheBaseFee2 + (earlyUnstakeFee2 * (timeElapsed / 90 days));
         }
         else {
+            console.log("FEE params2: ", timeElapsed, trancheBaseFee3, earlyUnstakeFee3);
             fee = (timeElapsed > 180 days) ? trancheBaseFee3 :
             trancheBaseFee3 + (earlyUnstakeFee3 * (timeElapsed / 180 days));
         }
+        console.log(fee);
+
     }
 
     //@TODO:retrieve function for unclaimed Rewards
@@ -253,24 +261,25 @@ contract NSTBLStakePool is StakePoolStorage {
         uint256 maturityTokens = _getMaturityTokens(tokensAvailable, staker.amount, staker.stakeTimeStamp);
         console.log("Tokens ::::::::", tokensAvailable, maturityTokens);
         if (!depeg) {
+            console.log("Unstakingggggg");
+            unstakeFee = _getUnstakeFee(trancheId , staker.stakeTimeStamp) * maturityTokens / 10_000;
+            
             if (timeElapsed <= trancheStakeTimePeriod[trancheId] + 1 ) {
                 console.log("Early Unstakingggggg");
-                unstakeFee = maturityTokens <= tokensAvailable ? 0 : _getUnstakeFee(trancheId , staker.stakeTimeStamp) * maturityTokens / 10_000;
+                // unstakeFee = maturityTokens <= tokensAvailable ? 0 : _getUnstakeFee(trancheId , staker.stakeTimeStamp) * maturityTokens / 10_000;
             }
-            // } else {
-            //     //restake
-            //     console.log("Restakingggggg");
-            //     pool.stakeAmount -= staker.amount;
-            //     poolBalance -= staker.amount;
-            //     staker.amount = tokensAvailable;
-            //     pool.stakeAmount += tokensAvailable;
-            //     poolBalance += tokensAvailable;
-            //     staker.rewardDebt = (staker.amount * pool.accNSTBLPerShare) / 1e18;
-            //     staker.burnDebt = (staker.amount * pool.burnNSTBLPerShare) / 1e18;
-            //     staker.stakeTimeStamp = block.timestamp;
-            //     return;
-            // }
-        } else {
+            else {
+                //restake
+                console.log("Restakingggggg");
+                console.log("Restaking params", tokensAvailable, maturityTokens, unstakeFee);
+                staker.amount = maturityTokens - unstakeFee;
+                staker.stakeTimeStamp = block.timestamp;
+                IERC20Helper(nstbl).safeTransfer(atvl, (tokensAvailable - maturityTokens) + unstakeFee);
+
+                return;
+            }
+        }
+        else {
             unstakeFee = 0;
         }
 
@@ -295,6 +304,7 @@ contract NSTBLStakePool is StakePoolStorage {
                 // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
 
             }
+            console.log("-------------------------UNSTAKED--------------------------");
             emit Unstake(user, tokensAvailable);
 
         }

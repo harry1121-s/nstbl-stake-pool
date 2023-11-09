@@ -32,7 +32,8 @@ contract StakePoolTest is BaseTest {
         uint256 lowerBound = 10 * 1e18;
         _amount1 = bound(_amount1, lowerBound, 1e12 * 1e18);
         _amount2 = bound(_amount2, lowerBound, 1e12 * 1e18);
-        _investAmount = bound(_investAmount, 7*(_amount1 + _amount2)/8, 1e15 * 1e18);
+        // _investAmount = bound(_investAmount, 7*(_amount1 + _amount2)/8, 1e15 * 1e18);
+        _investAmount = bound(_investAmount, 1e24, 1e15 * 1e18);
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
@@ -83,7 +84,7 @@ contract StakePoolTest is BaseTest {
                 assertApproxEqAbs(hubBalAfter-hubBalBefore + (atvlBalAfter-atvlBalBefore), _amount1 + (loanManager.getMaturedAssets(usdc)-_investAmount), 1e18);
             }
             else {
-                assertEq(hubBalAfter-hubBalBefore, _amount1);
+                assertEq(hubBalAfter-hubBalBefore + (atvlBalAfter-atvlBalBefore), _amount1);
             }
         }
         else{
@@ -160,7 +161,6 @@ contract StakePoolTest is BaseTest {
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
         uint256 poolProductBefore = stakePool.poolProduct();
         uint256 poolEpochIdBefore = stakePool.poolEpochId();
-
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
@@ -170,13 +170,14 @@ contract StakePoolTest is BaseTest {
         if(poolBalanceBefore - _burnAmount <= 1e18){ //user 1 should receive 0 tokens
             assertEq(hubBalAfter-hubBalBefore, 0, "no tokens transferred");
         }
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         hubBalBefore = hubBalAfter;
         stakePool.unstake(user2, 2, false);
         vm.stopPrank();
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
-
+        // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
         //user 2 should receive all his tokens
-        assertEq(hubBalAfter-hubBalBefore, _amount2, "no tokens transferred");
+        assertEq(hubBalAfter-hubBalBefore + (nstblToken.balanceOf(atvl)-atvlBalBefore), _amount2, "no tokens transferred");
         
         //checking for pool empty state
         assertEq(stakePool.atvlExtraYield(), 0, "check atvlExtraYield");
