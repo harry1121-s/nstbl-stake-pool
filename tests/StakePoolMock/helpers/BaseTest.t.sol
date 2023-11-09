@@ -45,7 +45,6 @@ contract BaseTest is testToken {
         nstblToken.setStakePoolAddress(address(stakePool));
         stakePool.init(atvl, 285388127, [300,200,100], [700,500,300], [30,90,180]);
         loanManager.initializeTime();
-        console.log("Total supply at setup: ", nstblToken.totalSupply());
         vm.stopPrank();
     }
 
