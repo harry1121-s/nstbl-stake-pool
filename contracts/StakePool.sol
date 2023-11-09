@@ -39,7 +39,7 @@ contract NSTBLStakePool is StakePoolStorage {
         loanManager = _loanManager;
     }
 
-    function init(address _atvl, uint256 _yieldThreshold, uint8[3] memory trancheBaseFee, uint8[3] memory earlyUnstakeFee, uint8[3] memory stakeTimePeriods) external onlyAdmin {
+    function init(address _atvl, uint256 _yieldThreshold, uint16[3] memory trancheBaseFee, uint16[3] memory earlyUnstakeFee, uint8[3] memory stakeTimePeriods) external onlyAdmin {
         require(trancheBaseFee.length == 3, "SP: INVALID_TRANCHE_FEE");
         require(earlyUnstakeFee.length == 3, "SP: INVALID_EARLY_UNSTAKE_FEE");
         require(stakeTimePeriods.length == 3, "SP: INVALID_STAKE_TIME_PERIODS");
