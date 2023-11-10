@@ -27,11 +27,8 @@ contract BaseTest is testToken {
 
     function setUp() public virtual override {
         super.setUp();
-        // uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
-        // vm.selectFork(mainnetFork);
         vm.startPrank(owner);
 
-        // aclManager = new ACLManager();
         aclManager.setAuthorizedCallerStakePool(NSTBL_HUB, true);
 
         priceFeed = new ChainlinkPriceFeed();
@@ -43,7 +40,6 @@ contract BaseTest is testToken {
             address(loanManager)
             );
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
-        nstblToken.setStakePoolAddress(address(stakePool));
         stakePool.init(atvl, 285_388_127, [300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();
@@ -67,54 +63,6 @@ contract BaseTest is testToken {
         stakePool.stake(_user, _amount, _trancheId, destinationAddress);
         vm.stopPrank();
     }
-
-    // function _checkStakePostCondition(
-    //     bytes11 _stakeId,
-    //     uint8 _trancheId,
-    //     address _owner,
-    //     uint256 _amount,
-    //     uint256 _rewardDebt,
-    //     uint256 _burnDebt,
-    //     uint256 _stakeTimeStamp
-    // ) internal {
-    //     (
-    //         bytes11 stakeId,
-    //         uint8 trancheId,
-    //         address owner,
-    //         uint256 amount,
-    //         uint256 rewardDebt,
-    //         uint256 burnDebt,
-    //         uint256 stakeTimeStamp
-    //     ) = stakePool.stakerInfo(_stakeId);
-
-    //     assertEq(stakeId, _stakeId, "check stakeId");
-    //     assertEq(trancheId, _trancheId, "check trancheId");
-    //     assertEq(owner, _owner, "check _owner");
-    //     assertEq(amount, _amount, "check _amount");
-    //     assertEq(rewardDebt, _rewardDebt, "check _rewardDebt");
-    //     assertEq(burnDebt, _burnDebt,  "check _burnDebt" );
-    //     assertEq(stakeTimeStamp, _stakeTimeStamp, "check _stakeTimeStamp");
-    // }
-
-    // function _printStakePostCondition(bytes11 _stakeId) internal {
-    //     (
-    //         bytes11 stakeId,
-    //         uint8 trancheId,
-    //         address owner,
-    //         uint256 amount,
-    //         uint256 rewardDebt,
-    //         uint256 burnDebt,
-    //         uint256 stakeTimeStamp
-    //     ) = stakePool.stakerInfo(_stakeId);
-
-    //     console.logBytes11(stakeId);
-    //     console.log("trancheId:-      ", trancheId);
-    //     console.log("owner:-          ", owner);
-    //     console.log("amount:-         ", amount);
-    //     console.log("rewardDebt:-     ", rewardDebt);
-    //     console.log("burnDebt:-       ", burnDebt);
-    //     console.log("stakeTimeStamp:- ", stakeTimeStamp);
-    // }
 
     function _randomizeStakeIdAndIndex(bytes11 _stakeId, uint256 len)
         internal
