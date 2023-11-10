@@ -15,4 +15,5 @@ interface IStakePool {
         uint256 epochId;
         uint256 lpTokens;
     }
+
 }
