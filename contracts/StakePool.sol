@@ -47,6 +47,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         lpToken = new TokenLP("NSTBLStakePool LP Token", "NSTBL_SP", IACLManager(aclManager).admin());
         _locked = 1;
         poolProduct = 1e18;
+        emit StakePoolInitialized(REVISION, aclManager, nstbl, loanManager, atvl, address(lpToken));
     }
 
     function setupStakePool(
@@ -68,28 +69,30 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
         trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
         trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
+        emit StakePoolSetup(yieldThreshold, trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
     }
 
     function setATVL(address _atvl) external onlyAdmin {
         _zeroAddressCheck(_atvl);
         atvl = _atvl;
+        emit ATVLUpdated(atvl);
     }
 
     function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
 
         if (_trancheId == 0) {
-            fee = (timeElapsed > 30 days)
+            fee = (timeElapsed > trancheStakeTimePeriod[0])
                 ? trancheBaseFee1
                 : trancheBaseFee1 + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0]-timeElapsed) / trancheStakeTimePeriod[0]);
         } else if (_trancheId == 1) {
-            fee = (timeElapsed > 90 days)
+            fee = (timeElapsed > trancheStakeTimePeriod[1])
                 ? trancheBaseFee2
-                : trancheBaseFee2 + (earlyUnstakeFee2 * timeElapsed / 90 days);
+                : trancheBaseFee2 + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1]-timeElapsed) / trancheStakeTimePeriod[1]);
         } else {
-            fee = (timeElapsed > 180 days)
+            fee = (timeElapsed > trancheStakeTimePeriod[2])
                 ? trancheBaseFee3
-                : trancheBaseFee3 + (earlyUnstakeFee3 * timeElapsed / 180 days);
+                : trancheBaseFee3 + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2]-timeElapsed) / trancheStakeTimePeriod[2]);
         }
     }
 
@@ -114,7 +117,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             nstblYield = newMaturityVal - oldMaturityVal;
             oldMaturityVal = newMaturityVal + depositAmount;
         }
-        if (poolBalance == 0) {
+        if (poolBalance <= 1e18) {
             IERC20Helper(nstbl).mint(address(this), nstblYield);
             unclaimedRewards += (nstblYield);
             return;
@@ -127,8 +130,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
         nstblYield *= 1e18; //to maintain precision for accNSTBLPerShare
 
-        poolProduct = poolProduct * (1e18 + nstblYield / poolBalance) / 1e18;
+        poolProduct = (poolProduct * (poolBalance*1e18 + nstblYield)) / (poolBalance*1e18);
         poolBalance += (nstblYield / 1e18);
+        emit UpdatedFromHub(poolProduct, poolBalance, nstblYield, atvlYield);
     }
 
     function _updatePool() internal {
@@ -145,7 +149,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
                 return;
             }
 
-            if (poolBalance == 0) {
+            if (poolBalance <= 1e18) {
                 IERC20Helper(nstbl).mint(atvl, nstblYield);
                 oldMaturityVal = newMaturityVal;
                 return;
@@ -160,7 +164,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
             nstblYield *= 1e18; //to maintain precision
 
-            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield) / poolBalance)) / 1e18;
+            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance*1e18);
             poolBalance += (nstblYield / 1e18);
 
             oldMaturityVal = newMaturityVal;
@@ -168,12 +172,15 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     function updateMaturityValue() external {
+        require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
+        genesis += 1;
     }
 
     function withdrawUnclaimedRewards() external authorizedCaller {
         IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
         unclaimedRewards = 0;
+        emit UnclaimedRewardsWithdrawn(msg.sender, unclaimedRewards);
     }
 
     function burnNSTBL(uint256 _amount) external authorizedCaller {
@@ -183,7 +190,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
         IERC20Helper(nstbl).burn(address(this), _amount);
 
-        poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18) / poolBalance)) / 1e18;
+        poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance*1e18);
 
         if (poolProduct == 0 || poolBalance - _amount <= 1e18) {
             //because of loss of precision
@@ -194,6 +201,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         } else {
             poolBalance -= _amount;
         }
+        emit NSTBLBurned(_amount, poolProduct, poolBalance, poolEpochId);
     }
 
     function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress)
@@ -224,7 +232,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         staker.lpTokens += stakeAmount;
         lpToken.mint(destinationAddress, stakeAmount);
 
-        emit Stake(user, staker.amount, staker.poolDebt);
+        emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
     }
 
     function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
@@ -276,7 +284,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
                 poolBalance = 0;
                 // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
             }
-            emit Unstake(user, tokensAvailable);
+            emit Unstake(user, maturityTokens, unstakeFee);
         }
     }
 

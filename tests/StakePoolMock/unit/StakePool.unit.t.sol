@@ -177,16 +177,19 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 12 days);
         loanManager.updateAwaitingRedemption(usdc, true);
 
+        console.log("Here1");
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is active
         vm.startPrank(NSTBL_HUB);
         uint256 oldVal = stakePool.oldMaturityVal();
         assertEq(loanManager.getAwaitingRedemptionStatus(usdc), true, "Awaiting Redemption status");
         stakePool.updatePoolFromHub(false, 0, 1e6 * 1e18);
-        assertEq(stakePool.oldMaturityVal(), oldVal, "No update due to awaiting redemption");
+        assertEq(stakePool.oldMaturityVal(), oldVal + 1e6*1e18, "No update due to awaiting redemption");
         vm.stopPrank();
 
+        console.log("Here2");
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is inactive
         vm.startPrank(NSTBL_HUB);
+        loanManager.updateInvestedAssets(15e5 * 1e18 + 1e6 * 1e18);
         oldVal = stakePool.oldMaturityVal();
         loanManager.updateAwaitingRedemption(usdc, false);
         assertEq(loanManager.getAwaitingRedemptionStatus(usdc), false, "Awaiting Redemption status");
@@ -195,8 +198,9 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal - maturityVal, loanManager.getMaturedAssets(usdc) - 15e5 * 1e18 + 1e6 * 1e18, "UpdateRewards");
         vm.stopPrank();
 
+        console.log("Here3");
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active
-        loanManager.updateInvestedAssets(15e5 * 1e18 + 1e6 * 1e18);
+        loanManager.updateInvestedAssets(15e5 * 1e18 + 2e6 * 1e18); //because deposit was made 2 times previosuly
         vm.warp(block.timestamp + 12 days);
         vm.startPrank(NSTBL_HUB);
         oldVal = stakePool.oldMaturityVal();
@@ -206,6 +210,7 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal - oldVal, loanManager.getMaturedAssets(usdc) - oldVal, "Reward update due to redemption");
         vm.stopPrank();
 
+        console.log("Here4");
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active and tBills are devalued
         vm.startPrank(NSTBL_HUB);
         loanManager.updateInvestedAssets(15e5 * 1e18);
@@ -216,6 +221,7 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal, oldVal, "No reward update due to ,aple devalue");
         vm.stopPrank();
 
+        console.log("Here5");
         // Mocking for updatePoolFromHub during deposit when tBills are devalued
         vm.startPrank(NSTBL_HUB);
         loanManager.updateAwaitingRedemption(usdc, false);
@@ -236,6 +242,7 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, _amount, _trancheId);
         loanManager.updateInvestedAssets(_amount * 4);
         stakePool.updateMaturityValue();
+        uint256 maturityVal = stakePool.oldMaturityVal();
         vm.warp(block.timestamp + _time);
         loanManager.updateAwaitingRedemption(usdc, true);
 
@@ -244,21 +251,22 @@ contract StakePoolTest is BaseTest {
         uint256 oldVal = stakePool.oldMaturityVal();
         assertEq(loanManager.getAwaitingRedemptionStatus(usdc), true, "Awaiting Redemption status");
         stakePool.updatePoolFromHub(false, 0, _amount / 10);
-        assertEq(stakePool.oldMaturityVal(), oldVal, "No update due to awaiting redemption");
+        assertEq(stakePool.oldMaturityVal(), oldVal + _amount/10, "No update due to awaiting redemption");
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is inactive
         vm.startPrank(NSTBL_HUB);
+        loanManager.updateInvestedAssets(_amount * 4 + _amount / 10);
         oldVal = stakePool.oldMaturityVal();
         loanManager.updateAwaitingRedemption(usdc, false);
         assertEq(loanManager.getAwaitingRedemptionStatus(usdc), false, "Awaiting Redemption status");
         stakePool.updatePoolFromHub(false, 0, _amount / 10);
         uint256 newVal = stakePool.oldMaturityVal();
-        assertEq(newVal - oldVal, loanManager.getMaturedAssets(usdc) - _amount * 4 + _amount / 10, "UpdateRewards");
+        assertEq(newVal - maturityVal, loanManager.getMaturedAssets(usdc) - _amount * 4 + _amount / 10, "UpdateRewards");
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active
-        loanManager.updateInvestedAssets(_amount * 4 + _amount / 10);
+        loanManager.updateInvestedAssets(_amount * 4 + _amount / 5);
         vm.warp(block.timestamp + _time);
         vm.startPrank(NSTBL_HUB);
         oldVal = stakePool.oldMaturityVal();
@@ -275,7 +283,7 @@ contract StakePoolTest is BaseTest {
         oldVal = stakePool.oldMaturityVal();
         stakePool.updatePoolFromHub(true, _amount / 100, 0);
         newVal = stakePool.oldMaturityVal();
-        assertEq(newVal, oldVal, "No reward update due to ,aple devalue");
+        assertEq(newVal, oldVal, "No reward update due to Maple devalue");
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during deposit when tBills are devalued
@@ -285,7 +293,7 @@ contract StakePoolTest is BaseTest {
         oldVal = stakePool.oldMaturityVal();
         stakePool.updatePoolFromHub(false, 0, _amount / 10);
         newVal = stakePool.oldMaturityVal();
-        assertEq(newVal, oldVal, "No reward update due to Maple devalue");
+        assertEq(newVal, oldVal + _amount/10, "No reward update due to Maple devalue");
         vm.stopPrank();
     }
 

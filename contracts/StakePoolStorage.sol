@@ -24,6 +24,8 @@ contract StakePoolStorage is IStakePool {
     address public loanManager;
     address public atvl;
 
+    uint256 public genesis;
+
     uint64 public trancheFee1;
     uint64 public trancheFee2;
     uint64 public trancheFee3;

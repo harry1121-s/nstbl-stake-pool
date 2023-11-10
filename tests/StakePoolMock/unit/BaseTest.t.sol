@@ -13,7 +13,6 @@ import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LZEndpointMock } from "@layerzerolabs/contracts/mocks/LZEndpointMock.sol";
 import { NSTBLStakePool } from "../../../contracts/StakePool.sol";
 import { LoanManagerMock } from "../../../contracts/mocks/LoanManagerMock.sol";
-import { ChainlinkPriceFeed } from "../../../contracts/chainlink/ChainlinkPriceFeed.sol";
 
 contract BaseTest is Test {
     using SafeERC20 for IERC20Helper;
@@ -36,7 +35,6 @@ contract BaseTest is Test {
 
     // Staking setup
     NSTBLStakePool public stakePool;
-    ChainlinkPriceFeed public priceFeed;
     NSTBLToken public nstblToken;
 
     // Mocks
@@ -109,7 +107,6 @@ contract BaseTest is Test {
         aclManager.setAuthorizedCallerStakePool(NSTBL_HUB, true);
 
         // Deploy StakePool requirements
-        priceFeed = new ChainlinkPriceFeed();
 
         loanManager = new LoanManagerMock(owner);
         nstblToken = token_src;
