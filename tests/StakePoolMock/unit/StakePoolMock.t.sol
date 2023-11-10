@@ -447,4 +447,27 @@ contract StakePoolTest is BaseTest {
             "check available tokens"
         );
     }
+
+    function test_init_funcs() external {
+        vm.startPrank(owner);
+        stakePool.init(atvl, 500_388_127, [400, 300, 200], [900, 800, 700], [60, 120, 240]);
+        vm.stopPrank();
+
+
+        assertEq(stakePool.atvl(), atvl, "check atvl");
+        assertEq(stakePool.yieldThreshold(), 500_388_127, "check yieldThreshold");
+        assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
+        assertEq(stakePool.trancheBaseFee2(), 300, "check trancheFee2");
+        assertEq(stakePool.trancheBaseFee3(), 200, "check trancheFee3");
+        assertEq(stakePool.earlyUnstakeFee1(), 900, "check earlyUnstakeFee1");
+        assertEq(stakePool.earlyUnstakeFee2(), 800, "check earlyUnstakeFee2");
+        assertEq(stakePool.earlyUnstakeFee3(), 700, "check earlyUnstakeFee3");
+        assertEq(stakePool.trancheStakeTimePeriod(0), 60, "check trancheStakeTimePeriod1");
+        assertEq(stakePool.trancheStakeTimePeriod(1), 120, "check trancheStakeTimePeriod2");
+        assertEq(stakePool.trancheStakeTimePeriod(2), 240, "check trancheStakeTimePeriod3");
+
+        vm.prank(owner);
+        stakePool.setATVL(vm.addr(987));
+        assertEq(stakePool.atvl(), vm.addr(987), "check atvl");
+    }
 }
