@@ -9,7 +9,6 @@ import { IHandlerMain } from "./helpers/IHandlerMain.sol";
 import { NSTBLStakePool } from "../../../../contracts/StakePool.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LoanManagerMock } from "../../../../contracts/mocks/LoanManagerMock.sol";
-import { IERC20Helper } from "../../../../contracts/StakePoolStorage.sol";
 
 contract HandlerHub is HandlerBase {
     NSTBLToken public nSTBLtoken;
@@ -126,13 +125,17 @@ contract HandlerHub is HandlerBase {
         //     return;
         // }
         if(oldPoolBalance <= 1e18) {
-            assertEq(newTokenBalance - oldTokenBalance, (loanManager.getMaturedAssets(USDC) + amount_), "Rewards minted correctly when poolBalance < 1e18");
+            assertEq(newTokenBalance - oldTokenBalance, (loanManager.getMaturedAssets(USDC) + amount_) - maturityVal, "Rewards minted correctly when poolBalance < 1e18");
             assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
             assertEq(newMaturityVal, loanManager.getMaturedAssets(USDC), "3:Should have set the oldMaturityVal correctly");
             return;
         }
         // assertEq(newBalance - oldBalance, nstblYield - atvlYield, "Rewards minted correctly to the stakePool");
         // assertEq(stakePool.oldMaturityVal(), loanManager.getMaturedAssets(USDC) , "Should have set the oldMaturityVal correctly");
+
+    }
+
+    function burnNSTBL(uint256 amount_) public {
 
     }
 
