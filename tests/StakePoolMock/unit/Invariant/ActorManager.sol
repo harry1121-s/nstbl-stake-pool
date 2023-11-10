@@ -24,7 +24,7 @@ contract ActorManager {
 
         for (uint256 i; i < weights_.length; ++i) {
             weightsTotal += weights_[i];
-        }
+        } 
 
         require(weightsTotal == WEIGHTS_RANGE, "DH:INVALID_WEIGHTS");
 
@@ -35,7 +35,7 @@ contract ActorManager {
     /*//////////////////////////////////////////////////////////////
     Entry point
     //////////////////////////////////////////////////////////////*/
-    
+
     function distributorEntryPoint(uint256 seed_) external {
         numOfCallsTotal++;
 

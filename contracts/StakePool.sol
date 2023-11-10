@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: BUSL-1.1
-
 pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -30,10 +29,15 @@ contract NSTBLStakePool is StakePoolStorage {
         _;
     }
 
-    constructor(address _aclManager, address _nstbl, address _loanManager) {
+    constructor(address _aclManager, address _nstbl, address _loanManager, address _atvl) {
+        _zeroAddressCheck(_aclManager);
+        _zeroAddressCheck(_nstbl);
+        _zeroAddressCheck(_loanManager);
+        _zeroAddressCheck(_atvl);
         aclManager = _aclManager;
         nstbl = _nstbl;
         loanManager = _loanManager;
+        atvl = _atvl;
         lpToken = new TokenLP("Maple LP Token", "MPL", IACLManager(aclManager).admin());
     }
 
@@ -61,6 +65,7 @@ contract NSTBLStakePool is StakePoolStorage {
     }
 
     function setATVL(address _atvl) external onlyAdmin {
+        _zeroAddressCheck(_atvl);
         atvl = _atvl;
     }
 
@@ -297,5 +302,9 @@ contract NSTBLStakePool is StakePoolStorage {
     function transferATVLYield() public nonReentrant {
         IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
         atvlExtraYield = 0;
+    }
+
+    function _zeroAddressCheck(address _address) internal pure {
+        require(_address != address(0), "SP:INVALID_ADDRESS");
     }
 }

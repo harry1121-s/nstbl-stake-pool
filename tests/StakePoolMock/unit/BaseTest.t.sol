@@ -18,7 +18,7 @@ contract BaseTest is Test {
     /*//////////////////////////////////////////////////////////////
     Contract instances
     //////////////////////////////////////////////////////////////*/
-    
+
     // Token setup
     ACLManager public aclManager;
     NSTBLToken public token_src;
@@ -30,7 +30,7 @@ contract BaseTest is Test {
     // Staking setup
     NSTBLStakePool public stakePool;
     ChainlinkPriceFeed public priceFeed;
-    NSTBLToken public nstblToken; 
+    NSTBLToken public nstblToken;
 
     // Mocks
     LoanManagerMock public loanManager;
@@ -47,7 +47,6 @@ contract BaseTest is Test {
     uint8 public sharedDecimals = 5;
 
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
 
     /*//////////////////////////////////////////////////////////////
     Addresses for testing
@@ -95,28 +94,30 @@ contract BaseTest is Test {
         token_src.setAuthorizedChain(block.chainid, true);
 
         // Set authorized caller in ACLManager
-        // Token 
+        // Token
         aclManager.setAuthorizedCallerToken(NSTBL_HUB, true);
         aclManager.setAuthorizedCallerToken(owner, true);
         aclManager.setAuthorizedCallerBlacklister(compliance, true);
         // StakePool
         aclManager.setAuthorizedCallerStakePool(NSTBL_HUB, true);
 
-        // Deploy price feed
+        // Deploy StakePool requirements
         priceFeed = new ChainlinkPriceFeed();
+
         loanManager = new LoanManagerMock(owner);
         nstblToken = token_src;
         stakePool = new NSTBLStakePool(
             address(aclManager),
             address(nstblToken),
-            address(loanManager)
+            address(loanManager),
+            atvl
             );
         aclManager.setAuthorizedCallerToken(address(stakePool), true);
         stakePool.init(atvl, 285_388_127, [300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();
     }
-    
+
     function erc20_transfer(address asset_, address account_, address destination_, uint256 amount_) internal {
         vm.startPrank(account_);
         console.log("Balance of account: ", IERC20Helper(asset_).balanceOf(account_));
@@ -146,5 +147,4 @@ contract BaseTest is Test {
         index = uint256(hashedVal) % len;
         return (randomStakeId, index);
     }
-
 }

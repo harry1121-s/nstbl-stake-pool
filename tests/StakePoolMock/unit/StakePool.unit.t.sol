@@ -8,8 +8,93 @@ import "../../../contracts/IStakePool.sol";
 contract StakePoolTest is BaseTest {
     using SafeERC20 for IERC20Helper;
 
+    /*//////////////////////////////////////////////////////////////
+    Setup
+    //////////////////////////////////////////////////////////////*/
+    
     function setUp() public override {
         super.setUp();
+    }
+
+    function test_deployment() external {
+        // Check deployment
+        assertEq(stakePool.aclManager(), address(aclManager), "check aclManager");
+        assertEq(stakePool.nstbl(), address(nstblToken), "check nstblToken");
+        assertEq(stakePool.atvl(), address(atvl), "check atvl");
+
+        // Test failing Deployment
+
+        // ACLManager cannot be the zero address
+        vm.expectRevert("SP:INVALID_ADDRESS");
+        NSTBLStakePool stakePoolTemp = new NSTBLStakePool(
+            address(0),
+            address(nstblToken),
+            address(loanManager),
+            atvl
+        );
+
+        // nSTBL token cannot be the zero address
+        vm.expectRevert("SP:INVALID_ADDRESS");
+        stakePoolTemp = new NSTBLStakePool(
+            address(aclManager),
+            address(0),
+            address(loanManager),
+            atvl
+        );
+
+        // loanManager cannot be the zero address
+        vm.expectRevert("SP:INVALID_ADDRESS");
+        stakePoolTemp = new NSTBLStakePool(
+            address(aclManager),
+            address(nstblToken),
+            address(0),
+            atvl
+        );
+
+        // ATVL cannot be the zero address
+        vm.expectRevert("SP:INVALID_ADDRESS");
+        stakePoolTemp = new NSTBLStakePool(
+            address(aclManager),
+            address(nstblToken),
+            address(loanManager),
+            address(0)
+        );
+    }
+
+    function test_init_funcs() external {
+        vm.startPrank(deployer);
+        stakePool.init(atvl, 500_388_127, [400, 300, 200], [900, 800, 700], [60, 120, 240]);
+        vm.stopPrank();
+        assertEq(stakePool.atvl(), atvl, "check atvl");
+        assertEq(stakePool.yieldThreshold(), 500_388_127, "check yieldThreshold");
+        assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
+        assertEq(stakePool.trancheBaseFee2(), 300, "check trancheFee2");
+        assertEq(stakePool.trancheBaseFee3(), 200, "check trancheFee3");
+        assertEq(stakePool.earlyUnstakeFee1(), 900, "check earlyUnstakeFee1");
+        assertEq(stakePool.earlyUnstakeFee2(), 800, "check earlyUnstakeFee2");
+        assertEq(stakePool.earlyUnstakeFee3(), 700, "check earlyUnstakeFee3");
+        assertEq(stakePool.trancheStakeTimePeriod(0), 60, "check trancheStakeTimePeriod1");
+        assertEq(stakePool.trancheStakeTimePeriod(1), 120, "check trancheStakeTimePeriod2");
+        assertEq(stakePool.trancheStakeTimePeriod(2), 240, "check trancheStakeTimePeriod3");
+        vm.prank(deployer);
+        stakePool.setATVL(vm.addr(987));
+        assertEq(stakePool.atvl(), vm.addr(987), "check atvl");
+    }
+
+    function test_setATVL() external {
+        // Only the Admin can call
+        vm.expectRevert();
+        stakePool.setATVL(atvl);
+
+        // Input address cannot be the zero address
+        vm.prank(deployer);
+        vm.expectRevert();
+        stakePool.setATVL(address(0));
+
+        // setATVL works
+        vm.prank(deployer);
+        stakePool.setATVL(atvl);
+        assertEq(stakePool.atvl(), atvl, "check atvl");
     }
 
     function test_updatePool() external {
@@ -446,25 +531,5 @@ contract StakePoolTest is BaseTest {
             nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) <= 1e18,
             "check available tokens"
         );
-    }
-
-    function test_init_funcs() external {
-        vm.startPrank(deployer);
-        stakePool.init(atvl, 500_388_127, [400, 300, 200], [900, 800, 700], [60, 120, 240]);
-        vm.stopPrank();
-        assertEq(stakePool.atvl(), atvl, "check atvl");
-        assertEq(stakePool.yieldThreshold(), 500_388_127, "check yieldThreshold");
-        assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
-        assertEq(stakePool.trancheBaseFee2(), 300, "check trancheFee2");
-        assertEq(stakePool.trancheBaseFee3(), 200, "check trancheFee3");
-        assertEq(stakePool.earlyUnstakeFee1(), 900, "check earlyUnstakeFee1");
-        assertEq(stakePool.earlyUnstakeFee2(), 800, "check earlyUnstakeFee2");
-        assertEq(stakePool.earlyUnstakeFee3(), 700, "check earlyUnstakeFee3");
-        assertEq(stakePool.trancheStakeTimePeriod(0), 60, "check trancheStakeTimePeriod1");
-        assertEq(stakePool.trancheStakeTimePeriod(1), 120, "check trancheStakeTimePeriod2");
-        assertEq(stakePool.trancheStakeTimePeriod(2), 240, "check trancheStakeTimePeriod3");
-        vm.prank(deployer);
-        stakePool.setATVL(vm.addr(987));
-        assertEq(stakePool.atvl(), vm.addr(987), "check atvl");
     }
 }
