@@ -179,7 +179,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
-    function updateMaturyValue() external {
+    function updateMaturityValue() external {
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
     }
 

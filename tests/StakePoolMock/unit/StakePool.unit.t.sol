@@ -117,7 +117,7 @@ contract StakePoolTest is BaseTest {
         uint8 _trancheId = 0;
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
         console.log("Maturity Value: ", stakePool.oldMaturityVal());
 
         uint256 maturityVal = stakePool.oldMaturityVal();
@@ -160,7 +160,7 @@ contract StakePoolTest is BaseTest {
         uint8 _trancheId = 0;
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
         uint256 maturityVal = stakePool.oldMaturityVal();
         vm.warp(block.timestamp + 12 days);
         vm.startPrank(NSTBL_HUB);
@@ -236,7 +236,7 @@ contract StakePoolTest is BaseTest {
         // Action
         _stakeNSTBL(user1, _amount, _trancheId);
         loanManager.updateInvestedAssets(_amount * 4);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
         vm.warp(block.timestamp + _time);
         loanManager.updateAwaitingRedemption(usdc, true);
 
@@ -301,7 +301,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
 
         _stakeNSTBL(user1, _amount1, 0);
         _stakeNSTBL(user2, _amount2, 1);
@@ -339,7 +339,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
 
         _stakeNSTBL(user1, _amount1, 0);
         _stakeNSTBL(user2, _amount2, 1);
@@ -395,7 +395,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
         // Action
         deal(address(nstblToken), address(stakePool), 1e24); // just to mess with the system
         _stakeNSTBL(user1, _amount1, 1);
@@ -492,7 +492,7 @@ contract StakePoolTest is BaseTest {
         _investAmount = bound(_investAmount, lowerBound * 2, 2 * 1e15 * 1e18);
 
         loanManager.updateInvestedAssets(_investAmount);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
 
         // Action
         _stakeNSTBL(user1, _amount1, 1);
