@@ -126,7 +126,7 @@ contract HandlerHub is HandlerBase {
         //     return;
         // }
         if(oldPoolBalance <= 1e18) {
-            assertEq(newTokenBalance - oldTokenBalance, (loanManager.getMaturedAssets(USDC) + amount_) - maturityVal, "Rewards minted correctly when poolBalance < 1e18");
+            assertEq(newTokenBalance - oldTokenBalance, (loanManager.getMaturedAssets(USDC) + amount_), "Rewards minted correctly when poolBalance < 1e18");
             assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
             assertEq(newMaturityVal, loanManager.getMaturedAssets(USDC), "3:Should have set the oldMaturityVal correctly");
             return;
