@@ -95,6 +95,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
     function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller {
         if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem) {
+            oldMaturityVal += depositAmount;
             return;
         }
         uint256 nstblYield;
