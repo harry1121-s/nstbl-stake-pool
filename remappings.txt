@@ -5,3 +5,4 @@ forge-std/=modules/forge-std/src/
 @loanManager/=modules/nstbl-loan-manager
 @nstbl-acl-manager/=modules/nstbl-acl-manager
 @nstbl-token/=modules/nstbl-token
+@LZEndpointMock/=modules/nstbl-token/modules/solidity-examples

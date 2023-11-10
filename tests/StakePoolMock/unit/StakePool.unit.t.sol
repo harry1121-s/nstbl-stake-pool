@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../helpers/BaseTest.t.sol";
+import "./BaseTest.t.sol";
 import "../../../contracts/IStakePool.sol";
 
 contract StakePoolTest is BaseTest {
@@ -449,11 +449,9 @@ contract StakePoolTest is BaseTest {
     }
 
     function test_init_funcs() external {
-        vm.startPrank(owner);
+        vm.startPrank(deployer);
         stakePool.init(atvl, 500_388_127, [400, 300, 200], [900, 800, 700], [60, 120, 240]);
         vm.stopPrank();
-
-
         assertEq(stakePool.atvl(), atvl, "check atvl");
         assertEq(stakePool.yieldThreshold(), 500_388_127, "check yieldThreshold");
         assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
@@ -465,8 +463,7 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.trancheStakeTimePeriod(0), 60, "check trancheStakeTimePeriod1");
         assertEq(stakePool.trancheStakeTimePeriod(1), 120, "check trancheStakeTimePeriod2");
         assertEq(stakePool.trancheStakeTimePeriod(2), 240, "check trancheStakeTimePeriod3");
-
-        vm.prank(owner);
+        vm.prank(deployer);
         stakePool.setATVL(vm.addr(987));
         assertEq(stakePool.atvl(), vm.addr(987), "check atvl");
     }
