@@ -31,17 +31,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         _;
     }
 
-    // constructor(address _aclManager, address _nstbl, address _loanManager, address _atvl) {
-    //     _zeroAddressCheck(_aclManager);
-    //     _zeroAddressCheck(_nstbl);
-    //     _zeroAddressCheck(_loanManager);
-    //     _zeroAddressCheck(_atvl);
-    //     aclManager = _aclManager;
-    //     nstbl = _nstbl;
-    //     loanManager = _loanManager;
-    //     atvl = _atvl;
-    //     lpToken = new TokenLP("Maple LP Token", "MPL", IACLManager(aclManager).admin());
-    // }
     constructor() {
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
@@ -60,8 +49,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         poolProduct = 1e18;
     }
 
-    function init(
-        address _atvl,
+    function setupStakePool(
         uint256 _yieldThreshold,
         uint16[3] memory trancheBaseFee,
         uint16[3] memory earlyUnstakeFee,
@@ -70,7 +58,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         require(trancheBaseFee.length == 3, "SP: INVALID_TRANCHE_FEE");
         require(earlyUnstakeFee.length == 3, "SP: INVALID_EARLY_UNSTAKE_FEE");
         require(stakeTimePeriods.length == 3, "SP: INVALID_STAKE_TIME_PERIODS");
-        atvl = _atvl;
         yieldThreshold = _yieldThreshold;
         trancheBaseFee1 = trancheBaseFee[0];
         trancheBaseFee2 = trancheBaseFee[1];
@@ -94,15 +81,15 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         if (_trancheId == 0) {
             fee = (timeElapsed > 30 days)
                 ? trancheBaseFee1
-                : trancheBaseFee1 + (earlyUnstakeFee1 * (timeElapsed / 30 days));
+                : trancheBaseFee1 + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0]-timeElapsed) / trancheStakeTimePeriod[0]);
         } else if (_trancheId == 1) {
             fee = (timeElapsed > 90 days)
                 ? trancheBaseFee2
-                : trancheBaseFee2 + (earlyUnstakeFee2 * (timeElapsed / 90 days));
+                : trancheBaseFee2 + (earlyUnstakeFee2 * timeElapsed / 90 days);
         } else {
             fee = (timeElapsed > 180 days)
                 ? trancheBaseFee3
-                : trancheBaseFee3 + (earlyUnstakeFee3 * (timeElapsed / 180 days));
+                : trancheBaseFee3 + (earlyUnstakeFee3 * timeElapsed / 180 days);
         }
     }
 
@@ -143,7 +130,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         poolBalance += (nstblYield / 1e18);
     }
 
-    function updatePool() public {
+    function _updatePool() internal {
         if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc)) {
             return;
         }
@@ -189,7 +176,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     function burnNSTBL(uint256 _amount) external authorizedCaller {
-        updatePool();
+        _updatePool();
         transferATVLYield();
 
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
@@ -217,7 +204,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         require(trancheId < 3, "SP: INVALID_TRANCHE");
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
-        updatePool();
+        _updatePool();
         IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
 
         if (staker.amount > 0) {
@@ -247,7 +234,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         StakerInfo storage staker = stakerInfo[trancheId][user];
         require(lpToken.balanceOf(lpOwner) >= staker.lpTokens);
         require(staker.amount > 0, "SP: NO STAKE");
-        updatePool();
+        _updatePool();
         if (staker.epochId != poolEpochId) {
             staker.amount = 0;
             return;

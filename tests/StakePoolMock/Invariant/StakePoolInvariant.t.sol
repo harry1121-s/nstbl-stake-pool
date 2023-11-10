@@ -42,7 +42,7 @@ contract TestStakePoolInvariant is BaseTest {
         targetSender(address(0xdeed));
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
-        stakePool.updateMaturyValue();
+        stakePool.updateMaturityValue();
     }
 
     function invariant_stakePool() public {
