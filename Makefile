@@ -22,6 +22,9 @@ testStakePoolMock:
 testStakePool:
 	forge test --match-path ./tests/StakePool/unit/StakePool.t.sol -vvv
 
+testInvariant:
+	forge test --match-path ./tests/StakePoolMock/Invariant/StakePoolInvariant.t.sol -vvvvv
+
 debug: 
 	forge test -vvvvv
 

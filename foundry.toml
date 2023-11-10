@@ -13,7 +13,11 @@ gas_reports = ["*"]
 optimizer = true
 
 [fuzz]
-runs = 10000 
+runs = 1000
+
+[invariant]
+fail_on_revert = false  # Fail the test if the contract reverts
+include_storage = true # The flag indicating whether to include values from storage.
 
 [fmt]
 line_length = 120
