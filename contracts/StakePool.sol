@@ -112,6 +112,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             oldMaturityVal = newMaturityVal;
         } else {
             if (newMaturityVal < oldMaturityVal) {
+                oldMaturityVal += depositAmount;
                 return;
             }
             nstblYield = newMaturityVal - oldMaturityVal;

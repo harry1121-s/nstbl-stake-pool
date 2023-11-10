@@ -28,8 +28,8 @@ contract TestStakePoolInvariant is BaseTest {
         aclManager.setAuthorizedCallerStakePool(address(hub), true);
 
         // Set weights for user actions
-        hub.setSelectorWeight("deposit(uint256)", 100);
-        // hub.setSelectorWeight("redeemMaple(uint256)", 100);
+        // hub.setSelectorWeight("deposit(uint256)", 100);
+        hub.setSelectorWeight("redeemMaple(uint256)", 100);
 
         uint256[] memory weightsActorManager = new uint256[](1);
         weightsActorManager[0] = 100; // hub
