@@ -3,9 +3,11 @@ pragma solidity 0.8.21;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
-
+import { ITransparentUpgradeableProxy, TransparentUpgradeableProxy } from "../../../contracts/upgradeable/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "../../../contracts/upgradeable/ProxyAdmin.sol";
 import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LZEndpointMock } from "@layerzerolabs/contracts/mocks/LZEndpointMock.sol";
@@ -26,6 +28,11 @@ contract BaseTest is Test {
 
     LZEndpointMock public LZEndpoint_src;
     LZEndpointMock public LZEndpoint_dst;
+
+    //Proxy setup
+    ProxyAdmin public proxyAdmin;
+    TransparentUpgradeableProxy public stakePoolProxy;
+    NSTBLStakePool public stakePoolImpl;
 
     // Staking setup
     NSTBLStakePool public stakePool;
@@ -106,13 +113,25 @@ contract BaseTest is Test {
 
         loanManager = new LoanManagerMock(owner);
         nstblToken = token_src;
-        stakePool = new NSTBLStakePool(
-            address(aclManager),
-            address(nstblToken),
-            address(loanManager),
-            atvl
-            );
-        aclManager.setAuthorizedCallerToken(address(stakePool), true);
+
+        // Deploy ProxyAdmin
+        proxyAdmin = new ProxyAdmin(deployer);
+        assertEq(proxyAdmin.owner(), deployer);
+        stakePoolImpl = new NSTBLStakePool();
+        console.log("Implementation Address:", address(stakePoolImpl));
+        bytes memory data = abi.encodeCall(stakePoolImpl.initialize, (address(aclManager), address(nstblToken), address(loanManager), atvl));
+        stakePoolProxy = new TransparentUpgradeableProxy(address(stakePoolImpl), address(proxyAdmin), data);
+        stakePool = NSTBLStakePool(address(stakePoolProxy));
+        console.log("Proxy Address:", address(stakePoolProxy));
+
+        // stakePool = new NSTBLStakePool(
+        //     address(aclManager),
+        //     address(nstblToken),
+        //     address(loanManager),
+        //     atvl
+        //     );
+        
+        aclManager.setAuthorizedCallerToken(address(stakePoolProxy), true);
         stakePool.init(atvl, 285_388_127, [300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();

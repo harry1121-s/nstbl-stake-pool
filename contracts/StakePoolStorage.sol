@@ -10,9 +10,9 @@ contract StakePoolStorage is IStakePool {
     /*//////////////////////////////////////////////////////////////
     IMMUTABLES
     //////////////////////////////////////////////////////////////*/
-    address public immutable nstbl;
-    address public immutable usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public immutable loanManager;
+    address public immutable usdc;
+    uint256 internal immutable REVISION = 1;
+
 
     /*//////////////////////////////////////////////////////////////
     STORAGE : Stake Pool
@@ -20,6 +20,8 @@ contract StakePoolStorage is IStakePool {
 
     address public versionSlot;
     address public aclManager;
+    address public nstbl;
+    address public loanManager;
     address public atvl;
 
     uint64 public trancheFee1;
@@ -30,12 +32,12 @@ contract StakePoolStorage is IStakePool {
 
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 
-    uint256 public poolProduct = 1e18;
+    uint256 public poolProduct;
     uint256 public poolBalance;
     uint256 public poolEpochId;
     uint256 public unclaimedRewards;
 
-    uint256 public yieldThreshold = 285_388_127; //9% APY
+    uint256 public yieldThreshold; //9% APY
     // uint256 public stakingThreshold;
 
     uint256 public atvlExtraYield;
@@ -54,5 +56,8 @@ contract StakePoolStorage is IStakePool {
 
     mapping(uint8 => uint64) public trancheStakeTimePeriod;
 
-    uint256[49] __gap;
+
+    //add new variables here to extended the storage
+    //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision
+    uint256[33] __gap;
 }

@@ -2,12 +2,14 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { console } from "forge-std/console.sol";
+import {VersionedInitializable} from "./upgradeable/VersionedInitializable.sol";
 import { IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
 
-contract NSTBLStakePool is StakePoolStorage {
+contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     using SafeERC20 for IERC20Helper;
 
-    uint256 private _locked = 1;
+    uint256 private _locked;
 
     modifier nonReentrant() {
         require(_locked == 1, "P:LOCKED");
@@ -29,7 +31,22 @@ contract NSTBLStakePool is StakePoolStorage {
         _;
     }
 
-    constructor(address _aclManager, address _nstbl, address _loanManager, address _atvl) {
+    // constructor(address _aclManager, address _nstbl, address _loanManager, address _atvl) {
+    //     _zeroAddressCheck(_aclManager);
+    //     _zeroAddressCheck(_nstbl);
+    //     _zeroAddressCheck(_loanManager);
+    //     _zeroAddressCheck(_atvl);
+    //     aclManager = _aclManager;
+    //     nstbl = _nstbl;
+    //     loanManager = _loanManager;
+    //     atvl = _atvl;
+    //     lpToken = new TokenLP("Maple LP Token", "MPL", IACLManager(aclManager).admin());
+    // }
+    constructor() {
+        usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    }
+
+    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl) external initializer {
         _zeroAddressCheck(_aclManager);
         _zeroAddressCheck(_nstbl);
         _zeroAddressCheck(_loanManager);
@@ -38,7 +55,9 @@ contract NSTBLStakePool is StakePoolStorage {
         nstbl = _nstbl;
         loanManager = _loanManager;
         atvl = _atvl;
-        lpToken = new TokenLP("Maple LP Token", "MPL", IACLManager(aclManager).admin());
+        lpToken = new TokenLP("NSTBLStakePool LP Token", "NSTBL_SP", IACLManager(aclManager).admin());
+        _locked = 1;
+        poolProduct = 1e18;
     }
 
     function init(
@@ -307,4 +326,13 @@ contract NSTBLStakePool is StakePoolStorage {
     function _zeroAddressCheck(address _address) internal pure {
         require(_address != address(0), "SP:INVALID_ADDRESS");
     }
+
+    function getRevision() internal pure virtual override returns (uint256) {
+        return REVISION;
+    }
+
+    function getVersion() public pure returns(uint256 _version) {
+        _version = getRevision();
+    }
+
 }

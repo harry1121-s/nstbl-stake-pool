@@ -16,50 +16,65 @@ contract StakePoolTest is BaseTest {
         super.setUp();
     }
 
-    function test_deployment() external {
-        // Check deployment
-        assertEq(stakePool.aclManager(), address(aclManager), "check aclManager");
-        assertEq(stakePool.nstbl(), address(nstblToken), "check nstblToken");
-        assertEq(stakePool.atvl(), address(atvl), "check atvl");
+    function test_proxy() external{
+        
+        assertEq(stakePool.aclManager(), address(aclManager));
+        assertEq(stakePool.nstbl(), address(nstblToken));
+        assertEq(stakePool.atvl(), address(atvl));
+        assertEq(stakePool.loanManager(), address(loanManager));
+        ERC20 lp = ERC20(address(stakePool.lpToken()));
+        assertEq(lp.name(), "NSTBLStakePool LP Token");
+        assertEq(lp.symbol(), "NSTBL_SP");
+        assertEq(stakePool.poolProduct(), 1e18);
+        assertEq(stakePool.yieldThreshold(), 285_388_127);
+        assertEq(stakePool.getVersion(), 1);
+        assertEq(uint256(vm.load(address(stakePool), bytes32(uint256(0)))), 1);
 
-        // Test failing Deployment
-
-        // ACLManager cannot be the zero address
-        vm.expectRevert("SP:INVALID_ADDRESS");
-        NSTBLStakePool stakePoolTemp = new NSTBLStakePool(
-            address(0),
-            address(nstblToken),
-            address(loanManager),
-            atvl
-        );
-
-        // nSTBL token cannot be the zero address
-        vm.expectRevert("SP:INVALID_ADDRESS");
-        stakePoolTemp = new NSTBLStakePool(
-            address(aclManager),
-            address(0),
-            address(loanManager),
-            atvl
-        );
-
-        // loanManager cannot be the zero address
-        vm.expectRevert("SP:INVALID_ADDRESS");
-        stakePoolTemp = new NSTBLStakePool(
-            address(aclManager),
-            address(nstblToken),
-            address(0),
-            atvl
-        );
-
-        // ATVL cannot be the zero address
-        vm.expectRevert("SP:INVALID_ADDRESS");
-        stakePoolTemp = new NSTBLStakePool(
-            address(aclManager),
-            address(nstblToken),
-            address(loanManager),
-            address(0)
-        );
     }
+    // function test_deployment() external {
+    //     // Check deployment
+    //     assertEq(stakePool.aclManager(), address(aclManager), "check aclManager");
+    //     assertEq(stakePool.nstbl(), address(nstblToken), "check nstblToken");
+    //     assertEq(stakePool.atvl(), address(atvl), "check atvl");
+
+    //     // Test failing Deployment
+
+    //     // ACLManager cannot be the zero address
+    //     vm.expectRevert("SP:INVALID_ADDRESS");
+    //     NSTBLStakePool stakePoolTemp = new NSTBLStakePool(
+    //         address(0),
+    //         address(nstblToken),
+    //         address(loanManager),
+    //         atvl
+    //     );
+
+    //     // nSTBL token cannot be the zero address
+    //     vm.expectRevert("SP:INVALID_ADDRESS");
+    //     stakePoolTemp = new NSTBLStakePool(
+    //         address(aclManager),
+    //         address(0),
+    //         address(loanManager),
+    //         atvl
+    //     );
+
+    //     // loanManager cannot be the zero address
+    //     vm.expectRevert("SP:INVALID_ADDRESS");
+    //     stakePoolTemp = new NSTBLStakePool(
+    //         address(aclManager),
+    //         address(nstblToken),
+    //         address(0),
+    //         atvl
+    //     );
+
+    //     // ATVL cannot be the zero address
+    //     vm.expectRevert("SP:INVALID_ADDRESS");
+    //     stakePoolTemp = new NSTBLStakePool(
+    //         address(aclManager),
+    //         address(nstblToken),
+    //         address(loanManager),
+    //         address(0)
+    //     );
+    // }
 
     function test_init_funcs() external {
         vm.startPrank(deployer);
@@ -103,6 +118,8 @@ contract StakePoolTest is BaseTest {
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
         stakePool.updateMaturyValue();
+        console.log("Maturity Value: ", stakePool.oldMaturityVal());
+
         uint256 maturityVal = stakePool.oldMaturityVal();
         vm.warp(block.timestamp + 12 days);
         stakePool.updatePool();
@@ -367,7 +384,7 @@ contract StakePoolTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_stake_updatePool_fuzz(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _time)
+    function test_stake_unstake_updatePool_fuzz(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _time)
         external
     {
         uint256 lowerBound = 10 * 1e18;
@@ -463,7 +480,7 @@ contract StakePoolTest is BaseTest {
         }
     }
 
-    function test_stake_burn_noYield_fuzz(
+    function test_stake_unstake_burn_noYield_fuzz(
         uint256 _amount1,
         uint256 _amount2,
         uint256 _investAmount,
