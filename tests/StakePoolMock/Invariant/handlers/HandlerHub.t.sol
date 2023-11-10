@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
+import "forge-std/console.sol";
+
 import { HandlerBase } from "./helpers/HandlerBase.t.sol";
 import { IHandlerMain } from "./helpers/IHandlerMain.sol";
 
@@ -52,8 +54,6 @@ contract HandlerHub is HandlerBase {
         uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 newMaturityVal = stakePool.oldMaturityVal();
 
-
-
         // // Post-condition
         if(awaitingRedemption) {
             assertEq(newTokenBalance, oldTokenBalance, "1:Should not have minted any rewards to the pool");
@@ -97,7 +97,8 @@ contract HandlerHub is HandlerBase {
 
         // Redemption less than assets invested in Maple
         uint256 oldLMAssets = loanManager.getMaturedAssets(USDC);
-        amount_ = amount_ % oldLMAssets;
+        amount_ = amount_ % oldLMAssets+1;
+
 
         // Update loanManager InvestedAssets based on redeem (assumes requestRedemption and Redemption done in one step)
         loanManager.updateInvestedAssets(oldLMAssets - amount_);
@@ -107,12 +108,12 @@ contract HandlerHub is HandlerBase {
         uint256 oldTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 maturityVal = stakePool.oldMaturityVal();
 
-        stakePool.updatePoolFromHub(true, 0, amount_);
+        stakePool.updatePoolFromHub(true, amount_, 0);
         uint256 newPoolBalance = stakePool.poolBalance();
         uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 newMaturityVal = stakePool.oldMaturityVal();
 
-        uint256 nstblYield = loanManager.getMaturedAssets(USDC) + amount_ - maturityVal;
+        // uint256 nstblYield = (loanManager.getMaturedAssets(USDC) + amount_) - maturityVal;
         // uint256 atvlBal = IERC20Helper(atvl).balanceOf(address(stakePool));
         // uint256 poolBalance = stakePool.poolBalance();
         // uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
@@ -125,9 +126,9 @@ contract HandlerHub is HandlerBase {
         //     return;
         // }
         if(oldPoolBalance <= 1e18) {
-            assertEq(newTokenBalance - oldTokenBalance, nstblYield, "Rewards minted correctly when poolBalance < 1e18");
-            // assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
-            // assertEq(newMaturityVal, loanManager.getMaturedAssets(USDC) + amount_, "3:Should have set the oldMaturityVal correctly");
+            assertEq(newTokenBalance - oldTokenBalance, (loanManager.getMaturedAssets(USDC) + amount_) - maturityVal, "Rewards minted correctly when poolBalance < 1e18");
+            assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
+            assertEq(newMaturityVal, loanManager.getMaturedAssets(USDC), "3:Should have set the oldMaturityVal correctly");
             return;
         }
         // assertEq(newBalance - oldBalance, nstblYield - atvlYield, "Rewards minted correctly to the stakePool");
