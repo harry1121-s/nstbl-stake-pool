@@ -23,12 +23,13 @@ contract TestStakePoolInvariant is BaseTest {
     function setUp() public override {
         super.setUp();
 
-        hub = new HandlerHub(address(nstblToken), address(stakePool), address(loanManager), address(this));
+        hub = new HandlerHub(address(nstblToken), address(stakePool), address(loanManager), address(this), atvl);
         vm.prank(deployer);
         aclManager.setAuthorizedCallerStakePool(address(hub), true);
 
         // Set weights for user actions
         hub.setSelectorWeight("deposit(uint256)", 100);
+        // hub.setSelectorWeight("redeemMaple(uint256)", 100);
 
         uint256[] memory weightsActorManager = new uint256[](1);
         weightsActorManager[0] = 100; // hub
