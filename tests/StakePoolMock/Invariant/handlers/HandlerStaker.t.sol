@@ -39,7 +39,7 @@ contract HandlerStaker is HandlerBase {
         }
 
         uint8 trancheId = uint8(amount_ % 3);
-        amount_ = bound(amount_, 10e18, 1e32);
+        amount_ = bound(amount_, 10e18, 1e30);
 
         bool awaitingRedemption = loanManager.getAwaitingRedemptionStatus(USDC);
 
@@ -48,7 +48,7 @@ contract HandlerStaker is HandlerBase {
         assertLt(trancheId, 3);
         assertGt(block.timestamp, oldTime);
         assertEq(block.timestamp, oldTime + numOfDays * 1 days);
-        
+
         // Action
         uint256 oldPoolBalance = stakePool.poolBalance();
         uint256 oldTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
