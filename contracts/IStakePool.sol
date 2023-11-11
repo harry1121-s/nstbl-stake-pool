@@ -11,7 +11,6 @@ interface IStakePool {
         uint256 version, address aclManager, address nstblToken, address loanManager, address atvl, address lpToken
     );
     event StakePoolSetup(
-        uint256 yieldThreshold,
         uint64 trancheStakeTimePeriod1,
         uint64 trancheStakeTimePeriod2,
         uint64 trancheStakeTimePeriod3

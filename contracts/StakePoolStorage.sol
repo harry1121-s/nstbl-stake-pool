@@ -38,7 +38,7 @@ contract StakePoolStorage is IStakePool {
     uint256 public poolEpochId;
     uint256 public unclaimedRewards;
 
-    uint256 public yieldThreshold; //9% APY
+    // uint256 public yieldThreshold; //9% APY
     // uint256 public stakingThreshold;
 
     uint256 public atvlExtraYield;

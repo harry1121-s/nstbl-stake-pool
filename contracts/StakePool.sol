@@ -51,7 +51,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     function setupStakePool(
-        uint256 _yieldThreshold,
+        // uint256 _yieldThreshold,
         uint16[3] memory trancheBaseFee,
         uint16[3] memory earlyUnstakeFee,
         uint8[3] memory stakeTimePeriods
@@ -59,7 +59,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         require(trancheBaseFee.length == 3, "SP: INVALID_TRANCHE_FEE");
         require(earlyUnstakeFee.length == 3, "SP: INVALID_EARLY_UNSTAKE_FEE");
         require(stakeTimePeriods.length == 3, "SP: INVALID_STAKE_TIME_PERIODS");
-        yieldThreshold = _yieldThreshold;
+        // yieldThreshold = _yieldThreshold;
         trancheBaseFee1 = trancheBaseFee[0];
         trancheBaseFee2 = trancheBaseFee[1];
         trancheBaseFee3 = trancheBaseFee[2];
@@ -69,7 +69,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
         trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
         trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
-        emit StakePoolSetup(yieldThreshold, trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
+        emit StakePoolSetup(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
     }
 
     function setATVL(address _atvl) external onlyAdmin {
@@ -96,7 +96,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
-    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller {
+    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller nonReentrant{
         if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem) {
             oldMaturityVal += depositAmount;
             return;
@@ -111,7 +111,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             nstblYield = newMaturityVal + stablesReceived - oldMaturityVal;
             oldMaturityVal = newMaturityVal;
         } else {
-            if (newMaturityVal < oldMaturityVal) {
+            if (newMaturityVal < oldMaturityVal) { 
                 oldMaturityVal += depositAmount;
                 return;
             }
@@ -295,19 +295,19 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
-    function _getMaturityTokens(uint256 tokensAvailable, uint256 stakeAmount, uint256 stakeTimeStamp)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 timeElapsed = (block.timestamp - stakeTimeStamp);
-        if (tokensAvailable <= stakeAmount) {
-            return tokensAvailable;
-        } else {
-            uint256 maturityTokens = stakeAmount + (stakeAmount * timeElapsed * yieldThreshold / 1e17);
-            return maturityTokens <= tokensAvailable ? maturityTokens : tokensAvailable;
-        }
-    }
+    // function _getMaturityTokens(uint256 tokensAvailable, uint256 stakeAmount, uint256 stakeTimeStamp)
+    //     internal
+    //     view
+    //     returns (uint256)
+    // {
+    //     uint256 timeElapsed = (block.timestamp - stakeTimeStamp);
+    //     if (tokensAvailable <= stakeAmount) {
+    //         return tokensAvailable;
+    //     } else {
+    //         uint256 maturityTokens = stakeAmount + (stakeAmount * timeElapsed * yieldThreshold / 1e17);
+    //         return maturityTokens <= tokensAvailable ? maturityTokens : tokensAvailable;
+    //     }
+    // }
 
     function getStakerInfo(address user, uint8 trancheId)
         external

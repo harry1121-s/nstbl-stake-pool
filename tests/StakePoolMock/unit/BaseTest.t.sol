@@ -129,7 +129,7 @@ contract BaseTest is Test {
         //     );
         
         aclManager.setAuthorizedCallerToken(address(stakePoolProxy), true);
-        stakePool.setupStakePool(285_388_127, [300, 200, 100], [700, 500, 300], [30, 90, 180]);
+        stakePool.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();
     }
