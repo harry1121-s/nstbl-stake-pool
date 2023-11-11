@@ -185,7 +185,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
-    function updateMaturityValue() external authorizedCaller {
+    function updateMaturityValue() external {
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
         genesis += 1;
@@ -228,7 +228,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
         _updatePool();
-        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
 
         if (staker.amount > 0) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
@@ -245,6 +244,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         staker.lpTokens += stakeAmount;
         lpToken.mint(destinationAddress, stakeAmount);
 
+        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
         emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
     }
 
@@ -277,15 +277,15 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         staker.lpTokens = 0;
         poolBalance -= tokensAvailable;
 
-        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
-        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-
         //resetting system
         if (poolBalance <= 1e18) {
             poolProduct = 1e18;
             poolEpochId += 1;
             poolBalance = 0;
         }
+
+        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
+        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         emit Unstake(user, tokensAvailable, unstakeFee);
     }
 
