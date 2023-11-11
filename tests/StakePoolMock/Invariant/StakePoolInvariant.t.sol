@@ -38,7 +38,8 @@ contract TestStakePoolInvariant is BaseTest {
         // hub.setSelectorWeight("redeemMaple(uint256)", 50);
         // hub.setSelectorWeight("burnNSTBL(uint256)", 100);
 
-        staker1.setSelectorWeight("stake(uint256)", 100);
+        staker1.setSelectorWeight("stake(uint256)", 50);
+        staker1.setSelectorWeight("unstake(uint256)", 50);
 
         uint256[] memory weightsActorManager = new uint256[](1);
         // weightsActorManager[0] = 100; // hub
