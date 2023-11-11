@@ -13,6 +13,7 @@ contract LoanManagerMock {
     uint256 public rewards;
     uint256 public extraDeposit;
     uint256 public removedAssets;
+    uint256 public redeemedAssets;
     uint256 public startTime;
     TokenLPMock public lUSDC;
     TokenLPMock public lUSDT;
@@ -50,12 +51,16 @@ contract LoanManagerMock {
         investedAssets = _investedAssets;
     }
 
+    function updateRedeemedAssets(uint256 _redeemedAssets) external {
+        redeemedAssets = _redeemedAssets;
+    }
+
     function getInvestedAssets(address _asset) external view returns (uint256) {
         return investedAssets + extraDeposit - removedAssets;
     }
 
     function getMaturedAssets(address _asset) external view returns (uint256 _value) {
-        _value = extraDeposit + (investedAssets + ((investedAssets * (block.timestamp - startTime) * interest) / 1e17));
+        _value = extraDeposit + (investedAssets + ((investedAssets * (block.timestamp - startTime) * interest) / 1e17)) - redeemedAssets;
     }
 
     // function getMaturedAssets(address _asset) external view returns(uint256) {

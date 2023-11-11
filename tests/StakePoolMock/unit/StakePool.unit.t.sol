@@ -266,14 +266,15 @@ contract StakePoolTest is BaseTest {
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active
-        loanManager.updateInvestedAssets(_amount * 4 + _amount / 5);
+        loanManager.updateInvestedAssets(_amount * 4 + _amount / 5 - _amount/100);
+        loanManager.updateRedeemedAssets(_amount/100);
         vm.warp(block.timestamp + _time);
         vm.startPrank(NSTBL_HUB);
         oldVal = stakePool.oldMaturityVal();
         loanManager.updateAwaitingRedemption(usdc, true);
         stakePool.updatePoolFromHub(true, _amount / 100, 0);
         newVal = stakePool.oldMaturityVal();
-        assertEq(newVal - oldVal, loanManager.getMaturedAssets(usdc) - oldVal, "Reward update due to redemption");
+        assertEq(newVal - oldVal, loanManager.getMaturedAssets(usdc) - (oldVal - _amount/100), "Reward update due to redemption");
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active and tBills are devalued
