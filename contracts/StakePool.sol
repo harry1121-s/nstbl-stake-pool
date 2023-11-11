@@ -106,12 +106,12 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         authorizedCaller
         nonReentrant
     {
-        if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem) {
+        if (ILoanManager(loanManager).awaitingRedemption() && !redeem) {
             oldMaturityVal += depositAmount;
             return;
         }
         uint256 nstblYield;
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
+        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
 
         if (redeem) {
             if (newMaturityVal + stablesReceived < oldMaturityVal) {
@@ -150,11 +150,11 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     function _updatePool() internal {
-        if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc)) {
+        if (ILoanManager(loanManager).awaitingRedemption()) {
             return;
         }
 
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
+        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
             // in case Maple devalues T-bills
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
@@ -187,7 +187,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
     function updateMaturityValue() external {
         require(genesis == 0, "SP: GENESIS");
-        oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
+        oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         genesis += 1;
     }
 
