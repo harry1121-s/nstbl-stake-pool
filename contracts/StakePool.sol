@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { console } from "forge-std/console.sol";
-import {VersionedInitializable} from "./upgradeable/VersionedInitializable.sol";
+import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
 import { IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
 
 contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
@@ -35,7 +35,10 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
 
-    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl) external initializer {
+    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
+        external
+        initializer
+    {
         _zeroAddressCheck(_aclManager);
         _zeroAddressCheck(_nstbl);
         _zeroAddressCheck(_loanManager);
@@ -83,19 +86,26 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         if (_trancheId == 0) {
             fee = (timeElapsed > trancheStakeTimePeriod[0])
                 ? trancheBaseFee1
-                : trancheBaseFee1 + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0]-timeElapsed) / trancheStakeTimePeriod[0]);
+                : trancheBaseFee1
+                    + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
         } else if (_trancheId == 1) {
             fee = (timeElapsed > trancheStakeTimePeriod[1])
                 ? trancheBaseFee2
-                : trancheBaseFee2 + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1]-timeElapsed) / trancheStakeTimePeriod[1]);
+                : trancheBaseFee2
+                    + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
         } else {
             fee = (timeElapsed > trancheStakeTimePeriod[2])
                 ? trancheBaseFee3
-                : trancheBaseFee3 + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2]-timeElapsed) / trancheStakeTimePeriod[2]);
+                : trancheBaseFee3
+                    + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
         }
     }
 
-    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external authorizedCaller nonReentrant{
+    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount)
+        external
+        authorizedCaller
+        nonReentrant
+    {
         if (ILoanManager(loanManager).getAwaitingRedemptionStatus(usdc) && !redeem) {
             oldMaturityVal += depositAmount;
             return;
@@ -110,12 +120,12 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             nstblYield = newMaturityVal + stablesReceived - oldMaturityVal;
             oldMaturityVal = newMaturityVal;
         } else {
-            if (newMaturityVal < oldMaturityVal) { 
+            if (newMaturityVal < oldMaturityVal) {
                 oldMaturityVal += depositAmount;
                 return;
             }
             nstblYield = newMaturityVal - oldMaturityVal;
-            if(nstblYield <= 1e18){
+            if (nstblYield <= 1e18) {
                 oldMaturityVal += depositAmount;
                 return;
             }
@@ -134,7 +144,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
         nstblYield *= 1e18; //to maintain precision for accNSTBLPerShare
 
-        poolProduct = (poolProduct * (poolBalance*1e18 + nstblYield)) / (poolBalance*1e18);
+        poolProduct = (poolProduct * (poolBalance * 1e18 + nstblYield)) / (poolBalance * 1e18);
         poolBalance += (nstblYield / 1e18);
         emit UpdatedFromHub(poolProduct, poolBalance, nstblYield, atvlYield);
     }
@@ -168,14 +178,14 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
             nstblYield *= 1e18; //to maintain precision
 
-            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance*1e18);
+            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
             poolBalance += (nstblYield / 1e18);
 
             oldMaturityVal = newMaturityVal;
         }
     }
 
-    function updateMaturityValue() external authorizedCaller{
+    function updateMaturityValue() external authorizedCaller {
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
         genesis += 1;
@@ -194,7 +204,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
         IERC20Helper(nstbl).burn(address(this), _amount);
 
-        poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance*1e18);
+        poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance * 1e18);
 
         if (poolProduct == 0 || poolBalance - _amount <= 1e18) {
             //because of loss of precision
@@ -259,37 +269,39 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         if (!depeg) {
             unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
 
-            if (timeElapsed > trancheStakeTimePeriod[trancheId] + 1) {
-                //restake
-                // staker.amount = maturityTokens - unstakeFee;
-                staker.amount = tokensAvailable - unstakeFee;
-                staker.stakeTimeStamp = block.timestamp;
-                IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+            // if (timeElapsed > trancheStakeTimePeriod[trancheId] + 1) {
+            //     //restake
+            //     // staker.amount = maturityTokens - unstakeFee;
+            //     staker.amount = tokensAvailable - unstakeFee;
+            //     staker.stakeTimeStamp = block.timestamp;
+            //     staker.poolDebt = poolProduct;
+            //     IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
 
-                return;
-            }
+            //     return;
+            // }
         } else {
             unstakeFee = 0;
         }
 
-        if (depeg || timeElapsed <= trancheStakeTimePeriod[trancheId] + 1) {
-            lpToken.burn(lpOwner, staker.lpTokens);
-            staker.amount = 0;
-            staker.lpTokens = 0;
-            poolBalance -= tokensAvailable;
+        // if (depeg || timeElapsed <= trancheStakeTimePeriod[trancheId] + 1) {
+        lpToken.burn(lpOwner, staker.lpTokens);
+        staker.amount = 0;
+        staker.lpTokens = 0;
+        staker.poolDebt = 0;
+        poolBalance -= tokensAvailable;
 
-            IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
-            IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
+        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
 
-            //resetting system
-            if (poolBalance <= 1e18) {
-                poolProduct = 1e18;
-                poolEpochId += 1;
-                poolBalance = 0;
-                // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
-            }
-            emit Unstake(user, tokensAvailable, unstakeFee);
+        //resetting system
+        if (poolBalance <= 1e18) {
+            poolProduct = 1e18;
+            poolEpochId += 1;
+            poolBalance = 0;
+            // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
         }
+        emit Unstake(user, tokensAvailable, unstakeFee);
+        // }
     }
 
     function getStakerInfo(address user, uint8 trancheId)
@@ -318,8 +330,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         return REVISION;
     }
 
-    function getVersion() public pure returns(uint256 _version) {
+    function getVersion() public pure returns (uint256 _version) {
         _version = getRevision();
     }
-
 }

@@ -6,7 +6,10 @@ import "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
-import { ITransparentUpgradeableProxy, TransparentUpgradeableProxy } from "../../../contracts/upgradeable/TransparentUpgradeableProxy.sol";
+import {
+    ITransparentUpgradeableProxy,
+    TransparentUpgradeableProxy
+} from "../../../contracts/upgradeable/TransparentUpgradeableProxy.sol";
 import { ProxyAdmin } from "../../../contracts/upgradeable/ProxyAdmin.sol";
 import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
@@ -116,7 +119,9 @@ contract BaseTest is Test {
         assertEq(proxyAdmin.owner(), deployer);
         stakePoolImpl = new NSTBLStakePool();
         console.log("Implementation Address:", address(stakePoolImpl));
-        bytes memory data = abi.encodeCall(stakePoolImpl.initialize, (address(aclManager), address(nstblToken), address(loanManager), atvl));
+        bytes memory data = abi.encodeCall(
+            stakePoolImpl.initialize, (address(aclManager), address(nstblToken), address(loanManager), atvl)
+        );
         stakePoolProxy = new TransparentUpgradeableProxy(address(stakePoolImpl), address(proxyAdmin), data);
         stakePool = NSTBLStakePool(address(stakePoolProxy));
         console.log("Proxy Address:", address(stakePoolProxy));
@@ -127,7 +132,7 @@ contract BaseTest is Test {
         //     address(loanManager),
         //     atvl
         //     );
-        
+
         aclManager.setAuthorizedCallerToken(address(stakePoolProxy), true);
         stakePool.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();

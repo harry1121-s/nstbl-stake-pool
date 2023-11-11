@@ -11,9 +11,7 @@ interface IStakePool {
         uint256 version, address aclManager, address nstblToken, address loanManager, address atvl, address lpToken
     );
     event StakePoolSetup(
-        uint64 trancheStakeTimePeriod1,
-        uint64 trancheStakeTimePeriod2,
-        uint64 trancheStakeTimePeriod3
+        uint64 trancheStakeTimePeriod1, uint64 trancheStakeTimePeriod2, uint64 trancheStakeTimePeriod3
     );
     event ATVLUpdated(address atvl);
     event UpdatedFromHub(uint256 poolProduct, uint256 poolBalance, uint256 nstblYield, uint256 atvlYield);
