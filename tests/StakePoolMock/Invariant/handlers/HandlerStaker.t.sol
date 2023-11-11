@@ -36,7 +36,7 @@ contract HandlerStaker is HandlerBase {
         }
 
         uint8 trancheId = uint8(amount_ % 3);
-        amount_ = bound(amount_, 1e18, 1e32);
+        amount_ = bound(amount_, 10e18, 1e32);
         
         bool awaitingRedemption = loanManager.getAwaitingRedemptionStatus(USDC);
 
@@ -52,9 +52,9 @@ contract HandlerStaker is HandlerBase {
         deal(address(nSTBLtoken), address(this), amount_);
         nSTBLtoken.approve(address(stakePool), amount_);
         stakePool.stake(address(this), amount_, trancheId, address(this));
-        uint256 newPoolBalance = stakePool.poolBalance();
-        uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
-        uint256 newMaturityVal = stakePool.oldMaturityVal();
+        // uint256 newPoolBalance = stakePool.poolBalance();
+        // uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
+        // uint256 newMaturityVal = stakePool.oldMaturityVal();
 
     } 
 

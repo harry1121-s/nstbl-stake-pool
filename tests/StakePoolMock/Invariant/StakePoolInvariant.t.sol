@@ -46,8 +46,8 @@ contract TestStakePoolInvariant is BaseTest {
         // weightsActorManager[1] = 100; // staker1
 
         address[] memory targetContracts = new address[](1);
-        // targetContracts[0] = address(hub);
-        targetContracts[0] = address(staker1);
+        targetContracts[0] = address(hub);
+        // targetContracts[0] = address(staker1);
 
         actorManager = new ActorManager(targetContracts, weightsActorManager);
 

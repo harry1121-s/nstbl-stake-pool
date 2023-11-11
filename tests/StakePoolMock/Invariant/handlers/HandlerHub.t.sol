@@ -100,7 +100,7 @@ contract HandlerHub is HandlerBase {
 
 
         // Update loanManager InvestedAssets based on redeem (assumes requestRedemption and Redemption done in one step)
-        loanManager.updateInvestedAssets(oldLMAssets - amount_);
+        loanManager.removeAssets(oldLMAssets - amount_);
 
         // Action
         uint256 oldPoolBalance = stakePool.poolBalance();

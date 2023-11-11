@@ -44,7 +44,7 @@ contract LoanManagerMock {
     }
 
     function removeAssets(uint256 _assets) external {
-        removedAssets = _assets;
+        removedAssets += _assets;
     }
 
     function updateInvestedAssets(uint256 _investedAssets) external {
