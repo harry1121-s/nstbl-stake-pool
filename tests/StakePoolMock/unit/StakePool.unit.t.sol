@@ -370,8 +370,8 @@ contract StakePoolTest is BaseTest {
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
-        (,,, uint256 stakerLP1) = stakePool.getStakerInfo(user1, 0);
-        (,,, uint256 stakerLP2) = stakePool.getStakerInfo(user2, 1);
+        (,,, uint256 stakerLP1,) = stakePool.getStakerInfo(user1, 0);
+        (,,, uint256 stakerLP2,) = stakePool.getStakerInfo(user2, 1);
         if (_time / 1 days <= stakePool.trancheStakeTimePeriod(0) + 1) {
             if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
                 assertApproxEqAbs(
@@ -418,7 +418,7 @@ contract StakePoolTest is BaseTest {
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,,) = stakePool.getStakerInfo(user1, 1);
+        (uint256 amount, uint256 poolDebt,,,) = stakePool.getStakerInfo(user1, 1);
         assertEq(amount, _amount1, "check stakerInfo.amount");
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 
@@ -438,7 +438,7 @@ contract StakePoolTest is BaseTest {
             assertEq(stakePool.poolBalance(), _amount1 + _amount2, "check poolBalance3");
         }
 
-        (amount, poolDebt,,) = stakePool.getStakerInfo(user2, 2);
+        (amount, poolDebt,,,) = stakePool.getStakerInfo(user2, 2);
         assertEq(amount, _amount2, "check stakerInfo.amount");
 
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
@@ -516,7 +516,7 @@ contract StakePoolTest is BaseTest {
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
-        (uint256 amount, uint256 poolDebt,,) = stakePool.getStakerInfo(user1, 1);
+        (uint256 amount, uint256 poolDebt,,,) = stakePool.getStakerInfo(user1, 1);
         assertEq(amount, _amount1, "check stakerInfo.amount");
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 

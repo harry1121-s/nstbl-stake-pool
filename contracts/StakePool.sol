@@ -295,13 +295,14 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     function getStakerInfo(address user, uint8 trancheId)
         external
         view
-        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens)
+        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens, uint256 _stakerTimeStamp)
     {
         StakerInfo memory staker = stakerInfo[trancheId][user];
         _amount = staker.amount;
         _poolDebt = staker.poolDebt;
         _epochId = staker.epochId;
         _lpTokens = staker.lpTokens;
+        _stakerTimeStamp = staker.stakeTimeStamp;
     }
 
     function transferATVLYield() public nonReentrant {
