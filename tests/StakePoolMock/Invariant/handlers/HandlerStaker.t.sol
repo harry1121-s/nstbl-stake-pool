@@ -127,6 +127,7 @@ contract HandlerStaker is HandlerBase {
 
         bool awaitingRedemption = loanManager.getAwaitingRedemptionStatus(USDC);
 
+        uint256 tokenBalanceStaker = 
         uint256 oldPoolBalance = stakePool.poolBalance();
         uint256 oldTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 maturityVal = stakePool.oldMaturityVal();
@@ -159,14 +160,10 @@ contract HandlerStaker is HandlerBase {
         uint256 unstakeFee;
         if (!depeg) {
             unstakeFee = _getUnstakeFee(trancheId, stakerInfo.stakeTimeStamp) * tokensAvailable / 10_000;
-            if (block.timestamp - stakerInfo.stakeTimeStamp > trancheStakeTimePeriod[trancheId] + 1) {
-                assertEq(
-                    stakerInfoNew.amount, tokensAvailable - unstakeFee, "1:Should have restaked the correct amount"
-                );
-                assertEq(stakerInfoNew.stakeTimeStamp, block.timestamp, "1:Should have set the correct stakeTimeStamp");
-            }
-        }
 
+        }
+        assertEq(stakerInfoNew.amount, 0, "1:Should have unstaked the correct amount");
+        assertEq(stakerInfoNew.epochId, 0, "1:Should have set the epochId correctly");
         // Updating staker details
         (stakerInfo.amount, stakerInfo.poolDebt, stakerInfo.epochId, stakerInfo.lpTokens, stakerInfo.stakeTimeStamp) =
             stakePool.getStakerInfo(address(this), trancheId);

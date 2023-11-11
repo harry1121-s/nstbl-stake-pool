@@ -265,29 +265,16 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp) / 1 days;
         uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-        // uint256 maturityTokens = _getMaturityTokens(tokensAvailable, staker.amount, staker.stakeTimeStamp);
+
         if (!depeg) {
             unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-
-            // if (timeElapsed > trancheStakeTimePeriod[trancheId] + 1) {
-            //     //restake
-            //     // staker.amount = maturityTokens - unstakeFee;
-            //     staker.amount = tokensAvailable - unstakeFee;
-            //     staker.stakeTimeStamp = block.timestamp;
-            //     staker.poolDebt = poolProduct;
-            //     IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-
-            //     return;
-            // }
         } else {
             unstakeFee = 0;
         }
 
-        // if (depeg || timeElapsed <= trancheStakeTimePeriod[trancheId] + 1) {
         lpToken.burn(lpOwner, staker.lpTokens);
         staker.amount = 0;
         staker.lpTokens = 0;
-        staker.poolDebt = 0;
         poolBalance -= tokensAvailable;
 
         IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
@@ -298,10 +285,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             poolProduct = 1e18;
             poolEpochId += 1;
             poolBalance = 0;
-            // IERC20Helper(nstbl).safeTransfer(atvl, IERC20Helper(nstbl).balanceOf(address(this)));
         }
         emit Unstake(user, tokensAvailable, unstakeFee);
-        // }
     }
 
     function getStakerInfo(address user, uint8 trancheId)

@@ -307,7 +307,9 @@ contract StakePoolTest is BaseTest {
         _amount2 = bound(_amount2, lowerBound, 1e12 * 1e18);
         _amount3 = bound(_amount3, lowerBound, 1e12 * 1e18);
         _investAmount = bound(_investAmount, 7 * (_amount1 + _amount2) / 8, 1e15 * 1e18);
-        _time = bound(_time, 10 days, 5 * 365 days);
+        _time = bound(_time, 10 days, 5 * 365 days); // randomize for all three don't use same time
+        // fuzz awaiting redemption
+        // write stateless fuzz
 
         loanManager.updateInvestedAssets(_investAmount);
         vm.prank(NSTBL_HUB);
