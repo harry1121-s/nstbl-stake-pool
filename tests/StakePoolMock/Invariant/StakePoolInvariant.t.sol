@@ -7,7 +7,6 @@ import { HandlerHub } from "./handlers/HandlerHub.t.sol";
 import { HandlerStaker } from "./handlers/HandlerStaker.t.sol";
 
 contract TestStakePoolInvariant is BaseTest {
-
     /*//////////////////////////////////////////////////////////////
     Agent handlers
     //////////////////////////////////////////////////////////////*/
@@ -16,7 +15,7 @@ contract TestStakePoolInvariant is BaseTest {
     HandlerStaker public staker2;
     ActorManager public actorManager;
 
-    // Feedback of user addresses for agentHandler 
+    // Feedback of user addresses for agentHandler
     address[] public users;
 
     /*//////////////////////////////////////////////////////////////
@@ -35,19 +34,19 @@ contract TestStakePoolInvariant is BaseTest {
         vm.stopPrank();
 
         // Set weights for user actions
-        // hub.setSelectorWeight("deposit(uint256)", 100);
-        hub.setSelectorWeight("redeemMaple(uint256)", 100);
+        // hub.setSelectorWeight("deposit(uint256)", 50);
+        // hub.setSelectorWeight("redeemMaple(uint256)", 50);
         // hub.setSelectorWeight("burnNSTBL(uint256)", 100);
 
         staker1.setSelectorWeight("stake(uint256)", 100);
 
         uint256[] memory weightsActorManager = new uint256[](1);
-        weightsActorManager[0] = 100; // hub
-        // weightsActorManager[1] = 100; // staker1
+        // weightsActorManager[0] = 100; // hub
+        weightsActorManager[0] = 100; // staker1
 
         address[] memory targetContracts = new address[](1);
-        targetContracts[0] = address(hub);
-        // targetContracts[0] = address(staker1);
+        // targetContracts[0] = address(hub);
+        targetContracts[0] = address(staker1);
 
         actorManager = new ActorManager(targetContracts, weightsActorManager);
 
@@ -58,11 +57,9 @@ contract TestStakePoolInvariant is BaseTest {
         stakePool.updateMaturityValue();
     }
 
-    function invariant_stakePool() public {}
+    function invariant_stakePool() public { }
 
     function numOfUsers() public view returns (uint256) {
         return users.length;
     }
-
-
 }

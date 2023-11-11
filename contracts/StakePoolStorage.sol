@@ -13,7 +13,6 @@ contract StakePoolStorage is IStakePool {
     address public immutable usdc;
     uint256 internal immutable REVISION = 1;
 
-
     /*//////////////////////////////////////////////////////////////
     STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
@@ -57,7 +56,6 @@ contract StakePoolStorage is IStakePool {
     uint32 public earlyUnstakeFee3;
 
     mapping(uint8 => uint64) public trancheStakeTimePeriod;
-
 
     //add new variables here to extended the storage
     //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision

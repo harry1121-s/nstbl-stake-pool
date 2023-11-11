@@ -31,7 +31,7 @@ contract LoanManagerMock {
         extraDeposit = _assets;
     }
 
-    function deposit(address _asset, uint256 _amount) external { 
+    function deposit(address _asset, uint256 _amount) external {
         investedAssets += _amount;
     }
 
@@ -60,7 +60,8 @@ contract LoanManagerMock {
     }
 
     function getMaturedAssets(address _asset) external view returns (uint256 _value) {
-        _value = extraDeposit + (investedAssets + ((investedAssets * (block.timestamp - startTime) * interest) / 1e17)) - redeemedAssets;
+        _value = extraDeposit + (investedAssets + ((investedAssets * (block.timestamp - startTime) * interest) / 1e17))
+            - redeemedAssets;
     }
 
     // function getMaturedAssets(address _asset) external view returns(uint256) {

@@ -8,6 +8,7 @@ import { IHandlerMain } from "./helpers/IHandlerMain.sol";
 import { NSTBLStakePool } from "../../../../contracts/StakePool.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LoanManagerMock } from "../../../../contracts/mocks/LoanManagerMock.sol";
+import { IStakePool } from "../../../../contracts/IStakePool.sol";
 
 contract HandlerStaker is HandlerBase {
     NSTBLToken public nSTBLtoken;
@@ -20,6 +21,8 @@ contract HandlerStaker is HandlerBase {
     uint256 public supply;
     address public atvl;
 
+    IStakePool.StakerInfo public stakerInfo;
+
     constructor(address _token, address _stakePool, address _loanManager, address _handlerMain, address _atvl) {
         nSTBLtoken = NSTBLToken(_token);
         stakePool = NSTBLStakePool(_stakePool);
@@ -31,17 +34,18 @@ contract HandlerStaker is HandlerBase {
     function stake(uint256 amount_) public {
         // Pre-condition
         uint256 numOfDays = uint256(keccak256(abi.encodePacked(amount_))) % WARP_RANGE + 1; // 1 - 10
-        if(numOfDays % 2 == 0) {
+        if (numOfDays % 2 == 0) {
             loanManager.updateAwaitingRedemption(USDC, true);
         }
 
         uint8 trancheId = uint8(amount_ % 3);
         amount_ = bound(amount_, 10e18, 1e32);
-        
+
         bool awaitingRedemption = loanManager.getAwaitingRedemptionStatus(USDC);
 
         uint256 oldTime = block.timestamp;
-        vm.warp(block.timestamp + numOfDays * 1 days); 
+        vm.warp(block.timestamp + numOfDays * 1 days);
+        assertLt(trancheId, 3);
         assertEq(block.timestamp, oldTime + numOfDays * 1 days);
 
         // Action
@@ -55,13 +59,12 @@ contract HandlerStaker is HandlerBase {
         // uint256 newPoolBalance = stakePool.poolBalance();
         // uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         // uint256 newMaturityVal = stakePool.oldMaturityVal();
+        
+        (stakerInfo.amount, stakerInfo.poolDebt, stakerInfo.epochId, stakerInfo.lpTokens) =
+            stakePool.getStakerInfo(address(this), trancheId);
+    }
 
-    } 
+    function unstake() public { }
 
-    function unstake() public {}
-
-    function mint() public {}
-
+    function mint() public { }
 }
-
-
