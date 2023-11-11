@@ -116,6 +116,10 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
                 return;
             }
             nstblYield = newMaturityVal - oldMaturityVal;
+            if(nstblYield <= 1e18){
+                oldMaturityVal += depositAmount;
+                return;
+            }
             oldMaturityVal = newMaturityVal + depositAmount;
         }
         if (poolBalance <= 1e18) {
@@ -172,7 +176,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
-    function updateMaturityValue() external {
+    function updateMaturityValue() external authorizedCaller{
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
         genesis += 1;
@@ -219,7 +223,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
         if (staker.amount > 0) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            uint256 maturityToken = _getMaturityTokens(tokensAvailable, stakeAmount, staker.stakeTimeStamp);
+            uint256 maturityToken = _getMaturityTokens(tokensAvailable, staker.amount, staker.stakeTimeStamp);
             uint256 unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * maturityToken / 10_000;
             staker.amount = maturityToken - unstakeFee + stakeAmount;
             IERC20Helper(nstbl).safeTransfer(atvl, (tokensAvailable - maturityToken) + unstakeFee);

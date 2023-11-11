@@ -116,6 +116,7 @@ contract StakePoolTest is BaseTest {
     //     uint8 _trancheId = 0;
 
     //     loanManager.updateInvestedAssets(15e5 * 1e18);
+        // vm.prank(NSTBL_HUB);
     //     stakePool.updateMaturityValue();
     //     console.log("Maturity Value: ", stakePool.oldMaturityVal());
 
@@ -159,6 +160,7 @@ contract StakePoolTest is BaseTest {
         uint8 _trancheId = 0;
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
         uint256 maturityVal = stakePool.oldMaturityVal();
         vm.warp(block.timestamp + 12 days);
@@ -241,6 +243,7 @@ contract StakePoolTest is BaseTest {
         // Action
         _stakeNSTBL(user1, _amount, _trancheId);
         loanManager.updateInvestedAssets(_amount * 4);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
         uint256 maturityVal = stakePool.oldMaturityVal();
         vm.warp(block.timestamp + _time);
@@ -266,7 +269,7 @@ contract StakePoolTest is BaseTest {
         vm.stopPrank();
 
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active
-        loanManager.updateInvestedAssets(_amount * 4 + _amount / 5 - _amount/100);
+        loanManager.updateInvestedAssets(_amount * 4 + _amount / 5);
         loanManager.updateRedeemedAssets(_amount/100);
         vm.warp(block.timestamp + _time);
         vm.startPrank(NSTBL_HUB);
@@ -309,6 +312,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
         _stakeNSTBL(user1, _amount1, 0);
@@ -347,6 +351,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
         _stakeNSTBL(user1, _amount1, 0);
@@ -403,6 +408,7 @@ contract StakePoolTest is BaseTest {
         _time = bound(_time, 0, 5 * 365 days);
 
         loanManager.updateInvestedAssets(_investAmount);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
         // Action
         deal(address(nstblToken), address(stakePool), 1e24); // just to mess with the system
@@ -500,6 +506,7 @@ contract StakePoolTest is BaseTest {
         _investAmount = bound(_investAmount, lowerBound * 2, 2 * 1e15 * 1e18);
 
         loanManager.updateInvestedAssets(_investAmount);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
         // Action
