@@ -54,6 +54,7 @@ contract TestStakePoolInvariant is BaseTest {
         targetSender(address(0xdeed));
 
         loanManager.updateInvestedAssets(15e5 * 1e18);
+        vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
     }
 

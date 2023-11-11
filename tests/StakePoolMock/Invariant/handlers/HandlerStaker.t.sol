@@ -46,8 +46,9 @@ contract HandlerStaker is HandlerBase {
         uint256 oldTime = block.timestamp;
         vm.warp(block.timestamp + numOfDays * 1 days);
         assertLt(trancheId, 3);
+        assertGt(block.timestamp, oldTime);
         assertEq(block.timestamp, oldTime + numOfDays * 1 days);
-
+        
         // Action
         uint256 oldPoolBalance = stakePool.poolBalance();
         uint256 oldTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
@@ -59,12 +60,11 @@ contract HandlerStaker is HandlerBase {
         // uint256 newPoolBalance = stakePool.poolBalance();
         // uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         // uint256 newMaturityVal = stakePool.oldMaturityVal();
-        
+
         (stakerInfo.amount, stakerInfo.poolDebt, stakerInfo.epochId, stakerInfo.lpTokens) =
             stakePool.getStakerInfo(address(this), trancheId);
     }
 
     function unstake() public { }
 
-    function mint() public { }
 }

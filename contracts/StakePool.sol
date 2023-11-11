@@ -80,7 +80,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
     function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
-
         if (_trancheId == 0) {
             fee = (timeElapsed > trancheStakeTimePeriod[0])
                 ? trancheBaseFee1
@@ -147,7 +146,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets(usdc);
         if (newMaturityVal > oldMaturityVal) {
-            //in case Maple devalues T-bills
+            // in case Maple devalues T-bills
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
@@ -223,9 +222,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
         if (staker.amount > 0) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            // uint256 maturityTokens = _getMaturityTokens(tokensAvailable, staker.amount, staker.stakeTimeStamp);
-            uint256 unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            // staker.amount = maturityTokens - unstakeFee + stakeAmount;
+            // uint256 unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
             staker.amount = tokensAvailable - unstakeFee + stakeAmount;
             IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         } else {
@@ -294,20 +291,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             emit Unstake(user, tokensAvailable, unstakeFee);
         }
     }
-
-    // function _getMaturityTokens(uint256 tokensAvailable, uint256 stakeAmount, uint256 stakeTimeStamp)
-    //     internal
-    //     view
-    //     returns (uint256)
-    // {
-    //     uint256 timeElapsed = (block.timestamp - stakeTimeStamp);
-    //     if (tokensAvailable <= stakeAmount) {
-    //         return tokensAvailable;
-    //     } else {
-    //         uint256 maturityTokens = stakeAmount + (stakeAmount * timeElapsed * yieldThreshold / 1e17);
-    //         return maturityTokens <= tokensAvailable ? maturityTokens : tokensAvailable;
-    //     }
-    // }
 
     function getStakerInfo(address user, uint8 trancheId)
         external
