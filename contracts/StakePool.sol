@@ -185,6 +185,54 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
+    function previewUpdatePool() public view returns(uint256) {
+        if (ILoanManager(loanManager).awaitingRedemption()) {
+            return 0;
+        }
+
+        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+        if (newMaturityVal > oldMaturityVal) {
+            // in case Maple devalues T-bills
+            uint256 nstblYield = newMaturityVal - oldMaturityVal;
+
+            if (nstblYield <= 1e18) {
+                return 0;
+            }
+
+            if (poolBalance <= 1e18) {
+                // IERC20Helper(nstbl).mint(atvl, nstblYield);
+                // oldMaturityVal = newMaturityVal;
+                return 0;
+            }
+            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
+
+            nstblYield -= atvlYield;
+
+            // IERC20Helper(nstbl).mint(address(this), nstblYield);
+            // IERC20Helper(nstbl).mint(atvl, atvlYield);
+
+            nstblYield *= 1e18; //to maintain precision
+
+            // uint256 tempPoolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
+            return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
+
+
+            // oldMaturityVal = newMaturityVal;
+        }
+    }
+
+    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns(uint256){
+        StakerInfo memory staker = stakerInfo[_trancheId][_user];
+        uint256 newPoolProduct = previewUpdatePool();
+        if(newPoolProduct != 0){
+            return staker.amount*newPoolProduct/staker.poolDebt;
+        }
+        else{
+            return staker.amount*poolProduct/staker.poolDebt;
+        }
+    }
+
     function updateMaturityValue() external {
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();

@@ -127,7 +127,7 @@ contract HandlerStaker is HandlerBase {
 
         bool awaitingRedemption = loanManager.getAwaitingRedemptionStatus(USDC);
 
-        uint256 tokenBalanceStaker = 
+        // uint256 tokenBalanceStaker = 
         uint256 oldPoolBalance = stakePool.poolBalance();
         uint256 oldTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 maturityVal = stakePool.oldMaturityVal();
