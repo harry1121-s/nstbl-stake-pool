@@ -245,14 +245,15 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         staker.lpTokens += stakeAmount;
         lpToken.mint(destinationAddress, stakeAmount);
 
-        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
+        // IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
         emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
     }
 
     function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
         external
         authorizedCaller
-        nonReentrant
+        nonReentrant 
+        returns(uint256)
     {
         StakerInfo storage staker = stakerInfo[trancheId][user];
         require(lpToken.balanceOf(lpOwner) >= staker.lpTokens);
@@ -285,9 +286,11 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             poolBalance = 0;
         }
 
-        IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
+        // IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         emit Unstake(user, tokensAvailable, unstakeFee);
+        return(tokensAvailable - unstakeFee);
+
     }
 
     function getStakerInfo(address user, uint8 trancheId)
