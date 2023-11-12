@@ -233,6 +233,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
             uint256 unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
             staker.amount = tokensAvailable - unstakeFee + stakeAmount;
+            poolBalance -= unstakeFee;
             IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         } else {
             staker.amount = stakeAmount;
