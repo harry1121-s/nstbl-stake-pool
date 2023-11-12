@@ -261,7 +261,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         _updatePool();
         if (staker.epochId != poolEpochId) {
             staker.amount = 0;
-            return;
+            return 0;
         }
 
         uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp) / 1 days;
