@@ -7,7 +7,7 @@ build:
 
 update:
 	cd modules && \
-	git submodule update --remote nstbl-token nstbl-acl-manager nstbl-loan-manager && \
+	git submodule update --remote --init nstbl-token nstbl-acl-manager nstbl-loan-manager && \
 	cd ..
 
 test:

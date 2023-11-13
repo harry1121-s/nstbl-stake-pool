@@ -242,10 +242,15 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256) {
         StakerInfo memory staker = stakerInfo[_trancheId][_user];
         uint256 newPoolProduct = previewUpdatePool();
-        if (newPoolProduct != 0) {
+        if (newPoolProduct != 0 && staker.amount != 0) {
+
             return staker.amount * newPoolProduct / staker.poolDebt;
-        } else {
+        } 
+        else if (staker.amount != 0) {
             return staker.amount * poolProduct / staker.poolDebt;
+        }
+        else{
+            return 0;
         }
     }
 

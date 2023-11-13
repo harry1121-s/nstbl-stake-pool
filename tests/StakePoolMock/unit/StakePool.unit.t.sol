@@ -236,10 +236,11 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
 
         vm.warp(block.timestamp + _time);
-
+        uint256 tokensUser1 = stakePool.getUserAvailableTokens(user1, 0);
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         _stakeNSTBL(user1, _amount1, 0);
+        assertApproxEqRel(stakePool.getUserAvailableTokens(user1, 0), (tokensUser1 + _amount1), 1e17, "check user1 available tokens");
         uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
         if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
@@ -415,8 +416,10 @@ contract StakePoolTest is BaseTest {
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
+        assertEq(stakePool.getUserAvailableTokens(user1, 1), 0, "check available tokens");
         // Action
         _stakeNSTBL(user1, _amount1, 1);
+        assertEq(stakePool.getUserAvailableTokens(user1, 1), _amount1, "check available tokens");
 
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
@@ -441,6 +444,7 @@ contract StakePoolTest is BaseTest {
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
+
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 1, false, destinationAddress));
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
