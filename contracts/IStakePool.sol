@@ -128,6 +128,7 @@ interface IStakePool {
     
     /**
     * @dev Updates the old maturity value
+    * @dev called once from the hub
     */
     function updateMaturityValue() external;
 
@@ -179,6 +180,7 @@ interface IStakePool {
 
     /**
     * @dev Gets the current implementation version
+    * @return The current implementation version
     */
     function getVersion() external pure returns (uint256 _version);
 

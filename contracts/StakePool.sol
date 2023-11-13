@@ -81,6 +81,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         emit StakePoolSetup(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function setATVL(address _atvl) external onlyAdmin {
         _zeroAddressCheck(_atvl);
         atvl = _atvl;
@@ -106,7 +109,10 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
                     + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
         }
     }
-
+    
+    /**
+    @inheritdoc IStakePool
+    */
     function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount)
         external
         authorizedCaller
@@ -191,6 +197,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function previewUpdatePool() public view returns(uint256) {
         if (ILoanManager(loanManager).awaitingRedemption()) {
             return 0;
@@ -228,6 +237,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns(uint256){
         StakerInfo memory staker = stakerInfo[_trancheId][_user];
         uint256 newPoolProduct = previewUpdatePool();
@@ -239,18 +251,27 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         }
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function updateMaturityValue() external {
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         genesis += 1;
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function withdrawUnclaimedRewards() external authorizedCaller {
         IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
         unclaimedRewards = 0;
         emit UnclaimedRewardsWithdrawn(msg.sender, unclaimedRewards);
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function burnNSTBL(uint256 _amount) external authorizedCaller {
         _updatePool();
         transferATVLYield();
@@ -270,6 +291,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         emit NSTBLBurned(_amount, poolProduct, poolBalance, poolEpochId);
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress)
         external
         authorizedCaller
@@ -300,6 +324,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
         external
         authorizedCaller
@@ -344,6 +371,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
 
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function getStakerInfo(address user, uint8 trancheId)
         external
         view
@@ -357,6 +387,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         _stakerTimeStamp = staker.stakeTimeStamp;
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function transferATVLYield() public nonReentrant {
         IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
         atvlExtraYield = 0;
@@ -370,6 +403,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         return REVISION;
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function getVersion() public pure returns (uint256 _version) {
         _version = getRevision();
     }
