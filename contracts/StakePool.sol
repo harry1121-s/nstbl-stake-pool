@@ -255,8 +255,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance * 1e18);
 
         if (poolProduct == 0 || poolBalance - _amount <= 1e18) {
-            //because of loss of precision
-            // IERC20Helper(nstbl).safeTransfer(atvl, poolBalance - _amount);
             poolProduct = 1e18;
             poolBalance = 0;
             poolEpochId += 1;
@@ -293,7 +291,6 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         staker.lpTokens += stakeAmount;
         lpToken.mint(destinationAddress, stakeAmount);
 
-        // IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
         emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
     }
 
