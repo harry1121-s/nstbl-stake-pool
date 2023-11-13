@@ -329,6 +329,14 @@ contract StakePoolTest is BaseTest {
         deal(address(nstblToken), address(stakePool), 1e24); // just to mess with the system
         _stakeNSTBL(user1, _amount1, 1);
 
+        // Should revert if the amount is zero
+        vm.expectRevert("SP: ZERO_AMOUNT");
+        _stakeNSTBL(user1, 0, 1);
+        
+        // Should revert if trancheId is invalid
+        vm.expectRevert("SP: INVALID_TRANCHE");
+        _stakeNSTBL(user1, _amount1, 3);
+
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
