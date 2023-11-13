@@ -6,6 +6,7 @@ import "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
+import { INSTBLToken } from "../../../contracts/interfaces/INSTBLToken.sol";
 import {
     ITransparentUpgradeableProxy,
     TransparentUpgradeableProxy
@@ -78,6 +79,8 @@ contract BaseTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual {
+        uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
+        vm.selectFork(mainnetFork);
         // Deploy mock LZEndpoints
         LZEndpoint_src = new LZEndpointMock(chainId_src);
         LZEndpoint_dst = new LZEndpointMock(chainId_dst);
@@ -153,7 +156,7 @@ contract BaseTest is Test {
 
         // Action = Stake
         vm.startPrank(NSTBL_HUB);
-        IERC20Helper(address(nstblToken)).safeIncreaseAllowance(address(stakePool), _amount);
+        nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), _amount);
         stakePool.stake(_user, _amount, _trancheId, destinationAddress);
         vm.stopPrank();
     }

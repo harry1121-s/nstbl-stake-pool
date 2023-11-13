@@ -4,9 +4,9 @@ pragma solidity 0.8.21;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { console } from "forge-std/console.sol";
 import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
-import { IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
+import { IStakePool, IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
 
-contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
+contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable {
     using SafeERC20 for IERC20Helper;
 
     uint256 private _locked;

@@ -77,14 +77,6 @@ interface IStakePool {
      */
     event NSTBLBurned(uint256 amount, uint256 poolProduct, uint256 poolBalance, uint256 poolEpochId);
 
-    struct StakerInfo {
-        uint256 amount;
-        uint256 poolDebt;
-        uint256 stakeTimeStamp;
-        uint256 epochId;
-        uint256 lpTokens;
-    }
-
     /**
      * @dev Initializes the stake pool
      * @param _aclManager Address of the ACL manager
@@ -166,8 +158,9 @@ interface IStakePool {
      * @param trancheId Tranche ID of the user
      * @param depeg Whether the tokens are depeg or not
      * @param lpOwner Address of the LP tokens owner
+     * @return _tokensUnstaked Amount of tokens unstaked
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner) external;
+    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner) external returns(uint256 _tokensUnstaked);
 
     /**
      * @dev Gets the user's staker info
@@ -191,7 +184,7 @@ interface IStakePool {
 
     /**
      * @dev Gets the current implementation version
-     * @return The current implementation version
+     * @return _version The current implementation version
      */
     function getVersion() external pure returns (uint256 _version);
 }

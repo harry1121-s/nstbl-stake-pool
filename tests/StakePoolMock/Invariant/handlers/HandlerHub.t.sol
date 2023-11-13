@@ -33,7 +33,7 @@ contract HandlerHub is HandlerBase {
         // Pre-condition
         uint256 numOfDays = uint256(keccak256(abi.encodePacked(amount_))) % WARP_RANGE + 1; // 1 - 10
         if (numOfDays % 2 == 0) {
-            loanManager.updateAwaitingRedemption(USDC, true);
+            loanManager.updateAwaitingRedemption(true);
         }
         amount_ = bound(amount_, 1e18, 1e32);
 
@@ -60,11 +60,11 @@ contract HandlerHub is HandlerBase {
             assertEq(
                 stakePool.oldMaturityVal(), maturityVal + amount_, "1:Should have set the oldMaturityVal correctly"
             );
-            loanManager.updateInvestedAssets(loanManager.getMaturedAssets(USDC) + amount_);
+            loanManager.updateInvestedAssets(loanManager.getMaturedAssets() + amount_);
             return;
         }
         // // @TODO: test this
-        // if(stakePool.oldMaturityVal() < loanManager.getMaturedAssets(USDC)) {
+        // if(stakePool.oldMaturityVal() < loanManager.getMaturedAssets()) {
         //     assertEq(newTokenBalance, oldTokenBalance, "2:Should not have minted any rewards to the pool");
         //     assertEq(stakePool.oldMaturityVal(), maturityVal + amount_, "2:Should have set the oldMaturityVal correctly");
         //     return;
@@ -79,18 +79,18 @@ contract HandlerHub is HandlerBase {
             assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
             assertEq(
                 newMaturityVal,
-                loanManager.getMaturedAssets(USDC) + amount_,
+                loanManager.getMaturedAssets() + amount_,
                 "3:Should have set the oldMaturityVal correctly"
             );
-            loanManager.updateInvestedAssets(loanManager.getMaturedAssets(USDC) + amount_);
+            loanManager.updateInvestedAssets(loanManager.getMaturedAssets() + amount_);
             return;
         }
         // @TODO stake condition
-        // uint256 nstblYield = loanManager.getMaturedAssets(USDC) + amount_ - maturityVal;
-        // assertEq(newMaturityVal, loanManager.getMaturedAssets(USDC) + amount_, "4:Should have set the oldMaturityVal correctly");
+        // uint256 nstblYield = loanManager.getMaturedAssets() + amount_ - maturityVal;
+        // assertEq(newMaturityVal, loanManager.getMaturedAssets() + amount_, "4:Should have set the oldMaturityVal correctly");
 
         // Update loanManager InvestedAssets based on deposit
-        loanManager.updateInvestedAssets(loanManager.getMaturedAssets(USDC) + amount_);
+        loanManager.updateInvestedAssets(loanManager.getMaturedAssets() + amount_);
     }
 
     function redeemMaple(uint256 amount_) public {
@@ -102,7 +102,7 @@ contract HandlerHub is HandlerBase {
         assertEq(block.timestamp, oldTime + numOfDays * 1 days);
 
         // Redemption less than assets invested in Maple
-        uint256 oldLMAssets = loanManager.getMaturedAssets(USDC);
+        uint256 oldLMAssets = loanManager.getMaturedAssets();
         amount_ = amount_ % oldLMAssets + 1;
 
         // Update loanManager InvestedAssets based on redeem (assumes requestRedemption and Redemption done in one step)
@@ -118,14 +118,14 @@ contract HandlerHub is HandlerBase {
         uint256 newTokenBalance = nSTBLtoken.balanceOf(address(stakePool));
         uint256 newMaturityVal = stakePool.oldMaturityVal();
 
-        // uint256 nstblYield = (loanManager.getMaturedAssets(USDC) + amount_) - maturityVal;
+        // uint256 nstblYield = (loanManager.getMaturedAssets() + amount_) - maturityVal;
         // uint256 atvlBal = IERC20Helper(atvl).balanceOf(address(stakePool));
         // uint256 poolBalance = stakePool.poolBalance();
         // uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
 
         // Post-condition
         // @TODO: test this
-        // if(stakePool.oldMaturityVal() < loanManager.getMaturedAssets(USDC)) {
+        // if(stakePool.oldMaturityVal() < loanManager.getMaturedAssets()) {
         //     assertEq(newTokenBalance, oldTokenBalance, "2:Should not have minted any rewards to the pool");
         //     assertEq(stakePool.oldMaturityVal(), maturityVal + amount_, "2:Should have set the oldMaturityVal correctly");
         //     return;
@@ -138,12 +138,12 @@ contract HandlerHub is HandlerBase {
             );
             assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
             assertEq(
-                newMaturityVal, loanManager.getMaturedAssets(USDC), "3:Should have set the oldMaturityVal correctly"
+                newMaturityVal, loanManager.getMaturedAssets(), "3:Should have set the oldMaturityVal correctly"
             );
             return;
         }
         // assertEq(newBalance - oldBalance, nstblYield - atvlYield, "Rewards minted correctly to the stakePool");
-        // assertEq(stakePool.oldMaturityVal(), loanManager.getMaturedAssets(USDC) , "Should have set the oldMaturityVal correctly");
+        // assertEq(stakePool.oldMaturityVal(), loanManager.getMaturedAssets() , "Should have set the oldMaturityVal correctly");
     }
 
     function burnNSTBL(uint256 amount_) public { }

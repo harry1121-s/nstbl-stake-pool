@@ -29,51 +29,7 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.getVersion(), 1);
         assertEq(uint256(vm.load(address(stakePool), bytes32(uint256(0)))), 1);
     }
-    // function test_deployment() external {
-    //     // Check deployment
-    //     assertEq(stakePool.aclManager(), address(aclManager), "check aclManager");
-    //     assertEq(stakePool.nstbl(), address(nstblToken), "check nstblToken");
-    //     assertEq(stakePool.atvl(), address(atvl), "check atvl");
-
-    //     // Test failing Deployment
-
-    //     // ACLManager cannot be the zero address
-    //     vm.expectRevert("SP:INVALID_ADDRESS");
-    //     NSTBLStakePool stakePoolTemp = new NSTBLStakePool(
-    //         address(0),
-    //         address(nstblToken),
-    //         address(loanManager),
-    //         atvl
-    //     );
-
-    //     // nSTBL token cannot be the zero address
-    //     vm.expectRevert("SP:INVALID_ADDRESS");
-    //     stakePoolTemp = new NSTBLStakePool(
-    //         address(aclManager),
-    //         address(0),
-    //         address(loanManager),
-    //         atvl
-    //     );
-
-    //     // loanManager cannot be the zero address
-    //     vm.expectRevert("SP:INVALID_ADDRESS");
-    //     stakePoolTemp = new NSTBLStakePool(
-    //         address(aclManager),
-    //         address(nstblToken),
-    //         address(0),
-    //         atvl
-    //     );
-
-    //     // ATVL cannot be the zero address
-    //     vm.expectRevert("SP:INVALID_ADDRESS");
-    //     stakePoolTemp = new NSTBLStakePool(
-    //         address(aclManager),
-    //         address(nstblToken),
-    //         address(loanManager),
-    //         address(0)
-    //     );
-    // }
-
+  
     function test_setup_funcs() external {
         vm.startPrank(deployer);
         stakePool.setupStakePool([400, 300, 200], [900, 800, 700], [60, 120, 240]);
@@ -109,50 +65,6 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.atvl(), atvl, "check atvl");
     }
 
-    // function test_updatePool() external {
-    //     uint256 _amount = 10_000_000 * 1e18;
-    //     uint8 _trancheId = 0;
-
-    //     loanManager.updateInvestedAssets(15e5 * 1e18);
-    // vm.prank(NSTBL_HUB);
-    //     stakePool.updateMaturityValue();
-    //     console.log("Maturity Value: ", stakePool.oldMaturityVal());
-
-    //     uint256 maturityVal = stakePool.oldMaturityVal();
-    //     vm.warp(block.timestamp + 12 days);
-    //     stakePool.updatePool();
-    //     assertEq(stakePool.poolBalance(), 0);
-
-    //     // Action
-    //     _stakeNSTBL(user1, _amount, _trancheId);
-    //     vm.warp(block.timestamp + 12 days);
-    //     loanManager.updateAwaitingRedemption(usdc, true);
-
-    //     // Mocking for updatePool when awaiting redemption is active
-    //     uint256 oldVal = stakePool.oldMaturityVal();
-    //     assertEq(loanManager.getAwaitingRedemptionStatus(usdc), true, "Awaiting Redemption status");
-    //     stakePool.updatePool();
-    //     assertEq(stakePool.oldMaturityVal(), oldVal, "No update due to awaiting redemption");
-    //     assertEq(stakePool.poolProduct(), 1e18, "No update due to awaiting redemption");
-    //     assertEq(stakePool.poolBalance(), 10_000_000 * 1e18, "No update due to awaiting redemption");
-
-    //     // Mocking for updatePool when awaiting redemption is inactive
-    //     oldVal = stakePool.oldMaturityVal();
-    //     loanManager.updateAwaitingRedemption(usdc, false);
-    //     assertEq(loanManager.getAwaitingRedemptionStatus(usdc), false, "Awaiting Redemption status");
-    //     stakePool.updatePool();
-    //     uint256 newVal = stakePool.oldMaturityVal();
-    //     assertEq(newVal - maturityVal, loanManager.getMaturedAssets(usdc) - 15e5 * 1e18, "UpdateRewards");
-
-    //     // Mocking for updatePool when tBills are devalued
-    //     loanManager.updateInvestedAssets(10e5 * 1e18);
-    //     vm.warp(block.timestamp + 12 days);
-    //     oldVal = stakePool.oldMaturityVal();
-    //     stakePool.updatePool();
-    //     newVal = stakePool.oldMaturityVal();
-    //     assertEq(newVal, oldVal, "No reward update due to Maple devalue");
-    // }
-
     function test_updatePoolFromHub() external {
         uint256 _amount = 10_000_000 * 1e18;
         uint8 _trancheId = 0;
@@ -168,14 +80,14 @@ contract StakePoolTest is BaseTest {
         stakePool.withdrawUnclaimedRewards();
         vm.stopPrank();
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
-        assertEq(loanManager.getMaturedAssets(usdc) - 15e5 * 1e18, hubBalAfter - hubBalBefore, "No rewards to withdraw");
+        assertEq(loanManager.getMaturedAssets() - 15e5 * 1e18, hubBalAfter - hubBalBefore, "No rewards to withdraw");
 
         assertEq(stakePool.poolBalance(), 0);
 
         // Action
         _stakeNSTBL(user1, _amount, _trancheId);
         vm.warp(block.timestamp + 12 days);
-        loanManager.updateAwaitingRedemption(usdc, true);
+        loanManager.updateAwaitingRedemption(true);
 
         console.log("Here1");
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is active
@@ -191,11 +103,11 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         loanManager.updateInvestedAssets(15e5 * 1e18 + 1e6 * 1e18);
         oldVal = stakePool.oldMaturityVal();
-        loanManager.updateAwaitingRedemption(usdc, false);
+        loanManager.updateAwaitingRedemption(false);
         assertEq(loanManager.getAwaitingRedemptionStatus(usdc), false, "Awaiting Redemption status");
         stakePool.updatePoolFromHub(false, 0, 1e6 * 1e18);
         uint256 newVal = stakePool.oldMaturityVal();
-        assertEq(newVal - maturityVal, loanManager.getMaturedAssets(usdc) - 15e5 * 1e18 + 1e6 * 1e18, "UpdateRewards");
+        assertEq(newVal - maturityVal, loanManager.getMaturedAssets() - 15e5 * 1e18 + 1e6 * 1e18, "UpdateRewards");
         vm.stopPrank();
 
         console.log("Here3");
@@ -204,10 +116,10 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 12 days);
         vm.startPrank(NSTBL_HUB);
         oldVal = stakePool.oldMaturityVal();
-        loanManager.updateAwaitingRedemption(usdc, true);
+        loanManager.updateAwaitingRedemption(true);
         stakePool.updatePoolFromHub(true, 1e3 * 1e18, 0);
         newVal = stakePool.oldMaturityVal();
-        assertEq(newVal - oldVal, loanManager.getMaturedAssets(usdc) - oldVal, "Reward update due to redemption");
+        assertEq(newVal - oldVal, loanManager.getMaturedAssets() - oldVal, "Reward update due to redemption");
         vm.stopPrank();
 
         console.log("Here4");
@@ -224,7 +136,7 @@ contract StakePoolTest is BaseTest {
         console.log("Here5");
         // Mocking for updatePoolFromHub during deposit when tBills are devalued
         vm.startPrank(NSTBL_HUB);
-        loanManager.updateAwaitingRedemption(usdc, false);
+        loanManager.updateAwaitingRedemption(false);
         vm.warp(block.timestamp + 12 days);
         oldVal = stakePool.oldMaturityVal();
         stakePool.updatePoolFromHub(false, 0, 1e6 * 1e18);
@@ -330,10 +242,10 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, _amount1, 0);
         uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
-        if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
+        if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
             assertApproxEqAbs(
                 poolBalAfter - poolBalBefore + (atvlBalAfter - atvlBalBefore),
-                _amount1 + (loanManager.getMaturedAssets(usdc) - _investAmount),
+                _amount1 + (loanManager.getMaturedAssets() - _investAmount),
                 1e18,
                 "with yield"
             );
@@ -364,18 +276,19 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
-        stakePool.unstake(user1, 0, false, destinationAddress);
-        stakePool.unstake(user2, 1, true, destinationAddress);
+
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress) + stakePool.unstake(user2, 1, true, destinationAddress));
+
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
         (,,, uint256 stakerLP1,) = stakePool.getStakerInfo(user1, 0);
         (,,, uint256 stakerLP2,) = stakePool.getStakerInfo(user2, 1);
         // if (_time / 1 days <= stakePool.trancheStakeTimePeriod(0) + 1) {
-        if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
+        if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
             assertApproxEqAbs(
                 hubBalAfter - hubBalBefore + (atvlBalAfter - atvlBalBefore),
-                _amount2 + _amount1 + (loanManager.getMaturedAssets(usdc) - _investAmount),
+                _amount2 + _amount1 + (loanManager.getMaturedAssets() - _investAmount),
                 1e18,
                 "with yield"
             );
@@ -391,7 +304,7 @@ contract StakePoolTest is BaseTest {
 
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
-        stakePool.unstake(user3, 0, false, destinationAddress);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 0, false, destinationAddress));
         vm.stopPrank();
     }
 
@@ -428,10 +341,10 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user2, _amount2, 2);
 
         // Post-condition
-        if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
+        if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
             assertEq(
                 stakePool.poolBalance(),
-                _amount1 + _amount2 + (loanManager.getMaturedAssets(usdc) - _investAmount),
+                _amount1 + _amount2 + (loanManager.getMaturedAssets() - _investAmount),
                 "check poolBalance1"
             );
         } else {
@@ -447,16 +360,16 @@ contract StakePoolTest is BaseTest {
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        stakePool.unstake(user1, 1, false, destinationAddress);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 1, false, destinationAddress));
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
         // Post-condition; stakeAmount + all yield transferred
         // if (_time / 1 days <= stakePool.trancheStakeTimePeriod(1) + 1) {
-        if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
+        if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
             assertApproxEqAbs(
                 hubBalAfter - hubBalBefore + (atvlBalAfter - atvlBalBefore),
-                _amount1 + (loanManager.getMaturedAssets(usdc) - _investAmount),
+                _amount1 + (loanManager.getMaturedAssets() - _investAmount),
                 1e18
             );
         } else {
@@ -466,7 +379,7 @@ contract StakePoolTest is BaseTest {
         //     assertEq(hubBalAfter - hubBalBefore, 0);
         // }
 
-        stakePool.unstake(user2, 2, false, destinationAddress);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 2, false, destinationAddress));
         vm.stopPrank();
         atvlBalAfter = nstblToken.balanceOf(atvl);
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
@@ -484,15 +397,7 @@ contract StakePoolTest is BaseTest {
             nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) - 1e24 <= 1e18,
             "check available tokens"
         );
-        // } else {
-        //     if ((loanManager.getMaturedAssets(usdc) - _investAmount) > 1e18) {
-        //         assertApproxEqAbs(
-        //             stakePool.poolBalance(), _amount1 + (loanManager.getMaturedAssets(usdc) - _investAmount), 1e18
-        //         );
-        //     } else {
-        //         assertEq(stakePool.poolBalance(), _amount1);
-        //     }
-        // }
+       
     }
 
     function test_stake_unstake_burn_noYield_fuzz(
@@ -537,7 +442,7 @@ contract StakePoolTest is BaseTest {
         console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        stakePool.unstake(user1, 1, false, destinationAddress);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 1, false, destinationAddress));
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
 
         if (poolBalanceBefore - _burnAmount <= 1e18) {
@@ -546,7 +451,7 @@ contract StakePoolTest is BaseTest {
         }
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         hubBalBefore = hubBalAfter;
-        stakePool.unstake(user2, 2, false, destinationAddress);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 2, false, destinationAddress));
         vm.stopPrank();
         hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
