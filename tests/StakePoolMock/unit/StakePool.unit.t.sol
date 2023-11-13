@@ -39,6 +39,18 @@ contract StakePoolTest is BaseTest {
         );
         newProxy = new TransparentUpgradeableProxy(address(spImpl), address(proxyAdmin), data);
 
+        NSTBLStakePool sp2 = NSTBLStakePool(address(newProxy));
+        vm.expectRevert("SP: INVALID_TRANCHE_FEE");
+        sp2.setupStakePool([300, 200, 100, 50], [700, 500, 300], [30, 90, 180]);
+
+        vm.expectRevert("SP: INVALID_EARLY_UNSTAKE_FEE");
+        sp2.setupStakePool([300, 200, 100], [700, 500, 300, 150], [30, 90, 180]);
+
+        vm.expectRevert("SP: INVALID_STAKE_TIME_PERIODS");
+        sp2.setupStakePool([300, 200, 100, 50], [700, 500, 300, 150], [30, 90, 180, 360]);
+
+
+        sp2.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
     }
   
     function test_setup_funcs() external {
