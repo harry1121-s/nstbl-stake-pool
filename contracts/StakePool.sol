@@ -34,6 +34,10 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
 
+    /*//////////////////////////////////////////////////////////////
+    Admin only setters
+    //////////////////////////////////////////////////////////////*/
+
     /**
      * @inheritdoc IStakePool
      */
@@ -85,25 +89,18 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit ATVLUpdated(atvl);
     }
 
-    function _getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) internal view returns (uint256 fee) {
-        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
-        if (trancheId_ == 0) {
-            fee = (timeElapsed > trancheStakeTimePeriod[0])
-                ? trancheBaseFee1
-                : trancheBaseFee1
-                    + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
-        } else if (trancheId_ == 1) {
-            fee = (timeElapsed > trancheStakeTimePeriod[1])
-                ? trancheBaseFee2
-                : trancheBaseFee2
-                    + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
-        } else {
-            fee = (timeElapsed > trancheStakeTimePeriod[2])
-                ? trancheBaseFee3
-                : trancheBaseFee3
-                    + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
-        }
+    /**
+     * @inheritdoc IStakePool
+     */
+    function updateMaturityValue() external authorizedCaller {
+        require(genesis == 0, "SP: GENESIS");
+        oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+        genesis += 1;
     }
+
+    /*//////////////////////////////////////////////////////////////
+    Yield and Burn Accounting
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @inheritdoc IStakePool
@@ -195,69 +192,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function previewUpdatePool() public view returns (uint256) {
-
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        if (newMaturityVal > oldMaturityVal) {
-            // in case Maple devalues T-bills
-            uint256 nstblYield = newMaturityVal - oldMaturityVal;
-
-            if (nstblYield <= 1e18) {
-                return 0;
-            }
-
-            if (poolBalance <= 1e18) {
-                return 0;
-            }
-            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-
-            nstblYield -= atvlYield;
-            nstblYield *= 1e18; //to maintain precision
-
-            return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
-        }
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256) {
-        StakerInfo memory staker = stakerInfo[trancheId_][user_];
-        uint256 newPoolProduct = previewUpdatePool();
-        if (newPoolProduct != 0 && staker.amount != 0) {
-
-            return staker.amount * newPoolProduct / staker.poolDebt;
-        } 
-        else if (staker.amount != 0) {
-            return staker.amount * poolProduct / staker.poolDebt;
-        }
-        else{
-            return 0;
-        }
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function updateMaturityValue() external authorizedCaller {
-        require(genesis == 0, "SP: GENESIS");
-        oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        genesis += 1;
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function withdrawUnclaimedRewards() external authorizedCaller {
-        IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
-        unclaimedRewards = 0;
-        emit UnclaimedRewardsWithdrawn(msg.sender, unclaimedRewards);
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
     function burnNSTBL(uint256 _amount) external authorizedCaller {
         _updatePool();
         transferATVLYield();
@@ -276,6 +210,27 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         }
         emit NSTBLBurned(_amount, poolProduct, poolBalance, poolEpochId);
     }
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function transferATVLYield() public nonReentrant {
+        IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
+        atvlExtraYield = 0;
+    }
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function withdrawUnclaimedRewards() external authorizedCaller {
+        IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
+        unclaimedRewards = 0;
+        emit UnclaimedRewardsWithdrawn(msg.sender, unclaimedRewards);
+    }
+    
+    /*//////////////////////////////////////////////////////////////
+    Staking functionality
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @inheritdoc IStakePool
@@ -354,6 +309,37 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         return (tokensAvailable - unstakeFee);
     }
 
+    /*//////////////////////////////////////////////////////////////
+    Views
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function previewUpdatePool() public view returns (uint256) {
+
+        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+        if (newMaturityVal > oldMaturityVal) {
+            // in case Maple devalues T-bills
+            uint256 nstblYield = newMaturityVal - oldMaturityVal;
+
+            if (nstblYield <= 1e18) {
+                return 0;
+            }
+
+            if (poolBalance <= 1e18) {
+                return 0;
+            }
+            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
+
+            nstblYield -= atvlYield;
+            nstblYield *= 1e18; //to maintain precision
+
+            return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
+        }
+    }
+
     /**
      * @inheritdoc IStakePool
      */
@@ -373,9 +359,50 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function transferATVLYield() public nonReentrant {
-        IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
-        atvlExtraYield = 0;
+    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256) {
+        StakerInfo memory staker = stakerInfo[trancheId_][user_];
+        uint256 newPoolProduct = previewUpdatePool();
+        if (newPoolProduct != 0 && staker.amount != 0) {
+
+            return staker.amount * newPoolProduct / staker.poolDebt;
+        } 
+        else if (staker.amount != 0) {
+            return staker.amount * poolProduct / staker.poolDebt;
+        }
+        else{
+            return 0;
+        }
+    }
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function getVersion() public pure returns (uint256 _version) {
+        _version = getRevision();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+    Internals
+    //////////////////////////////////////////////////////////////*/
+
+    function _getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) internal view returns (uint256 fee) {
+        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
+        if (trancheId_ == 0) {
+            fee = (timeElapsed > trancheStakeTimePeriod[0])
+                ? trancheBaseFee1
+                : trancheBaseFee1
+                    + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
+        } else if (trancheId_ == 1) {
+            fee = (timeElapsed > trancheStakeTimePeriod[1])
+                ? trancheBaseFee2
+                : trancheBaseFee2
+                    + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
+        } else {
+            fee = (timeElapsed > trancheStakeTimePeriod[2])
+                ? trancheBaseFee3
+                : trancheBaseFee3
+                    + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
+        }
     }
 
     function _zeroAddressCheck(address _address) internal pure {
@@ -386,10 +413,4 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         return REVISION;
     }
 
-    /**
-     * @inheritdoc IStakePool
-     */
-    function getVersion() public pure returns (uint256 _version) {
-        _version = getRevision();
-    }
 }
