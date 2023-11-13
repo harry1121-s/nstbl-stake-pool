@@ -60,14 +60,10 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function setupStakePool(
-        // uint256 _yieldThreshold,
         uint16[3] memory trancheBaseFee,
         uint16[3] memory earlyUnstakeFee,
         uint8[3] memory stakeTimePeriods
     ) external onlyAdmin {
-        require(trancheBaseFee.length == 3, "SP: INVALID_TRANCHE_FEE");
-        require(earlyUnstakeFee.length == 3, "SP: INVALID_EARLY_UNSTAKE_FEE");
-        require(stakeTimePeriods.length == 3, "SP: INVALID_STAKE_TIME_PERIODS");
         // yieldThreshold = _yieldThreshold;
         trancheBaseFee1 = trancheBaseFee[0];
         trancheBaseFee2 = trancheBaseFee[1];
