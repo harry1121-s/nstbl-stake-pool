@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
-import { INSTBLToken } from "../../../contracts/interfaces/INSTBLToken.sol";
+// import { INSTBLToken } from "../../../contracts/interfaces/INSTBLToken.sol";
 import {
     ITransparentUpgradeableProxy,
     TransparentUpgradeableProxy
@@ -121,20 +121,11 @@ contract BaseTest is Test {
         proxyAdmin = new ProxyAdmin(deployer);
         assertEq(proxyAdmin.owner(), deployer);
         stakePoolImpl = new NSTBLStakePool();
-        console.log("Implementation Address:", address(stakePoolImpl));
         bytes memory data = abi.encodeCall(
             stakePoolImpl.initialize, (address(aclManager), address(nstblToken), address(loanManager), atvl)
         );
         stakePoolProxy = new TransparentUpgradeableProxy(address(stakePoolImpl), address(proxyAdmin), data);
         stakePool = NSTBLStakePool(address(stakePoolProxy));
-        console.log("Proxy Address:", address(stakePoolProxy));
-
-        // stakePool = new NSTBLStakePool(
-        //     address(aclManager),
-        //     address(nstblToken),
-        //     address(loanManager),
-        //     atvl
-        //     );
 
         aclManager.setAuthorizedCallerToken(address(stakePoolProxy), true);
         stakePool.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
@@ -144,7 +135,6 @@ contract BaseTest is Test {
 
     function erc20_transfer(address asset_, address account_, address destination_, uint256 amount_) internal {
         vm.startPrank(account_);
-        console.log("Balance of account: ", IERC20Helper(asset_).balanceOf(account_));
         IERC20Helper(asset_).safeTransfer(destination_, amount_);
         vm.stopPrank();
     }

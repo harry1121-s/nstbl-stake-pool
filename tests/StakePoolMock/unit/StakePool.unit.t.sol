@@ -28,6 +28,7 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.getVersion(), 1);
         assertEq(uint256(vm.load(address(stakePool), bytes32(uint256(0)))), 1);
 
+        vm.startPrank(deployer);
         NSTBLStakePool spImpl = new NSTBLStakePool();
          bytes memory data = abi.encodeCall(
             spImpl.initialize, (address(0), address(0), address(0), address(0))
@@ -42,6 +43,8 @@ contract StakePoolTest is BaseTest {
         NSTBLStakePool sp2 = NSTBLStakePool(address(newProxy));
 
         sp2.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
+
+        vm.stopPrank();
     }
   
     function test_setup_funcs() external {
@@ -103,7 +106,6 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 12 days);
         loanManager.updateAwaitingRedemption(true);
 
-        console.log("Here1");
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is active
         vm.startPrank(NSTBL_HUB);
         uint256 oldVal = stakePool.oldMaturityVal();
@@ -112,7 +114,6 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.oldMaturityVal(), oldVal + 1e6 * 1e18, "No update due to awaiting redemption");
         vm.stopPrank();
 
-        console.log("Here2");
         // Mocking for updatePoolFromHub during deposit when awaiting redemption is inactive
         vm.startPrank(NSTBL_HUB);
         loanManager.updateInvestedAssets(15e5 * 1e18 + 1e6 * 1e18);
@@ -124,7 +125,6 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal - maturityVal, loanManager.getMaturedAssets() - 15e5 * 1e18 + 1e6 * 1e18, "UpdateRewards");
         vm.stopPrank();
 
-        console.log("Here3");
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active
         loanManager.updateInvestedAssets(15e5 * 1e18 + 2e6 * 1e18); //because deposit was made 2 times previosuly
         vm.warp(block.timestamp + 12 days);
@@ -136,7 +136,6 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal - oldVal, loanManager.getMaturedAssets() - oldVal, "Reward update due to redemption");
         vm.stopPrank();
 
-        console.log("Here4");
         // Mocking for updatePoolFromHub during Maple redemption when awaiting redemption is active and tBills are devalued
         vm.startPrank(NSTBL_HUB);
         loanManager.updateInvestedAssets(15e5 * 1e18);
@@ -147,7 +146,6 @@ contract StakePoolTest is BaseTest {
         assertEq(newVal, oldVal, "No reward update due to ,aple devalue");
         vm.stopPrank();
 
-        console.log("Here5");
         // Mocking for updatePoolFromHub during deposit when tBills are devalued
         vm.startPrank(NSTBL_HUB);
         loanManager.updateAwaitingRedemption(false);
@@ -199,7 +197,6 @@ contract StakePoolTest is BaseTest {
                 "with yield"
             );
         } else {
-            console.log("assertion params", poolBalAfter - poolBalBefore, atvlBalAfter - atvlBalBefore, _amount1);
             assertEq(poolBalAfter - poolBalBefore + (atvlBalAfter - atvlBalBefore), _amount1, "without yield");
         }
     }
@@ -306,7 +303,6 @@ contract StakePoolTest is BaseTest {
         assertEq(poolDebt, 1e18, "check stakerInfo.poolDebt");
 
         vm.warp(block.timestamp + _time);
-        console.log("----------------------------staking after time warp--------------------------");
         // Action
         _stakeNSTBL(user2, _amount2, 2);
 
@@ -327,10 +323,12 @@ contract StakePoolTest is BaseTest {
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
-        console.log("  ----------------------------- unstaking alllll ]-------------------------");
+     
         vm.startPrank(NSTBL_HUB);
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+
         nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 1, false, destinationAddress));
+
         uint256 hubBalAfter = nstblToken.balanceOf(NSTBL_HUB);
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
 
@@ -345,9 +343,6 @@ contract StakePoolTest is BaseTest {
         } else {
             assertEq(hubBalAfter - hubBalBefore + (atvlBalAfter - atvlBalBefore), _amount1);
         }
-        // } else {
-        //     assertEq(hubBalAfter - hubBalBefore, 0);
-        // }
 
         nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 2, false, destinationAddress));
         vm.stopPrank();
@@ -356,11 +351,9 @@ contract StakePoolTest is BaseTest {
         uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
 
         assertEq(hubBalAfter - hubBalBefore + (atvlBalAfter - atvlBalBefore), poolBalBefore - poolBalAfter, "dfsgfg");
-        console.log(poolBalAfter, stakePool.atvlExtraYield(), "checking");
 
         stakePool.transferATVLYield();
         assertEq(stakePool.atvlExtraYield(), 0, "check atvlExtraYield");
-        // if (_time / 1 days <= stakePool.trancheStakeTimePeriod(1) + 1) {
         assertEq(stakePool.poolBalance(), 0, "check poolBalance");
         assertEq(stakePool.poolProduct(), 1e18, "check poolProduct");
         assertTrue(
@@ -369,7 +362,22 @@ contract StakePoolTest is BaseTest {
         );
        
     }
+    function test_burnNSTBL_revert() external {
 
+        loanManager.updateInvestedAssets(1e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+
+        assertEq(stakePool.getUserAvailableTokens(user1, 1), 0, "check available tokens");
+        // Action
+        _stakeNSTBL(user1, 1e5 * 1e18, 1);
+        assertEq(stakePool.getUserAvailableTokens(user1, 1), 1e5*1e18, "check available tokens");
+        
+        vm.startPrank(NSTBL_HUB);
+        vm.expectRevert();
+        stakePool.burnNSTBL(1e6*1e18);
+
+    }
     function test_stake_unstake_burn_noYield_fuzz(
         uint256 _amount1,
         uint256 _amount2,
@@ -400,8 +408,11 @@ contract StakePoolTest is BaseTest {
         _burnAmount = bound(_burnAmount, 0, stakePool.poolBalance());
         uint256 epochIdBefore = stakePool.poolEpochId();
         uint256 poolBalanceBefore = stakePool.poolBalance();
-        vm.prank(NSTBL_HUB);
+        
+        vm.startPrank(NSTBL_HUB);
+
         stakePool.burnNSTBL(_burnAmount);
+        vm.stopPrank();
 
         if (poolBalanceBefore - _burnAmount <= 1e18) {
             assertEq(stakePool.poolBalance(), 0, "check poolBalance");
@@ -411,7 +422,6 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user2, _amount2, 2);
 
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        console.log("  ----------------------------- unstaking alllll ]-------------------------");
         vm.startPrank(NSTBL_HUB);
 
         hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);

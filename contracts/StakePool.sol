@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { console } from "forge-std/console.sol";
 import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
 import { IStakePool, IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
 
@@ -330,7 +329,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         returns (uint256)
     {
         StakerInfo storage staker = stakerInfo[trancheId][user];
-        require(lpToken.balanceOf(lpOwner) >= staker.lpTokens);
+        require(lpToken.balanceOf(lpOwner) >= staker.lpTokens, "SP: Insuff LP Balance");
         require(staker.amount > 0, "SP: NO STAKE");
         _updatePool();
         if (staker.epochId != poolEpochId) {
