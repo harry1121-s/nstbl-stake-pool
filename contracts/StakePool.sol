@@ -35,6 +35,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
         external
         initializer
@@ -53,6 +56,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         emit StakePoolInitialized(REVISION, aclManager, nstbl, loanManager, atvl, address(lpToken));
     }
 
+    /**
+    @inheritdoc IStakePool
+    */
     function setupStakePool(
         // uint256 _yieldThreshold,
         uint16[3] memory trancheBaseFee,
@@ -80,7 +86,7 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         atvl = _atvl;
         emit ATVLUpdated(atvl);
     }
-
+    
     function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
         if (_trancheId == 0) {
