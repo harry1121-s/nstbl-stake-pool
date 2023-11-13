@@ -36,8 +36,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
         external
         initializer
@@ -57,8 +57,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function setupStakePool(
         // uint256 _yieldThreshold,
         uint16[3] memory trancheBaseFee,
@@ -82,14 +82,14 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function setATVL(address _atvl) external onlyAdmin {
         _zeroAddressCheck(_atvl);
         atvl = _atvl;
         emit ATVLUpdated(atvl);
     }
-    
+
     function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
         if (_trancheId == 0) {
@@ -109,10 +109,10 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
                     + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
         }
     }
-    
+
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount)
         external
         authorizedCaller
@@ -198,9 +198,9 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
-    function previewUpdatePool() public view returns(uint256) {
+     * @inheritdoc IStakePool
+     */
+    function previewUpdatePool() public view returns (uint256) {
         if (ILoanManager(loanManager).awaitingRedemption()) {
             return 0;
         }
@@ -232,28 +232,26 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
             // uint256 tempPoolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
             return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
 
-
             // oldMaturityVal = newMaturityVal;
         }
     }
 
     /**
-    @inheritdoc IStakePool
-    */
-    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns(uint256){
+     * @inheritdoc IStakePool
+     */
+    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256) {
         StakerInfo memory staker = stakerInfo[_trancheId][_user];
         uint256 newPoolProduct = previewUpdatePool();
-        if(newPoolProduct != 0){
-            return staker.amount*newPoolProduct/staker.poolDebt;
-        }
-        else{
-            return staker.amount*poolProduct/staker.poolDebt;
+        if (newPoolProduct != 0) {
+            return staker.amount * newPoolProduct / staker.poolDebt;
+        } else {
+            return staker.amount * poolProduct / staker.poolDebt;
         }
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function updateMaturityValue() external {
         require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
@@ -261,8 +259,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function withdrawUnclaimedRewards() external authorizedCaller {
         IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
         unclaimedRewards = 0;
@@ -270,8 +268,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function burnNSTBL(uint256 _amount) external authorizedCaller {
         _updatePool();
         transferATVLYield();
@@ -292,8 +290,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress)
         external
         authorizedCaller
@@ -325,13 +323,13 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
         external
         authorizedCaller
-        nonReentrant 
-        returns(uint256)
+        nonReentrant
+        returns (uint256)
     {
         StakerInfo storage staker = stakerInfo[trancheId][user];
         require(lpToken.balanceOf(lpOwner) >= staker.lpTokens);
@@ -367,13 +365,12 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
         // IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         emit Unstake(user, tokensAvailable, unstakeFee);
-        return(tokensAvailable - unstakeFee);
-
+        return (tokensAvailable - unstakeFee);
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function getStakerInfo(address user, uint8 trancheId)
         external
         view
@@ -388,8 +385,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function transferATVLYield() public nonReentrant {
         IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
         atvlExtraYield = 0;
@@ -404,8 +401,8 @@ contract NSTBLStakePool is StakePoolStorage, VersionedInitializable {
     }
 
     /**
-    @inheritdoc IStakePool
-    */
+     * @inheritdoc IStakePool
+     */
     function getVersion() public pure returns (uint256 _version) {
         _version = getRevision();
     }
