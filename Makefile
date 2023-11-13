@@ -1,35 +1,45 @@
-# Build and test
-
-profile ?=default
-
-build:
-	@FOUNDRY_PROFILE=production forge build
+install:
+	@mkdir modules && \
+	cd modules && \
+	git submodule add https://github.com/foundry-rs/forge-std.git && \
+	git submodule add https://github.com/OpenZeppelin/openzeppelin-contracts.git && \
+	git submodule add https://github.com/nealthy-labs/nSTBL_V1_ACLManager.git && \
+	git submodule add https://github.com/nealthy-labs/nSTBL_V1_LoanManager.git && \
+	git submodule add https://github.com/nealthy-labs/nSTBL_V1_nSTBLToken.git&& \
+	cd ..
 
 update:
-	cd modules && \
+	@cd modules && \
+	git submodule update --remote nstbl-acl-manager && \
+	cd ..
+
+build:
+	@forge build --sizes
+
+update:
+	@cd modules && \
 	git submodule update --remote --init nstbl-token nstbl-acl-manager nstbl-loan-manager && \
 	cd ..
 
 test:
-	forge test
+	@forge test
 
 testToken:
-	forge test --match-path ./tests/unit/Token.t.sol
+	@forge test --match-path ./tests/unit/Token.t.sol
 
 testStakePoolMock:
-	forge test --match-path ./tests/StakePoolMock/unit/StakePool.unit.t.sol -vvv --gas-report
-
-testStakePool:
-	forge test --match-path ./tests/StakePool/unit/StakePool.t.sol -vvv
+	@forge test --match-path ./tests/StakePoolMock/unit/StakePool.unit.t.sol -vvv --gas-report
 
 testInvariant:
-	forge test --match-path ./tests/StakePoolMock/Invariant/StakePoolInvariant.t.sol -vvvvv
+	@forge test --match-path ./tests/StakePoolMock/Invariant/StakePoolInvariant.t.sol -vvvvv
 
 debug: 
 	forge test -vvvvv
 
 clean:
-	@forge clean
+	@forge clean && \
+	rm -rf coverage && \
+	rm lcov.info
 
 git:
 	@git add .

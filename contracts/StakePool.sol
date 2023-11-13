@@ -37,18 +37,18 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
+    function initialize(address aclManager_, address nstbl_, address loanManager_, address atvl_)
         external
         initializer
     {
-        _zeroAddressCheck(_aclManager);
-        _zeroAddressCheck(_nstbl);
-        _zeroAddressCheck(_loanManager);
-        _zeroAddressCheck(_atvl);
-        aclManager = _aclManager;
-        nstbl = _nstbl;
-        loanManager = _loanManager;
-        atvl = _atvl;
+        _zeroAddressCheck(aclManager_);
+        _zeroAddressCheck(nstbl_);
+        _zeroAddressCheck(loanManager_);
+        _zeroAddressCheck(atvl_);
+        aclManager = aclManager_;
+        nstbl = nstbl_;
+        loanManager = loanManager_;
+        atvl = atvl_;
         lpToken = new TokenLP("NSTBLStakePool LP Token", "NSTBL_SP", IACLManager(aclManager).admin());
         _locked = 1;
         poolProduct = 1e18;
@@ -79,20 +79,20 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function setATVL(address _atvl) external onlyAdmin {
-        _zeroAddressCheck(_atvl);
-        atvl = _atvl;
+    function setATVL(address atvl_) external onlyAdmin {
+        _zeroAddressCheck(atvl_);
+        atvl = atvl_;
         emit ATVLUpdated(atvl);
     }
 
-    function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
-        uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
-        if (_trancheId == 0) {
+    function _getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) internal view returns (uint256 fee) {
+        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
+        if (trancheId_ == 0) {
             fee = (timeElapsed > trancheStakeTimePeriod[0])
                 ? trancheBaseFee1
                 : trancheBaseFee1
                     + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
-        } else if (_trancheId == 1) {
+        } else if (trancheId_ == 1) {
             fee = (timeElapsed > trancheStakeTimePeriod[1])
                 ? trancheBaseFee2
                 : trancheBaseFee2
@@ -207,32 +207,23 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             }
 
             if (poolBalance <= 1e18) {
-                // IERC20Helper(nstbl).mint(atvl, nstblYield);
-                // oldMaturityVal = newMaturityVal;
                 return 0;
             }
             uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
             uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
 
             nstblYield -= atvlYield;
-
-            // IERC20Helper(nstbl).mint(address(this), nstblYield);
-            // IERC20Helper(nstbl).mint(atvl, atvlYield);
-
             nstblYield *= 1e18; //to maintain precision
 
-            // uint256 tempPoolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
             return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
-
-            // oldMaturityVal = newMaturityVal;
         }
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256) {
-        StakerInfo memory staker = stakerInfo[_trancheId][_user];
+    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256) {
+        StakerInfo memory staker = stakerInfo[trancheId_][user_];
         uint256 newPoolProduct = previewUpdatePool();
         if (newPoolProduct != 0 && staker.amount != 0) {
 
@@ -337,7 +328,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             return 0;
         }
 
-        uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp) / 1 days;
         uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
 
@@ -359,7 +349,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolBalance = 0;
         }
 
-        // IERC20Helper(nstbl).safeTransfer(msg.sender, tokensAvailable - unstakeFee);
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         emit Unstake(user, tokensAvailable, unstakeFee);
         return (tokensAvailable - unstakeFee);

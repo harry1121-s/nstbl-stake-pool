@@ -9,9 +9,6 @@ block_timestamp = 1_685_721_539           # Timestamp for tests (non-zero)
 gas_limit       = "18446744073709551615"  # Gas limit for tests
 gas_reports = ["*"]
 
-[profile.production]
-optimizer = true
-
 [fuzz]
 runs = 1000
 
