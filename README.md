@@ -15,8 +15,8 @@ This repository contains the core contracts of the nSTBL V1 protocol that are re
 Contracts in this repo inherit and import code from:
 - [`openzeppelin-contracts`](https://github.com/OpenZeppelin/openzeppelin-contracts)
 - [`nSTBL_V1_ACLManager`](https://github.com/nealthy-labs/nSTBL_V1_ACLManager.git)
-[`nSTBL_V1_LoanManager`](https://github.com/nealthy-labs/nSTBL_V1_LoanManager.git)
-[`nSTBL_V1_nSTBLToken`](https://github.com/nealthy-labs/nSTBL_V1_nSTBLToken.git)
+- [`nSTBL_V1_LoanManager`](https://github.com/nealthy-labs/nSTBL_V1_LoanManager.git)
+- [`nSTBL_V1_nSTBLToken`](https://github.com/nealthy-labs/nSTBL_V1_nSTBLToken.git)
 
 ## Setup
 Run the command ```forge install``` before running any of the make commands. 
