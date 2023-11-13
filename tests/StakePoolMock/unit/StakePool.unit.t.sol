@@ -247,11 +247,14 @@ contract StakePoolTest is BaseTest {
         //     assertEq(IERC20Helper(lp).balanceOf(destinationAddress), _amount1, "check LP balance");
         // }
         assertEq(stakerLP2, 0);
-
+        assertEq(stakePool.poolBalance(), 0);
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
         nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 0, false, destinationAddress));
         vm.stopPrank();
+        vm.warp(block.timestamp + 100 days);
+        assertEq(stakePool.previewUpdatePool(), 0);
+        _stakeNSTBL(user4, 1e3*1e18, 1);
     }
 
     function test_stake_unstake_updatePool_fuzz(

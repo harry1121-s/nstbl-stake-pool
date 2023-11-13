@@ -201,9 +201,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function previewUpdatePool() public view returns (uint256) {
-        if (ILoanManager(loanManager).awaitingRedemption()) {
-            return 0;
-        }
 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
