@@ -177,10 +177,6 @@ interface IStakePool {
         view
         returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens, uint256 _stakerTimeStamp);
 
-    /**
-     * @dev Transfers the yield to the ATVL
-     */
-    function transferATVLYield() external;
 
     /**
      * @dev Gets the current implementation version
