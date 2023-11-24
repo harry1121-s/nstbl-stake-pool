@@ -160,7 +160,9 @@ interface IStakePool {
      * @param lpOwner Address of the LP tokens owner
      * @return _tokensUnstaked Amount of tokens unstaked
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner) external returns(uint256 _tokensUnstaked);
+    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
+        external
+        returns (uint256 _tokensUnstaked);
 
     /**
      * @dev Gets the user's staker info
@@ -176,7 +178,6 @@ interface IStakePool {
         external
         view
         returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens, uint256 _stakerTimeStamp);
-
 
     /**
      * @dev Gets the current implementation version

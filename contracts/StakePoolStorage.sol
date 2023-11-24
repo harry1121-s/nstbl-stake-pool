@@ -6,7 +6,7 @@ import "@nstbl-acl-manager/contracts/IACLManager.sol";
 import "./IStakePool.sol";
 import "./TokenLP.sol";
 
-contract StakePoolStorage  {
+contract StakePoolStorage {
     struct StakerInfo {
         uint256 amount;
         uint256 poolDebt;
@@ -17,6 +17,7 @@ contract StakePoolStorage  {
     /*//////////////////////////////////////////////////////////////
     IMMUTABLES
     //////////////////////////////////////////////////////////////*/
+
     address public immutable usdc;
     uint256 internal immutable REVISION = 1;
 

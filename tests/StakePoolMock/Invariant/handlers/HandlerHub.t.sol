@@ -137,9 +137,7 @@ contract HandlerHub is HandlerBase {
                 "Rewards minted correctly when poolBalance < 1e18"
             );
             assertEq(newPoolBalance, oldPoolBalance, "3:Pool balance should not have changed");
-            assertEq(
-                newMaturityVal, loanManager.getMaturedAssets(), "3:Should have set the oldMaturityVal correctly"
-            );
+            assertEq(newMaturityVal, loanManager.getMaturedAssets(), "3:Should have set the oldMaturityVal correctly");
             return;
         }
         // assertEq(newBalance - oldBalance, nstblYield - atvlYield, "Rewards minted correctly to the stakePool");

@@ -2,7 +2,6 @@
 pragma solidity 0.8.21;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
 import { IStakePool, IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
@@ -105,7 +104,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
                 : trancheBaseFee3
                     + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
         }
-        console.log("--------------_Fee_-----------------", fee);
     }
 
     /**
@@ -159,25 +157,22 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit UpdatedFromHub(poolProduct, poolBalance, nstblYield, atvlYield);
     }
 
-    function _updatePool() internal returns (uint256, uint256){ //returns nstblYield for the pool and atvl
-        console.log("In update pool");
+    function _updatePool() internal returns (uint256, uint256) {
+        //returns nstblYield for the pool and atvl
         if (ILoanManager(loanManager).awaitingRedemption()) {
             return (0, 0);
         }
 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        console.log("maturity values: ", newMaturityVal, oldMaturityVal);
-        if (newMaturityVal > oldMaturityVal) { // in case Maple devalues T-bills
-            
+        if (newMaturityVal > oldMaturityVal) {
+            // in case Maple devalues T-bills
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
-                console.log("yield less than 1e18");
                 return (0, 0);
             }
 
             if (poolBalance <= 1e18) {
-                console.log("empty pool");
                 // IERC20Helper(nstbl).mint(atvl, nstblYield);
                 oldMaturityVal = newMaturityVal;
                 return (0, nstblYield);
@@ -196,11 +191,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolBalance += (nstblYield / 1e18);
 
             oldMaturityVal = newMaturityVal;
-            console.log("final yield: ", nstblYield, atvlYield);
-            return(nstblYield, atvlYield);
-        }
-        else {
-            return(0, 0);
+            return (nstblYield, atvlYield);
+        } else {
+            return (0, 0);
         }
     }
 
@@ -208,7 +201,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function previewUpdatePool() public view returns (uint256) {
-
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
             // in case Maple devalues T-bills
@@ -247,13 +239,10 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         StakerInfo memory staker = stakerInfo[_trancheId][_user];
         uint256 newPoolProduct = previewUpdatePool();
         if (newPoolProduct != 0 && staker.amount != 0) {
-
             return staker.amount * newPoolProduct / staker.poolDebt;
-        } 
-        else if (staker.amount != 0) {
+        } else if (staker.amount != 0) {
             return staker.amount * poolProduct / staker.poolDebt;
-        }
-        else{
+        } else {
             return 0;
         }
     }
@@ -311,16 +300,12 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         require(trancheId < 3, "SP: INVALID_TRANCHE");
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
-        console.log("pool params before: ", poolBalance, poolProduct);
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        console.log("pool params after: ", poolBalance, poolProduct);
 
-        console.log("Yield: ", poolYield, atvlYield);
         uint256 unstakeFee;
         if (staker.amount > 0) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
             unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            console.log("UNSTAKE FEE: ", unstakeFee);
             staker.amount = tokensAvailable - unstakeFee + stakeAmount;
             poolBalance -= unstakeFee;
         } else {
@@ -404,7 +389,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         _lpTokens = staker.lpTokens;
         _stakerTimeStamp = staker.stakeTimeStamp;
     }
-
 
     function _zeroAddressCheck(address _address) internal pure {
         require(_address != address(0), "SP:INVALID_ADDRESS");
