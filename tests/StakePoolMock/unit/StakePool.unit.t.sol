@@ -507,6 +507,342 @@ contract StakePoolTest is BaseTest {
     }
 
 
+    function test_unstake_revert() external {
+
+        vm.startPrank(NSTBL_HUB);
+        vm.expectRevert("SP: NO STAKE");
+        stakePool.unstake(user1, 0, false, destinationAddress);
+        vm.stopPrank();
+
+        _stakeNSTBL(user1, 1e6*1e18, 0);
+        deal(address(stakePool.lpToken()), destinationAddress, 1e3*1e18); //manipulating lp token balance 
+
+        vm.startPrank(NSTBL_HUB);
+        vm.expectRevert("SP: Insuff LP Balance");
+        stakePool.unstake(user1, 0, false, destinationAddress);
+        vm.stopPrank();
+    }
+
+    //single staker, no yield
+    //instant unstake, fee of 10% applied in tranche 0
+    function test_unstake() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18);
+        assertEq(nstblToken.balanceOf(atvl), 1e5*1e18);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 9e5*1e18);
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+
+    }
+
+    //single staker, no yield
+    //instant unstake, maximum fee applied in all tranches
+    function test_unstake_multipleTranches() external {
+
+         //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        _stakeNSTBL(user2, 1e6 * 1e18, 1);
+        _stakeNSTBL(user3, 1e6 * 1e18, 2);
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 1, false, destinationAddress));
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 2, false, destinationAddress));
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 3e6*1e18);
+        assertEq(nstblToken.balanceOf(atvl), 1e5*1e18 + 7e4*1e18 + 4e4*1e18);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 9e5*1e18 + 93e4*1e18 + 96e4*1e18);
+    }
+
+    //single staker, no yield
+    //instant unstake, no fee applied because depeg is active
+    function test_unstake_depeg() external {
+
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18);
+        assertEq(nstblToken.balanceOf(atvl), 0);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 1e6*1e18);
+
+    }
+
+    //single staker, no yield
+    //instant unstake, no tokens are transferred because poolEpochID is increased
+    //mocking a burn event where all user tokens are burnt
+    function test_unstake_case2() external {
+
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+
+        //action
+        vm.store(address(stakePool), bytes32(uint256(11)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 0);
+        assertEq(nstblToken.balanceOf(atvl), 0);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0);
+
+    }
+
+    //single staker, with yield, awaiting redemption active - no yield given to the pool
+    //unstaking in tranche 0 after 100 days, base fee of 3% applied
+    //fee is transferred to atvl
+    function test_unstake_case3() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        loanManager.updateAwaitingRedemption(true);
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.warp(block.timestamp + 100 days);
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18);
+        assertEq(nstblToken.balanceOf(atvl), 3e4*1e18);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 97e4*1e18);
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+        
+    }
+
+    //single staker, with yield, awaiting redemption inactive - yield given to the pool
+    //unstaking in tranche 0 after 100 days, base fee of 3% applied
+    //fee is transferred to atvl
+    function test_unstake_case4() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 oldMaturityValue = stakePool.oldMaturityVal();
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.warp(block.timestamp + 100 days);
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), (1e6*1e18 + yield) * 3/100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6*1e18 + yield)*97/100, "check hub balance");
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+        
+    }
+
+    //revert due to burn amount greater than pool balance
+    function test_burn_nstblTokens_revert() external {
+
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        vm.expectRevert("SP: Burn > SP_BALANCE");
+        stakePool.burnNSTBL(11e5 * 1e18);
+        vm.stopPrank();
+
+       
+    }
+
+    //single staker, no yield
+    //burning 50% tokens
+    //fee is transferred to atvl
+    function test_burn_nstblTokens() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(5e5 * 1e18); //burnt 50% tokens
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 5e5*1e18, "check pool balance");
+
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, (5e5*1e18) * 10/100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5*1e18)*90/100, "check hub balance");
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+    }
+
+    //single staker, no yield
+    //burning 100% tokens
+    function test_burn_nstblTokens_case2() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(1e6 * 1e18); //burnt 50% tokens
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, 0, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0, "check hub balance");
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+    }
+
+    //single staker, with yield
+    //burning 50% tokens
+    //fee is transferred to atvl
+    function test_burn_nstblTokens_case3() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 oldMaturityValue = stakePool.oldMaturityVal();
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.warp(block.timestamp + 100 days);
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(5e5 * 1e18); //burnt 50% tokens
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), (5e5*1e18 + yield) * 3/100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5*1e18 + yield) * 97/100, "check hub balance");
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+    }
+
+    //single staker, with yield
+    //burning 100% tokens, only yield gets transferred to the user
+    //fee is transferred to atvl
+    function test_burn_nstblTokens_case4() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6*1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 oldMaturityValue = stakePool.oldMaturityVal();
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
+
+
+        //action
+        vm.warp(block.timestamp + 100 days);
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(1e6 * 1e18); //burnt 50% tokens
+        nstblToken.sendOrReturnPool(address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress));
+        vm.stopPrank();
+
+        //postcondition
+        uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
+        assertEq(poolBalanceBefore - stakePool.poolBalance() , 1e6*1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), (yield) * 3/100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (yield) * 97/100, "check hub balance");
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
+    }
+
+   
+    
+
+
 
     // function test_unstake_fuzz(uint256 _amount1, uint256 _amount2, uint256 _investAmount, uint256 _time) external {
     //     uint256 lowerBound = 10 * 1e18;
