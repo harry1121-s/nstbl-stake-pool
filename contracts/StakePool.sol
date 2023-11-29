@@ -35,25 +35,21 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
 
-    /*//////////////////////////////////////////////////////////////
-    Admin only setters
-    //////////////////////////////////////////////////////////////*/
-
     /**
      * @inheritdoc IStakePool
      */
-    function initialize(address aclManager_, address nstbl_, address loanManager_, address atvl_)
+    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
         external
         initializer
     {
-        _zeroAddressCheck(aclManager_);
-        _zeroAddressCheck(nstbl_);
-        _zeroAddressCheck(loanManager_);
-        _zeroAddressCheck(atvl_);
-        aclManager = aclManager_;
-        nstbl = nstbl_;
-        loanManager = loanManager_;
-        atvl = atvl_;
+        _zeroAddressCheck(_aclManager);
+        _zeroAddressCheck(_nstbl);
+        _zeroAddressCheck(_loanManager);
+        _zeroAddressCheck(_atvl);
+        aclManager = _aclManager;
+        nstbl = _nstbl;
+        loanManager = _loanManager;
+        atvl = _atvl;
         lpToken = new TokenLP("NSTBLStakePool LP Token", "NSTBL_SP", IACLManager(aclManager).admin());
         _locked = 1;
         poolProduct = 1e18;
@@ -84,9 +80,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function setATVL(address atvl_) external onlyAdmin {
-        _zeroAddressCheck(atvl_);
-        atvl = atvl_;
+    function setATVL(address _atvl) external onlyAdmin {
+        _zeroAddressCheck(_atvl);
+        atvl = _atvl;
         emit ATVLUpdated(atvl);
     }
 
@@ -295,27 +291,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function transferATVLYield() public nonReentrant {
-        IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
-        atvlExtraYield = 0;
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function withdrawUnclaimedRewards() external authorizedCaller {
-        IERC20Helper(nstbl).safeTransfer(msg.sender, unclaimedRewards);
-        unclaimedRewards = 0;
-        emit UnclaimedRewardsWithdrawn(msg.sender, unclaimedRewards);
-    }
-    
-    /*//////////////////////////////////////////////////////////////
-    Staking functionality
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @inheritdoc IStakePool
-     */
     function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress)
         external
         authorizedCaller
@@ -369,6 +344,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             return 0;
         }
 
+        uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp) / 1 days;
         uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
 
@@ -398,37 +374,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         return (tokensAvailable - unstakeFee);
     }
 
-    /*//////////////////////////////////////////////////////////////
-    Views
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function previewUpdatePool() public view returns (uint256) {
-
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        if (newMaturityVal > oldMaturityVal) {
-            // in case Maple devalues T-bills
-            uint256 nstblYield = newMaturityVal - oldMaturityVal;
-
-            if (nstblYield <= 1e18) {
-                return 0;
-            }
-
-            if (poolBalance <= 1e18) {
-                return 0;
-            }
-            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-
-            nstblYield -= atvlYield;
-            nstblYield *= 1e18; //to maintain precision
-
-            return (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
-        }
-    }
-
     /**
      * @inheritdoc IStakePool
      */
@@ -445,14 +390,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         _stakerTimeStamp = staker.stakeTimeStamp;
     }
 
-    /**
-     * @inheritdoc IStakePool
-     */
-    function transferATVLYield() public nonReentrant {
-        IERC20Helper(nstbl).safeTransfer(atvl, atvlExtraYield);
-        atvlExtraYield = 0;
-    }
-
     function _zeroAddressCheck(address _address) internal pure {
         require(_address != address(0), "SP:INVALID_ADDRESS");
     }
@@ -461,4 +398,10 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         return REVISION;
     }
 
+    /**
+     * @inheritdoc IStakePool
+     */
+    function getVersion() public pure returns (uint256 _version) {
+        _version = getRevision();
+    }
 }
