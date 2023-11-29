@@ -86,7 +86,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit ATVLUpdated(atvl);
     }
 
-    function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) internal view returns (uint256 fee) {
+    function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) public view returns (uint256 fee) {
         uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
         if (_trancheId == 0) {
             fee = (timeElapsed > trancheStakeTimePeriod[0])
