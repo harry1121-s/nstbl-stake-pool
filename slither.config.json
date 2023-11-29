@@ -1,4 +1,4 @@
 {
-    "filter_paths": "modules|tests",
+    "filter_paths": "modules|tests|contracts/mocks",
     "solc_remaps": "@openzeppelin/=modules/openzeppelin-contracts/"
 }

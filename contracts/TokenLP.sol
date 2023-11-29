@@ -28,9 +28,9 @@ contract TokenLP is ERC20 {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(string memory _name, string memory _symbol, address _admin) ERC20(_name, _symbol) {
-        require(_admin != address(0), "LP: invalid Address");
-        admin = _admin;
+    constructor(string memory name_, string memory symbol_, address admin_) ERC20(name_, symbol_) {
+        require(admin_ != address(0), "LP: invalid Address");
+        admin = admin_;
         stakePool = msg.sender;
         emit AdminChanged(address(0), admin);
         emit StakePoolChanged(address(0), stakePool);
@@ -40,29 +40,29 @@ contract TokenLP is ERC20 {
                         ACCOUNT MINT/BURN
     //////////////////////////////////////////////////////////////*/
 
-    function mint(address _user, uint256 _amount) external authorizedCaller {
-        _mint(_user, _amount);
+    function mint(address user_, uint256 amount_) external authorizedCaller {
+        _mint(user_, amount_);
     }
 
-    function burn(address _user, uint256 _amount) external authorizedCaller {
-        _burn(_user, _amount);
+    function burn(address user_, uint256 amount_) external authorizedCaller {
+        _burn(user_, amount_);
     }
 
     /*//////////////////////////////////////////////////////////////
                                OWNERSHIP
     //////////////////////////////////////////////////////////////*/
 
-    function setStakePool(address _stakePool) external onlyAdmin {
-        require(_stakePool != address(0), "LP: invalid Address");
+    function setStakePool(address stakePool_) external onlyAdmin {
+        require(stakePool_ != address(0), "LP: invalid Address");
         address oldStakePool = stakePool;
-        stakePool = _stakePool;
+        stakePool = stakePool_;
         emit StakePoolChanged(oldStakePool, stakePool);
     }
 
-    function setAdmin(address _admin) external onlyAdmin {
-        require(_admin != address(0), "LP: invalid Address");
+    function setAdmin(address admin_) external onlyAdmin {
+        require(admin_ != address(0), "LP: invalid Address");
         address oldAdmin = admin;
-        admin = _admin;
+        admin = admin_;
         emit AdminChanged(oldAdmin, admin);
     }
 }
