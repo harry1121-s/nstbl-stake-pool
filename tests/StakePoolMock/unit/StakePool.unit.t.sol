@@ -385,6 +385,59 @@ contract StakePoolTest is BaseTest {
         assertEq(_amount, (1e6 * 1e18 + yield / 3) * 9767 / 10_000 + 1e6 * 1e18, "check user3 staked amount");
     }
 
+    //multiple stakers; pool resetted; then restake again
+    function test_restake_poolReset() external {
+
+        address lp = address(stakePool.lpToken());
+        //precondition
+        loanManager.updateInvestedAssets(10e6 * 1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        uint256 oldMaturityValue = stakePool.oldMaturityVal();
+
+        //action
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        _stakeNSTBL(user2, 1e6 * 1e18, 1);
+
+        //postcondition
+        assertEq(
+            stakePool.poolBalance() , 2e6 * 1e18, "check pool balance"
+        );
+        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18, "check destination addr LP balance");
+        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        assertEq(_amount, 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
+        assertEq(_lpTokens, 1e6 * 1e18, "check user1 lp tokens");
+
+        //resetting pool by burning all the nstbl in the stake pool
+        //action
+        vm.startPrank(NSTBL_HUB);
+        stakePool.burnNSTBL(stakePool.poolBalance()-1e17);
+        vm.stopPrank();
+
+        //postcondition
+        assertEq(stakePool.poolBalance(), 0);
+        assertEq(stakePool.poolProduct(), 1e18);
+        assertEq(stakePool.poolEpochId(), 1);
+
+        //restaking for user1 and user 2
+        //action
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+        _stakeNSTBL(user2, 1e6 * 1e18, 1);
+
+        //postcondition
+        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        assertEq(_amount, 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
+        assertEq(_lpTokens, 2e6 * 1e18, "check user1 lp tokens");
+
+        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user2, 1);
+        assertEq(_amount, 1e6 * 1e18, "check user2 staked amount");
+        assertEq(_poolDebt, stakePool.poolProduct(), "check user2 pool debt");
+        assertEq(_lpTokens, 2e6 * 1e18, "check user2 lp tokens");
+
+    }
+
     function test_unstake_revert() external {
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
@@ -636,7 +689,7 @@ contract StakePoolTest is BaseTest {
 
         //action
         vm.startPrank(NSTBL_HUB);
-        stakePool.burnNSTBL(1e6 * 1e18); //burnt 50% tokens
+        stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
         nstblToken.sendOrReturnPool(
             address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
         );
@@ -939,3 +992,5 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.previewUpdatePool(), 0);
     }
 }
+
+

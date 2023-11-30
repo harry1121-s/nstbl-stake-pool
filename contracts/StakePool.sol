@@ -166,6 +166,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
             // in case Maple devalues T-bills
+            console.log("Vals: ", newMaturityVal, oldMaturityVal);
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
@@ -270,7 +271,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      */
     function burnNSTBL(uint256 _amount) external authorizedCaller {
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-
+        console.log("YIELDS: ", poolYield);
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
 
         poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance * 1e18);
@@ -301,9 +302,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-
+        console.log("HERE");
         uint256 unstakeFee;
-        if (staker.amount > 0) {
+        if (staker.amount > 0 && staker.epochId == poolEpochId) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
             unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
             staker.amount = tokensAvailable - unstakeFee + stakeAmount;
