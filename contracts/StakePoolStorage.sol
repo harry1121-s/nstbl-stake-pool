@@ -61,5 +61,5 @@ contract StakePoolStorage {
 
     //add new variables here to extended the storage
     //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision
-    uint256[33] __gap;
+    uint256[35] __gap;
 }
