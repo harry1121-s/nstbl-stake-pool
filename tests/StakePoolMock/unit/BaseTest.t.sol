@@ -147,7 +147,7 @@ contract BaseTest is Test {
         // Action = Stake
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), _amount);
-        stakePool.stake(_user, _amount, _trancheId, destinationAddress);
+        stakePool.stake(_user, _amount, _trancheId);
         vm.stopPrank();
     }
 

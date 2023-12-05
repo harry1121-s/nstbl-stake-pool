@@ -4,7 +4,6 @@ import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
 import "@nstbl-acl-manager/contracts/IACLManager.sol";
 import "./IStakePool.sol";
-import "./TokenLP.sol";
 
 contract StakePoolStorage {
     struct StakerInfo {
@@ -12,7 +11,6 @@ contract StakePoolStorage {
         uint256 poolDebt;
         uint256 stakeTimeStamp;
         uint256 epochId;
-        uint256 lpTokens;
     }
     /*//////////////////////////////////////////////////////////////
     IMMUTABLES
@@ -36,8 +34,6 @@ contract StakePoolStorage {
     uint64 public trancheFee1;
     uint64 public trancheFee2;
     uint64 public trancheFee3;
-
-    TokenLP public lpToken;
 
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 

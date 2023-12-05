@@ -11,9 +11,8 @@ interface IStakePool {
      * @param stakeAmount Amount of tokens staked
      * @param poolDebt Amount of tokens owed to the pool
      * @param epochId Epoch ID of the stake
-     * @param lpTokens Amount of LP tokens minted
      */
-    event Stake(address indexed user, uint256 stakeAmount, uint256 poolDebt, uint256 epochId, uint256 lpTokens);
+    event Stake(address indexed user, uint256 stakeAmount, uint256 poolDebt, uint256 epochId);
 
     /**
      * @dev Emitted when a user unstakes tokens
@@ -30,11 +29,9 @@ interface IStakePool {
      * @param nstblToken Address of the NSTBL token
      * @param loanManager Address of the loan manager
      * @param atvl Address of the ATVL
-     * @param lpToken Address of the LP token
      */
     event StakePoolInitialized(
-        uint256 version, address aclManager, address nstblToken, address loanManager, address atvl, address lpToken
-    );
+        uint256 version, address aclManager, address nstblToken, address loanManager, address atvl);
 
     /**
      * @dev Emitted to setup the tranche fee, unstake fee, and stake time periods
@@ -148,19 +145,17 @@ interface IStakePool {
      * @param user Address of the user
      * @param stakeAmount Amount of tokens to stake
      * @param trancheId Tranche ID of the user
-     * @param destinationAddress Address of the destination at which tokens are minted
      */
-    function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress) external;
+    function stake(address user, uint256 stakeAmount, uint8 trancheId) external;
 
     /**
      * @dev Unstakes the user's tokens
      * @param user Address of the user
      * @param trancheId Tranche ID of the user
      * @param depeg Whether the tokens are depeg or not
-     * @param lpOwner Address of the LP tokens owner
      * @return _tokensUnstaked Amount of tokens unstaked
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
+    function unstake(address user, uint8 trancheId, bool depeg)
         external
         returns (uint256 _tokensUnstaked);
 
@@ -171,13 +166,12 @@ interface IStakePool {
      * @return _amount Amount of tokens staked by the user
      * @return _poolDebt Amount of tokens owed to the pool
      * @return _epochId Epoch ID of the stake
-     * @return _lpTokens Amount of LP tokens minted
      * @return _stakerTimeStamp Timestamp of the stake
      */
     function getStakerInfo(address user, uint8 trancheId)
         external
         view
-        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens, uint256 _stakerTimeStamp);
+        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _stakerTimeStamp);
 
     /**
      * @dev Gets the current implementation version

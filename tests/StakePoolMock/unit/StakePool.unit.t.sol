@@ -21,9 +21,6 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.nstbl(), address(nstblToken));
         assertEq(stakePool.atvl(), address(atvl));
         assertEq(stakePool.loanManager(), address(loanManager));
-        ERC20 lp = ERC20(address(stakePool.lpToken()));
-        assertEq(lp.name(), "NSTBLStakePool LP Token");
-        assertEq(lp.symbol(), "NSTBL_SP");
         assertEq(stakePool.poolProduct(), 1e18);
         assertEq(stakePool.getVersion(), 1);
         assertEq(uint256(vm.load(address(stakePool), bytes32(uint256(0)))), 1);
@@ -103,21 +100,20 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), 0);
         vm.expectRevert("SP: ZERO_AMOUNT"); // reverting due to zero amount
-        stakePool.stake(user1, 0, 0, destinationAddress);
+        stakePool.stake(user1, 0, 0);
         vm.stopPrank();
 
         deal(address(nstblToken), NSTBL_HUB, 1e6 * 1e18);
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), 1e6 * 1e18);
         vm.expectRevert("SP: INVALID_TRANCHE"); // reverting due to invalid trancheID
-        stakePool.stake(user1, 1e6 * 1e18, 4, destinationAddress);
+        stakePool.stake(user1, 1e6 * 1e18, 4);
         vm.stopPrank();
     }
 
     //single staker, no yield
     //no restake
     function test_stake() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -128,18 +124,15 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
 
         //postcondition
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 1e6 * 1e18);
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 1e6 * 1e18);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 1e6 * 1e18);
     }
 
     //single user, 1st staking event post 100 days of genesis state
     //all the accumulated yield before till the 1st stake is transferred to atvl
     function test_stake_case2() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -156,17 +149,14 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 1e6 * 1e18, "check pool balance");
         assertEq(stakePool.poolProduct(), 1e18, "check pool product");
         assertEq(nstblToken.balanceOf(atvl), yield, "check atvl balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 1e6 * 1e18);
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 1e6 * 1e18);
     }
 
     //single user, 1st staking event post 100 days of genesis state
     //mocking devaluation of t-bills
     function test_stake_case3() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -183,18 +173,15 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 1e6 * 1e18, "check pool balance");
         assertEq(stakePool.poolProduct(), 1e18, "check pool product");
         assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance"); //no yield due to t-bill devaluation
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 1e6 * 1e18);
         assertEq(stakePool.oldMaturityVal(), oldMaturityValue, "no update in maturity value");
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 1e6 * 1e18);
     }
 
     //multiple stakers, no yield
     //no restake
     function test_stake_multipleTranches() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(20e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -209,33 +196,27 @@ contract StakePoolTest is BaseTest {
 
         //postcondition
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 7e6 * 1e18);
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 7e6 * 1e18);
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 1e6 * 1e18);
 
-        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user2, 0);
+        (_amount, _poolDebt,,) = stakePool.getStakerInfo(user2, 0);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 1e6 * 1e18);
 
-        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user2, 1);
+        (_amount, _poolDebt,,) = stakePool.getStakerInfo(user2, 1);
         assertEq(_amount, 2e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 2e6 * 1e18);
 
-        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user3, 2);
+        (_amount, _poolDebt,,) = stakePool.getStakerInfo(user3, 2);
         assertEq(_amount, 3e6 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 3e6 * 1e18);
     }
 
     //single user, no yield
     //restaking in tranche 0, fee of 10% applied
     //fee is transferred to atvl
     function test_restake_case1() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -249,18 +230,15 @@ contract StakePoolTest is BaseTest {
         //postcondition
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 19e5 * 1e18);
         assertEq(nstblToken.balanceOf(atvl), 1e5 * 1e18);
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18);
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 19e5 * 1e18);
         assertEq(_poolDebt, 1e18);
-        assertEq(_lpTokens, 2e6 * 1e18);
     }
 
     //single user, with yield, awaiting redemption active - no yield given to the pool
     //restaking in tranche 0 after 100 days, base fee of 3% applied
     //fee is transferred to atvl
     function test_restake_case3() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -276,23 +254,19 @@ contract StakePoolTest is BaseTest {
         //postcondition
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 197e4 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), 3e4 * 1e18, "check atvl balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18, "check destination addr LP balance");
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 197e4 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, 1e18, "check user1 pool debt");
-        assertEq(_lpTokens, 2e6 * 1e18, "check user1 lp tokens");
     }
 
     //single user, with yield less than 1e18 => 0, awaiting redemption inactive
     //restaking in tranche 0 after 1 second, base fee of 10% applied
     //fee is transferred to atvl
     function test_restake_case4() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
-        uint256 oldMaturityValue = stakePool.oldMaturityVal();
         uint256 poolBalanceBefore = stakePool.poolBalance();
 
         //action
@@ -305,11 +279,9 @@ contract StakePoolTest is BaseTest {
             stakePool.poolBalance() - poolBalanceBefore, (1e6 * 1e18) * 90 / 100 + 1e6 * 1e18, "check pool balance"
         );
         assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18) * 10 / 100, "check atvl balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18, "check destination addr LP balance");
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, (1e6 * 1e18) * 90 / 100 + 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
-        assertEq(_lpTokens, 2e6 * 1e18, "check user1 lp tokens");
     }
 
     //single user, with yield, awaiting redemption inactive - yield given to the pool
@@ -317,7 +289,6 @@ contract StakePoolTest is BaseTest {
     //restaking in tranche 0 after 100 days, base fee of 3% applied
     //fee is transferred to atvl
     function test_restake_case5() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -338,11 +309,9 @@ contract StakePoolTest is BaseTest {
             "check pool balance"
         );
         assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 3 / 100, "check atvl balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18, "check destination addr LP balance");
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, (1e6 * 1e18 + yield) * 97 / 100 + 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
-        assertEq(_lpTokens, 2e6 * 1e18, "check user1 lp tokens");
     }
 
     //multiple stakers, with yield,  awaiting redemption inactive - yield given to the pool
@@ -350,7 +319,6 @@ contract StakePoolTest is BaseTest {
     //restaking in all tranches
     //fee is transferred to atvl
     function test_restake_multipleTranches() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -374,26 +342,23 @@ contract StakePoolTest is BaseTest {
             (6e6 * 1e18 + yield),
             "check pool balance and atvl balance"
         );
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 6e6 * 1e18, "check destination addr LP balance");
-        (uint256 _amount,,,,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount,,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, (1e6 * 1e18 + yield / 3) * 97 / 100 + 1e6 * 1e18, "check user1 staked amount");
 
-        (_amount,,,,) = stakePool.getStakerInfo(user2, 1);
+        (_amount,,,) = stakePool.getStakerInfo(user2, 1);
         assertEq(_amount, (1e6 * 1e18 + yield / 3) * 98 / 100 + 1e6 * 1e18, "check user2 staked amount");
 
-        (_amount,,,,) = stakePool.getStakerInfo(user3, 2);
+        (_amount,,,) = stakePool.getStakerInfo(user3, 2);
         assertEq(_amount, (1e6 * 1e18 + yield / 3) * 9767 / 10_000 + 1e6 * 1e18, "check user3 staked amount");
     }
 
     //multiple stakers; pool resetted; then restake again
     function test_restake_poolReset() external {
 
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
-        uint256 oldMaturityValue = stakePool.oldMaturityVal();
 
         //action
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
@@ -403,11 +368,9 @@ contract StakePoolTest is BaseTest {
         assertEq(
             stakePool.poolBalance() , 2e6 * 1e18, "check pool balance"
         );
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress), 2e6 * 1e18, "check destination addr LP balance");
-        (uint256 _amount, uint256 _poolDebt,, uint256 _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
-        assertEq(_lpTokens, 1e6 * 1e18, "check user1 lp tokens");
 
         //resetting pool by burning all the nstbl in the stake pool
         //action
@@ -426,37 +389,26 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user2, 1e6 * 1e18, 1);
 
         //postcondition
-        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user1, 0);
+        (_amount, _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
-        assertEq(_lpTokens, 2e6 * 1e18, "check user1 lp tokens");
 
-        (_amount, _poolDebt,, _lpTokens,) = stakePool.getStakerInfo(user2, 1);
+        (_amount, _poolDebt,,) = stakePool.getStakerInfo(user2, 1);
         assertEq(_amount, 1e6 * 1e18, "check user2 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user2 pool debt");
-        assertEq(_lpTokens, 2e6 * 1e18, "check user2 lp tokens");
 
     }
 
     function test_unstake_revert() external {
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: NO STAKE");
-        stakePool.unstake(user1, 0, false, destinationAddress);
-        vm.stopPrank();
-
-        _stakeNSTBL(user1, 1e6 * 1e18, 0);
-        deal(address(stakePool.lpToken()), destinationAddress, 1e3 * 1e18); //manipulating lp token balance
-
-        vm.startPrank(NSTBL_HUB);
-        vm.expectRevert("SP: Insuff LP Balance");
-        stakePool.unstake(user1, 0, false, destinationAddress);
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
     }
 
     //single staker, no yield
     //instant unstake, fee of 10% applied in tranche 0
     function test_unstake() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -464,12 +416,11 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -477,7 +428,6 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18);
         assertEq(nstblToken.balanceOf(atvl), 1e5 * 1e18);
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 9e5 * 1e18);
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //single staker, no yield
@@ -496,13 +446,13 @@ contract StakePoolTest is BaseTest {
         //action
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 1, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 1, false)
         );
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 2, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 2, false)
         );
 
         //postcondition
@@ -525,7 +475,7 @@ contract StakePoolTest is BaseTest {
         //action
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true)
         );
         vm.stopPrank();
 
@@ -548,24 +498,23 @@ contract StakePoolTest is BaseTest {
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
 
         //action
-        vm.store(address(stakePool), bytes32(uint256(11)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
+        vm.store(address(stakePool), bytes32(uint256(10)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true)
         );
         vm.stopPrank();
 
         //postcondition
-        assertEq(poolBalanceBefore - stakePool.poolBalance(), 0);
-        assertEq(nstblToken.balanceOf(atvl), 0);
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0);
+        assertEq(poolBalanceBefore - stakePool.poolBalance(), 0, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0, "check hub balance");
     }
 
     //single staker, with yield, awaiting redemption active - no yield given to the pool
     //unstaking in tranche 0 after 100 days, base fee of 3% applied
     //fee is transferred to atvl
     function test_unstake_case3() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -575,13 +524,12 @@ contract StakePoolTest is BaseTest {
 
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -589,14 +537,12 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18);
         assertEq(nstblToken.balanceOf(atvl), 3e4 * 1e18);
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 97e4 * 1e18);
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //single staker, with yield, awaiting redemption inactive - yield given to the pool
     //unstaking in tranche 0 after 100 days, base fee of 3% applied
     //fee is transferred to atvl
     function test_unstake_case4() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -606,13 +552,12 @@ contract StakePoolTest is BaseTest {
         uint256 oldMaturityValue = stakePool.oldMaturityVal();
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -621,7 +566,6 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 3 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6 * 1e18 + yield) * 97 / 100, "check hub balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //revert due to burn amount greater than pool balance
@@ -643,7 +587,6 @@ contract StakePoolTest is BaseTest {
     //burning 50% tokens
     //fee is transferred to atvl
     function test_burn_nstblTokens() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -653,7 +596,6 @@ contract StakePoolTest is BaseTest {
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.startPrank(NSTBL_HUB);
@@ -661,7 +603,7 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 5e5 * 1e18, "check pool balance");
 
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -669,13 +611,11 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, (5e5 * 1e18) * 10 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5 * 1e18) * 90 / 100, "check hub balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //single staker, no yield
     //burning 100% tokens
     function test_burn_nstblTokens_case2() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -685,13 +625,12 @@ contract StakePoolTest is BaseTest {
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -699,14 +638,12 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, 0, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0, "check hub balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //single staker, with yield
     //burning 50% tokens
     //fee is transferred to atvl
     function test_burn_nstblTokens_case3() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -716,14 +653,13 @@ contract StakePoolTest is BaseTest {
         uint256 oldMaturityValue = stakePool.oldMaturityVal();
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(5e5 * 1e18); //burnt 50% tokens
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -732,14 +668,12 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (5e5 * 1e18 + yield) * 3 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5 * 1e18 + yield) * 97 / 100, "check hub balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //single staker, with yield
     //burning 100% tokens, only yield gets transferred to the user
     //fee is transferred to atvl
     function test_burn_nstblTokens_case4() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -749,14 +683,13 @@ contract StakePoolTest is BaseTest {
         uint256 oldMaturityValue = stakePool.oldMaturityVal();
         uint256 poolBalanceBefore = stakePool.poolBalance();
         uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
-        uint256 lpBalBefore = IERC20Helper(lp).balanceOf(destinationAddress);
 
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(1e6 * 1e18); //burnt 50% tokens
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
         vm.stopPrank();
 
@@ -765,7 +698,6 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (yield) * 3 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (yield) * 97 / 100, "check hub balance");
-        assertEq(IERC20Helper(lp).balanceOf(destinationAddress) - lpBalBefore, 0);
     }
 
     //@NOTE: updatePoolFromHub(....) is called only during redemption and deposit
@@ -884,7 +816,6 @@ contract StakePoolTest is BaseTest {
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
-        uint256 oldMaturityValue = stakePool.oldMaturityVal();
         uint256 nstblBalBefore = nstblToken.balanceOf(address(stakePool));
 
         //action
@@ -916,7 +847,7 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         stakePool.updatePoolFromHub(true, 5e5 * 1e18, 0);
         nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false, destinationAddress)
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
 
         //postcondition
@@ -948,7 +879,6 @@ contract StakePoolTest is BaseTest {
     }
 
     function test_preview_userTokens() external {
-        address lp = address(stakePool.lpToken());
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);

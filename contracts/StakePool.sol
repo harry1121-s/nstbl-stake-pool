@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.21;
 
-import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
-import { IStakePool, IERC20Helper, ILoanManager, IACLManager, TokenLP, StakePoolStorage } from "./StakePoolStorage.sol";
+import { IStakePool, IERC20Helper, ILoanManager, IACLManager, StakePoolStorage } from "./StakePoolStorage.sol";
 
 contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable {
     using SafeERC20 for IERC20Helper;
@@ -50,10 +49,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         nstbl = _nstbl;
         loanManager = _loanManager;
         atvl = _atvl;
-        lpToken = new TokenLP("NSTBLStakePool LP Token", "NSTBL_SP", IACLManager(aclManager).admin());
         _locked = 1;
         poolProduct = 1e18;
-        emit StakePoolInitialized(REVISION, aclManager, nstbl, loanManager, atvl, address(lpToken));
+        emit StakePoolInitialized(REVISION, aclManager, nstbl, loanManager, atvl);
     }
 
     /**
@@ -166,7 +164,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
             // in case Maple devalues T-bills
-            console.log("Vals: ", newMaturityVal, oldMaturityVal);
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
@@ -271,7 +268,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      */
     function burnNSTBL(uint256 _amount) external authorizedCaller {
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        console.log("YIELDS: ", poolYield);
         require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
 
         poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance * 1e18);
@@ -292,7 +288,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function stake(address user, uint256 stakeAmount, uint8 trancheId, address destinationAddress)
+    function stake(address user, uint256 stakeAmount, uint8 trancheId)
         external
         authorizedCaller
         nonReentrant
@@ -302,7 +298,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        console.log("HERE");
         uint256 unstakeFee;
         if (staker.amount > 0 && staker.epochId == poolEpochId) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
@@ -316,27 +311,24 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         staker.poolDebt = poolProduct;
         staker.stakeTimeStamp = block.timestamp;
         poolBalance += stakeAmount;
-        staker.lpTokens += stakeAmount;
-        lpToken.mint(destinationAddress, stakeAmount);
 
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
 
-        emit Stake(user, staker.amount, staker.poolDebt, staker.epochId, staker.lpTokens);
+        emit Stake(user, staker.amount, staker.poolDebt, staker.epochId);
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address lpOwner)
+    function unstake(address user, uint8 trancheId, bool depeg)
         external
         authorizedCaller
         nonReentrant
         returns (uint256)
     {
         StakerInfo storage staker = stakerInfo[trancheId][user];
-        require(lpToken.balanceOf(lpOwner) >= staker.lpTokens, "SP: Insuff LP Balance");
         require(staker.amount > 0, "SP: NO STAKE");
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
 
@@ -345,7 +337,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             return 0;
         }
 
-        uint256 timeElapsed = (block.timestamp - staker.stakeTimeStamp) / 1 days;
         uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
 
@@ -356,7 +347,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         }
 
         staker.amount = 0;
-        staker.lpTokens = 0;
         poolBalance -= tokensAvailable;
 
         //resetting system
@@ -366,7 +356,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolBalance = 0;
         }
 
-        lpToken.burn(lpOwner, staker.lpTokens);
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
 
@@ -381,13 +370,12 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     function getStakerInfo(address user, uint8 trancheId)
         external
         view
-        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _lpTokens, uint256 _stakerTimeStamp)
+        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _stakerTimeStamp)
     {
         StakerInfo memory staker = stakerInfo[trancheId][user];
         _amount = staker.amount;
         _poolDebt = staker.poolDebt;
         _epochId = staker.epochId;
-        _lpTokens = staker.lpTokens;
         _stakerTimeStamp = staker.stakeTimeStamp;
     }
 
