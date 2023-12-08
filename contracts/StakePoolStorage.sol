@@ -23,7 +23,7 @@ contract StakePoolStorage {
     STORAGE : Stake Pool
     //////////////////////////////////////////////////////////////*/
 
-    address public versionSlot;
+    uint256 public versionSlot;
     address public aclManager;
     address public nstbl;
     address public loanManager;
