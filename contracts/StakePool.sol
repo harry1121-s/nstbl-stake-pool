@@ -189,7 +189,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolBalance += (nstblYield / 1e18);
 
             oldMaturityVal = newMaturityVal;
-            return (nstblYield, atvlYield);
+            return (nstblYield/1e18, atvlYield);
         } else {
             return (0, 0);
         }
@@ -199,6 +199,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function previewUpdatePool() public view returns (uint256) {
+        if (ILoanManager(loanManager).awaitingRedemption()) {
+            return 0;
+        }
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal > oldMaturityVal) {
             // in case Maple devalues T-bills
@@ -236,9 +239,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256) {
         StakerInfo memory staker = stakerInfo[_trancheId][_user];
         uint256 newPoolProduct = previewUpdatePool();
-        if (newPoolProduct != 0 && staker.amount != 0) {
+        if (newPoolProduct != 0 && staker.amount != 0 && staker.epochId == poolEpochId) {
             return staker.amount * newPoolProduct / staker.poolDebt;
-        } else if (staker.amount != 0) {
+        } else if (staker.amount != 0 && staker.epochId == poolEpochId) {
             return staker.amount * poolProduct / staker.poolDebt;
         } else {
             return 0;

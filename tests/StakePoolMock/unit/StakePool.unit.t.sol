@@ -430,6 +430,7 @@ contract StakePoolTest is BaseTest {
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 9e5 * 1e18);
     }
 
+
     //single staker, no yield
     //instant unstake, maximum fee applied in all tranches
     function test_unstake_multipleTranches() external {
@@ -687,7 +688,8 @@ contract StakePoolTest is BaseTest {
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
-        stakePool.burnNSTBL(1e6 * 1e18); //burnt 50% tokens
+        stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
+        uint256 userUnstakeAmount = stakePool.getUserAvailableTokens(user1, 0);
         nstblToken.sendOrReturnPool(
             address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
         );
@@ -698,6 +700,44 @@ contract StakePoolTest is BaseTest {
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (yield) * 3 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (yield) * 97 / 100, "check hub balance");
+        assertEq(userUnstakeAmount, yield, "check user tokens transferred");
+
+    }
+
+    //single staker, with yield, but awaiting redemption status set to true
+    //burning 100% tokens, no yield gets transferred to the user
+    //no fee is transferred to atvl
+    function test_burn_nstblTokens_case5() external {
+         //precondition
+        loanManager.updateInvestedAssets(10e6 * 1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e6 * 1e18, 0);
+
+        uint256 oldMaturityValue = stakePool.oldMaturityVal();
+        uint256 poolBalanceBefore = stakePool.poolBalance();
+        uint256 hubBalBefore = nstblToken.balanceOf(NSTBL_HUB);
+
+        //action
+        vm.warp(block.timestamp + 100 days);
+        loanManager.updateAwaitingRedemption(true);
+        vm.prank(NSTBL_HUB);
+        stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
+        uint256 userUnstakeAmount = stakePool.getUserAvailableTokens(user1, 0);
+
+        //unstaking
+        vm.startPrank(NSTBL_HUB);
+        nstblToken.sendOrReturnPool(
+            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
+        );
+        vm.stopPrank();
+
+
+        //postcondition
+        assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 0, "check hub balance");
+        assertEq(userUnstakeAmount, 0, "check tokens transferred");
     }
 
     //@NOTE: updatePoolFromHub(....) is called only during redemption and deposit
