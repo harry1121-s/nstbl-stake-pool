@@ -203,7 +203,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             return poolProduct;
         }
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        if (newMaturityVal > oldMaturityVal) {
+        if (newMaturityVal >= oldMaturityVal) {
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
@@ -222,9 +222,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
 
             return ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
 
-        }
-        else {
-            return poolProduct;
         }
     }
 
