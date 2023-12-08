@@ -128,7 +128,7 @@ contract BaseTest is Test {
         stakePool = NSTBLStakePool(address(stakePoolProxy));
 
         aclManager.setAuthorizedCallerToken(address(stakePoolProxy), true);
-        stakePool.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
+        stakePool.setupStakePool([500, 200, 100], [500, 500, 300], [30, 90, 180]);
         loanManager.initializeTime();
         vm.stopPrank();
     }

@@ -36,7 +36,7 @@ contract StakePoolTest is BaseTest {
 
         NSTBLStakePool sp2 = NSTBLStakePool(address(newProxy));
 
-        sp2.setupStakePool([300, 200, 100], [700, 500, 300], [30, 90, 180]);
+        sp2.setupStakePool([300, 200, 100], [500, 500, 300], [30, 90, 180]);
 
         vm.stopPrank();
     }
@@ -44,15 +44,15 @@ contract StakePoolTest is BaseTest {
     function test_setup_funcs() external {
         //action
         vm.prank(deployer);
-        stakePool.setupStakePool([400, 300, 200], [900, 800, 700], [60, 120, 240]);
+        stakePool.setupStakePool([400, 300, 200], [500, 400, 300], [60, 120, 240]);
 
         //postcondition
         assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
         assertEq(stakePool.trancheBaseFee2(), 300, "check trancheFee2");
         assertEq(stakePool.trancheBaseFee3(), 200, "check trancheFee3");
-        assertEq(stakePool.earlyUnstakeFee1(), 900, "check earlyUnstakeFee1");
-        assertEq(stakePool.earlyUnstakeFee2(), 800, "check earlyUnstakeFee2");
-        assertEq(stakePool.earlyUnstakeFee3(), 700, "check earlyUnstakeFee3");
+        assertEq(stakePool.earlyUnstakeFee1(), 500, "check earlyUnstakeFee1");
+        assertEq(stakePool.earlyUnstakeFee2(), 400, "check earlyUnstakeFee2");
+        assertEq(stakePool.earlyUnstakeFee3(), 300, "check earlyUnstakeFee3");
         assertEq(stakePool.trancheStakeTimePeriod(0), 60, "check trancheStakeTimePeriod1");
         assertEq(stakePool.trancheStakeTimePeriod(1), 120, "check trancheStakeTimePeriod2");
         assertEq(stakePool.trancheStakeTimePeriod(2), 240, "check trancheStakeTimePeriod3");
@@ -236,7 +236,7 @@ contract StakePoolTest is BaseTest {
     }
 
     //single user, with yield, awaiting redemption active - no yield given to the pool
-    //restaking in tranche 0 after 100 days, base fee of 3% applied
+    //restaking in tranche 0 after 100 days, base fee of 5% applied
     //fee is transferred to atvl
     function test_restake_case3() external {
         //precondition
@@ -252,15 +252,15 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
 
         //postcondition
-        assertEq(stakePool.poolBalance() - poolBalanceBefore, 197e4 * 1e18, "check pool balance");
-        assertEq(nstblToken.balanceOf(atvl), 3e4 * 1e18, "check atvl balance");
+        assertEq(stakePool.poolBalance() - poolBalanceBefore, 195e4 * 1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), 5e4 * 1e18, "check atvl balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, 197e4 * 1e18, "check user1 staked amount");
+        assertEq(_amount, 195e4 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, 1e18, "check user1 pool debt");
     }
 
     //single user, with yield less than 1e18 => 0, awaiting redemption inactive
-    //restaking in tranche 0 after 1 second, base fee of 10% applied
+    //restaking in tranche 0 after 1 second, fee of 10% applied
     //fee is transferred to atvl
     function test_restake_case4() external {
         //precondition
@@ -286,7 +286,7 @@ contract StakePoolTest is BaseTest {
 
     //single user, with yield, awaiting redemption inactive - yield given to the pool
     //all the yield is given to the pool since atvl balance is 0
-    //restaking in tranche 0 after 100 days, base fee of 3% applied
+    //restaking in tranche 0 after 100 days, base fee of 5% applied
     //fee is transferred to atvl
     function test_restake_case5() external {
         //precondition
@@ -305,12 +305,12 @@ contract StakePoolTest is BaseTest {
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(
             stakePool.poolBalance() - poolBalanceBefore,
-            (1e6 * 1e18 + yield) * 97 / 100 + 1e6 * 1e18,
+            (1e6 * 1e18 + yield) * 95 / 100 + 1e6 * 1e18,
             "check pool balance"
         );
-        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 3 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 5 / 100, "check atvl balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, (1e6 * 1e18 + yield) * 97 / 100 + 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield) * 95 / 100 + 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
     }
 
@@ -343,7 +343,7 @@ contract StakePoolTest is BaseTest {
             "check pool balance and atvl balance"
         );
         (uint256 _amount,,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, (1e6 * 1e18 + yield / 3) * 97 / 100 + 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield / 3) * 95 / 100 + 1e6 * 1e18, "check user1 staked amount");
 
         (_amount,,,) = stakePool.getStakerInfo(user2, 1);
         assertEq(_amount, (1e6 * 1e18 + yield / 3) * 98 / 100 + 1e6 * 1e18, "check user2 staked amount");
@@ -513,7 +513,7 @@ contract StakePoolTest is BaseTest {
     }
 
     //single staker, with yield, awaiting redemption active - no yield given to the pool
-    //unstaking in tranche 0 after 100 days, base fee of 3% applied
+    //unstaking in tranche 0 after 100 days, base fee of 5% applied
     //fee is transferred to atvl
     function test_unstake_case3() external {
         //precondition
@@ -536,12 +536,12 @@ contract StakePoolTest is BaseTest {
 
         //postcondition
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18);
-        assertEq(nstblToken.balanceOf(atvl), 3e4 * 1e18);
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 97e4 * 1e18);
+        assertEq(nstblToken.balanceOf(atvl), 5e4 * 1e18);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, 95e4 * 1e18);
     }
 
     //single staker, with yield, awaiting redemption inactive - yield given to the pool
-    //unstaking in tranche 0 after 100 days, base fee of 3% applied
+    //unstaking in tranche 0 after 100 days, base fee of 5% applied
     //fee is transferred to atvl
     function test_unstake_case4() external {
         //precondition
@@ -565,8 +565,8 @@ contract StakePoolTest is BaseTest {
         //postcondition
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
-        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 3 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6 * 1e18 + yield) * 97 / 100, "check hub balance");
+        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 5 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6 * 1e18 + yield) * 95 / 100, "check hub balance");
     }
 
     //revert due to burn amount greater than pool balance
@@ -667,8 +667,8 @@ contract StakePoolTest is BaseTest {
         //postcondition
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
-        assertEq(nstblToken.balanceOf(atvl), (5e5 * 1e18 + yield) * 3 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5 * 1e18 + yield) * 97 / 100, "check hub balance");
+        assertEq(nstblToken.balanceOf(atvl), (5e5 * 1e18 + yield) * 5 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (5e5 * 1e18 + yield) * 95 / 100, "check hub balance");
     }
 
     //single staker, with yield
@@ -698,8 +698,8 @@ contract StakePoolTest is BaseTest {
         //postcondition
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
-        assertEq(nstblToken.balanceOf(atvl), (yield) * 3 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (yield) * 97 / 100, "check hub balance");
+        assertEq(nstblToken.balanceOf(atvl), (yield) * 5 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (yield) * 95 / 100, "check hub balance");
         assertEq(userUnstakeAmount, yield, "check user tokens transferred");
 
     }
@@ -894,8 +894,8 @@ contract StakePoolTest is BaseTest {
         uint256 yield = loanManager.getMaturedAssets() - 25e5 * 1e18;
         assertEq(stakePool.oldMaturityVal(), 25e5 * 1e18 + yield);
         assertEq(stakePool.poolBalance(), 0);
-        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6 * 1e18 + yield) * 97 / 100);
-        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 3 / 100);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB) - hubBalBefore, (1e6 * 1e18 + yield) * 95 / 100);
+        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 5 / 100);
     }
 
     //mocking update during redemption and t-bill devaluation
