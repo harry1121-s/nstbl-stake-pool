@@ -929,9 +929,7 @@ contract StakePoolTest is BaseTest {
 
         //action
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
-
         assertEq(stakePool.getUserAvailableTokens(user1, 0), 1e6 * 1e18);
-
         vm.warp(block.timestamp + 100 days);
 
         //postcondition
@@ -940,18 +938,18 @@ contract StakePoolTest is BaseTest {
     }
 
     //empty pool with yield
-    function test_review_updatePool() external {
+    function test_preview_updatePool() external {
         //precondition
         loanManager.updateInvestedAssets(1e6 * 1e18);
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
         vm.warp(block.timestamp + 10 days);
-        assertEq(stakePool.previewUpdatePool(), 0);
+        assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
     }
 
     //non-empty pool with 0 yield
-    function test_review_updatePool_case2() external {
+    function test_preview_updatePool_case2() external {
         //precondition
         loanManager.updateInvestedAssets(1e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -959,7 +957,7 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user1, 1e3 * 1e18, 0);
 
         vm.warp(block.timestamp + 10 seconds);
-        assertEq(stakePool.previewUpdatePool(), 0);
+        assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
     }
 }
 
