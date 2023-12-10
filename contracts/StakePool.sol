@@ -289,6 +289,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     {
         require(stakeAmount > 0, "SP: ZERO_AMOUNT");
         require(trancheId < 3, "SP: INVALID_TRANCHE");
+        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
         StakerInfo storage staker = stakerInfo[trancheId][user];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
@@ -354,6 +355,8 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         IERC20Helper(nstbl).mint(atvl, atvlYield);
 
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+        IERC20Helper(nstbl).safeTransfer(msg.sender, (tokensAvailable - unstakeFee));
+
         emit Unstake(user, tokensAvailable, unstakeFee);
         return (tokensAvailable - unstakeFee);
     }

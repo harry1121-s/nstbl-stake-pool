@@ -142,11 +142,11 @@ contract BaseTest is Test {
     function _stakeNSTBL(address _user, uint256 _amount, uint8 _trancheId) internal {
         // Add nSTBL balance to NSTBL_HUB
         deal(address(nstblToken), NSTBL_HUB, _amount);
-        assertEq(IERC20Helper(address(nstblToken)).balanceOf(NSTBL_HUB), _amount);
+        assertEq(nstblToken.balanceOf(NSTBL_HUB), _amount);
 
         // Action = Stake
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), _amount);
+        nstblToken.approve(address(stakePool), _amount);
         stakePool.stake(_user, _amount, _trancheId);
         vm.stopPrank();
     }

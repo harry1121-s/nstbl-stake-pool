@@ -98,14 +98,13 @@ contract StakePoolTest is BaseTest {
 
         //action
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), 0);
         vm.expectRevert("SP: ZERO_AMOUNT"); // reverting due to zero amount
         stakePool.stake(user1, 0, 0);
         vm.stopPrank();
 
         deal(address(nstblToken), NSTBL_HUB, 1e6 * 1e18);
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(NSTBL_HUB, address(stakePool), 1e6 * 1e18);
+        nstblToken.approve(address(stakePool), 1e6*1e18);
         vm.expectRevert("SP: INVALID_TRANCHE"); // reverting due to invalid trancheID
         stakePool.stake(user1, 1e6 * 1e18, 4);
         vm.stopPrank();
@@ -419,9 +418,7 @@ contract StakePoolTest is BaseTest {
 
         //action
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -446,15 +443,9 @@ contract StakePoolTest is BaseTest {
 
         //action
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user2, 1, false)
-        );
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user3, 2, false)
-        );
+        stakePool.unstake(user1, 0, false);
+        stakePool.unstake(user2, 1, false);
+        stakePool.unstake(user3, 2, false);
 
         //postcondition
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 3e6 * 1e18);
@@ -475,9 +466,8 @@ contract StakePoolTest is BaseTest {
 
         //action
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true)
-        );
+        stakePool.unstake(user1, 0, true);
+
         vm.stopPrank();
 
         //postcondition
@@ -501,9 +491,7 @@ contract StakePoolTest is BaseTest {
         //action
         vm.store(address(stakePool), bytes32(uint256(10)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, true)
-        );
+        stakePool.unstake(user1, 0, true);
         vm.stopPrank();
 
         //postcondition
@@ -529,9 +517,7 @@ contract StakePoolTest is BaseTest {
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -557,9 +543,7 @@ contract StakePoolTest is BaseTest {
         //action
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -603,9 +587,7 @@ contract StakePoolTest is BaseTest {
         stakePool.burnNSTBL(5e5 * 1e18); //burnt 50% tokens
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 5e5 * 1e18, "check pool balance");
 
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -630,9 +612,7 @@ contract StakePoolTest is BaseTest {
         //action
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -659,9 +639,7 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(5e5 * 1e18); //burnt 50% tokens
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -690,9 +668,7 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         stakePool.burnNSTBL(1e6 * 1e18); //burnt 100% tokens
         uint256 userUnstakeAmount = stakePool.getUserAvailableTokens(user1, 0);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
         //postcondition
@@ -727,9 +703,7 @@ contract StakePoolTest is BaseTest {
 
         //unstaking
         vm.startPrank(NSTBL_HUB);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
         vm.stopPrank();
 
 
@@ -886,9 +860,7 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 100 days);
         vm.startPrank(NSTBL_HUB);
         stakePool.updatePoolFromHub(true, 5e5 * 1e18, 0);
-        nstblToken.sendOrReturnPool(
-            address(stakePool), NSTBL_HUB, stakePool.unstake(user1, 0, false)
-        );
+        stakePool.unstake(user1, 0, false);
 
         //postcondition
         uint256 yield = loanManager.getMaturedAssets() - 25e5 * 1e18;

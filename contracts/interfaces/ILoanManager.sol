@@ -6,7 +6,6 @@ interface ILoanManager {
                                  VIEWS
     //////////////////////////////////////////////////////////////*/
 
-    function getInvestedAssets(address _assets) external view returns (uint256);
     function getMaturedAssets() external view returns (uint256);
     function awaitingRedemption() external view returns (bool);
 }
