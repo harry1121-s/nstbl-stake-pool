@@ -153,9 +153,10 @@ interface IStakePool {
      * @param user Address of the user
      * @param trancheId Tranche ID of the user
      * @param depeg Whether the tokens are depeg or not
+     * @param destinationAddress receiver address
      * @return _tokensUnstaked Amount of tokens unstaked
      */
-    function unstake(address user, uint8 trancheId, bool depeg)
+    function unstake(address user, uint8 trancheId, bool depeg, address destinationAddress)
         external
         returns (uint256 _tokensUnstaked);
 

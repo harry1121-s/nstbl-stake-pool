@@ -317,7 +317,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function unstake(address user, uint8 trancheId, bool depeg)
+    function unstake(address user, uint8 trancheId, bool depeg, address destAddress_)
         external
         authorizedCaller
         nonReentrant
@@ -355,7 +355,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         IERC20Helper(nstbl).mint(atvl, atvlYield);
 
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-        IERC20Helper(nstbl).safeTransfer(msg.sender, (tokensAvailable - unstakeFee));
+        IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
 
         emit Unstake(user, tokensAvailable, unstakeFee);
         return (tokensAvailable - unstakeFee);
