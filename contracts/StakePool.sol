@@ -62,7 +62,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         uint16[3] memory earlyUnstakeFee,
         uint8[3] memory stakeTimePeriods
     ) external onlyAdmin {
-        require(earlyUnstakeFee[0] <= 500 && earlyUnstakeFee[0] <= 500 && earlyUnstakeFee[0] <= 500, "SP: Cannot Exceed 5%");
+        require(earlyUnstakeFee[0] <= 500 && earlyUnstakeFee[1] <= 500 && earlyUnstakeFee[2] <= 500, "SP: Cannot Exceed 5%");
         trancheBaseFee1 = trancheBaseFee[0];
         trancheBaseFee2 = trancheBaseFee[1];
         trancheBaseFee3 = trancheBaseFee[2];

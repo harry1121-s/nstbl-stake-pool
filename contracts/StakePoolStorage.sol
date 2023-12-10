@@ -42,13 +42,8 @@ contract StakePoolStorage {
     uint256 public poolEpochId;
     uint256 public unclaimedRewards;
 
-    // uint256 public yieldThreshold; //9% APY
-    // uint256 public stakingThreshold;
-
-    // mapping(bytes11 => StakerInfo) public stakerInfo;
-
     uint256 public oldMaturityVal;
-    // uint256 public precision = 1e27;
+    
     uint32 public trancheBaseFee1;
     uint32 public trancheBaseFee2;
     uint32 public trancheBaseFee3;

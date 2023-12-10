@@ -43,8 +43,12 @@ contract StakePoolTest is BaseTest {
 
     function test_setup_funcs() external {
         //action
-        vm.prank(deployer);
+        vm.startPrank(deployer);
+        vm.expectRevert("SP: Cannot Exceed 5%");
+        stakePool.setupStakePool([400, 300, 200], [500, 700, 300], [60, 120, 240]);
+
         stakePool.setupStakePool([400, 300, 200], [500, 400, 300], [60, 120, 240]);
+        vm.stopPrank();
 
         //postcondition
         assertEq(stakePool.trancheBaseFee1(), 400, "check trancheFee1");
