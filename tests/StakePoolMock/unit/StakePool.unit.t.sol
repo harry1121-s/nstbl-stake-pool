@@ -939,4 +939,21 @@ contract StakePoolTest is BaseTest {
         vm.warp(block.timestamp + 10 seconds);
         assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
     }
+
+    //non-empty pool Tbills are devalues
+    function test_preview_updatePool_case3() external {
+        //precondition
+        console.log(stakePool.oldMaturityVal());
+        loanManager.updateInvestedAssets(1e6 * 1e18);
+        vm.prank(NSTBL_HUB);
+        stakePool.updateMaturityValue();
+        _stakeNSTBL(user1, 1e3 * 1e18, 0);
+        console.log(stakePool.oldMaturityVal());
+
+        vm.warp(block.timestamp + 10 seconds);
+        vm.store(address(stakePool), bytes32(uint256(11)), bytes32(uint256(1e32)));
+        console.log(stakePool.oldMaturityVal());
+
+        assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
+    }
 }

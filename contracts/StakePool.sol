@@ -209,7 +209,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolProduct_ = poolProduct;
         } else {
             uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-            if (newMaturityVal >= oldMaturityVal) {
+            if (newMaturityVal > oldMaturityVal) {
                 uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
                 if (nstblYield <= 1e18) {
