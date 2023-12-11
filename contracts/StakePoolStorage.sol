@@ -6,7 +6,6 @@ import "@nstbl-acl-manager/contracts/IACLManager.sol";
 import "./interfaces/IStakePool.sol";
 
 contract StakePoolStorage {
-
     /*//////////////////////////////////////////////////////////////
     STRUCTS
     //////////////////////////////////////////////////////////////*/
@@ -47,10 +46,6 @@ contract StakePoolStorage {
 
     uint256 public genesis;
 
-    uint64 public trancheFee1;
-    uint64 public trancheFee2;
-    uint64 public trancheFee3;
-
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 
     uint256 public poolProduct;
@@ -59,7 +54,7 @@ contract StakePoolStorage {
     uint256 public unclaimedRewards;
 
     uint256 public oldMaturityVal;
-    
+
     uint32 public trancheBaseFee1;
 
     /// @notice base fee for tranche 2
@@ -82,5 +77,5 @@ contract StakePoolStorage {
 
     //add new variables here to extended the storage
     //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision
-    uint256[35] __gap;
+    uint256[36] __gap;
 }

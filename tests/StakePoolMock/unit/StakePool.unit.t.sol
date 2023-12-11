@@ -108,7 +108,7 @@ contract StakePoolTest is BaseTest {
 
         deal(address(nstblToken), NSTBL_HUB, 1e6 * 1e18);
         vm.startPrank(NSTBL_HUB);
-        nstblToken.approve(address(stakePool), 1e6*1e18);
+        nstblToken.approve(address(stakePool), 1e6 * 1e18);
         vm.expectRevert("SP: INVALID_TRANCHE"); // reverting due to invalid trancheID
         stakePool.stake(user1, 1e6 * 1e18, 4);
         vm.stopPrank();
@@ -357,7 +357,6 @@ contract StakePoolTest is BaseTest {
 
     //multiple stakers; pool resetted; then restake again
     function test_restake_poolReset() external {
-
         //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
@@ -368,9 +367,7 @@ contract StakePoolTest is BaseTest {
         _stakeNSTBL(user2, 1e6 * 1e18, 1);
 
         //postcondition
-        assertEq(
-            stakePool.poolBalance() , 2e6 * 1e18, "check pool balance"
-        );
+        assertEq(stakePool.poolBalance(), 2e6 * 1e18, "check pool balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
         assertEq(_amount, 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
@@ -378,7 +375,7 @@ contract StakePoolTest is BaseTest {
         //resetting pool by burning all the nstbl in the stake pool
         //action
         vm.startPrank(NSTBL_HUB);
-        stakePool.burnNSTBL(stakePool.poolBalance()-1e17);
+        stakePool.burnNSTBL(stakePool.poolBalance() - 1e17);
         vm.stopPrank();
 
         //postcondition
@@ -399,7 +396,6 @@ contract StakePoolTest is BaseTest {
         (_amount, _poolDebt,,) = stakePool.getStakerInfo(user2, 1);
         assertEq(_amount, 1e6 * 1e18, "check user2 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user2 pool debt");
-
     }
 
     function test_unstake_revert() external {
@@ -430,7 +426,6 @@ contract StakePoolTest is BaseTest {
         assertEq(nstblToken.balanceOf(atvl), 1e5 * 1e18);
         assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, 9e5 * 1e18);
     }
-
 
     //single staker, no yield
     //instant unstake, maximum fee applied in all tranches
@@ -493,12 +488,13 @@ contract StakePoolTest is BaseTest {
         uint256 balBefore = nstblToken.balanceOf(destinationAddress);
 
         //action
-        vm.store(address(stakePool), bytes32(uint256(10)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
+        vm.store(address(stakePool), bytes32(uint256(9)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
         vm.startPrank(NSTBL_HUB);
         stakePool.unstake(user1, 0, true, destinationAddress);
         vm.stopPrank();
 
         //postcondition
+        console.log("Pool Balance after burn: ", poolBalanceBefore, stakePool.poolBalance());
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 0, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
         assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, 0, "check destination balance");
@@ -554,7 +550,11 @@ contract StakePoolTest is BaseTest {
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 5 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, (1e6 * 1e18 + yield) * 95 / 100, "check destination balance");
+        assertEq(
+            nstblToken.balanceOf(destinationAddress) - balBefore,
+            (1e6 * 1e18 + yield) * 95 / 100,
+            "check destination balance"
+        );
     }
 
     //revert due to burn amount greater than pool balance
@@ -597,7 +597,9 @@ contract StakePoolTest is BaseTest {
         //postcondition
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl) - atvlBalBefore, (5e5 * 1e18) * 10 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, (5e5 * 1e18) * 90 / 100, "check destination balance");
+        assertEq(
+            nstblToken.balanceOf(destinationAddress) - balBefore, (5e5 * 1e18) * 90 / 100, "check destination balance"
+        );
     }
 
     //single staker, no yield
@@ -650,7 +652,11 @@ contract StakePoolTest is BaseTest {
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), (5e5 * 1e18 + yield) * 5 / 100, "check atvl balance");
-        assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, (5e5 * 1e18 + yield) * 95 / 100, "check destination balance");
+        assertEq(
+            nstblToken.balanceOf(destinationAddress) - balBefore,
+            (5e5 * 1e18 + yield) * 95 / 100,
+            "check destination balance"
+        );
     }
 
     //single staker, with yield
@@ -681,14 +687,13 @@ contract StakePoolTest is BaseTest {
         assertEq(nstblToken.balanceOf(atvl), (yield) * 5 / 100, "check atvl balance");
         assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, (yield) * 95 / 100, "check destination balance");
         assertEq(userUnstakeAmount, yield, "check user tokens transferred");
-
     }
 
     //single staker, with yield, but awaiting redemption status set to true
     //burning 100% tokens, no yield gets transferred to the user
     //no fee is transferred to atvl
     function test_burn_nstblTokens_case5() external {
-         //precondition
+        //precondition
         loanManager.updateInvestedAssets(10e6 * 1e18);
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
@@ -709,7 +714,6 @@ contract StakePoolTest is BaseTest {
         vm.startPrank(NSTBL_HUB);
         stakePool.unstake(user1, 0, false, destinationAddress);
         vm.stopPrank();
-
 
         //postcondition
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 1e6 * 1e18, "check pool balance");
@@ -936,5 +940,3 @@ contract StakePoolTest is BaseTest {
         assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
     }
 }
-
-

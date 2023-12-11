@@ -62,17 +62,23 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         uint16[3] memory earlyUnstakeFee_,
         uint8[3] memory stakeTimePeriods_
     ) external onlyAdmin {
-        require(earlyUnstakeFee[0] <= 500 && earlyUnstakeFee[1] <= 500 && earlyUnstakeFee[2] <= 500, "SP: Cannot Exceed 5%");
-        trancheBaseFee1 = trancheBaseFee[0];
-        trancheBaseFee2 = trancheBaseFee[1];
-        trancheBaseFee3 = trancheBaseFee[2];
-        earlyUnstakeFee1 = earlyUnstakeFee[0];
-        earlyUnstakeFee2 = earlyUnstakeFee[1];
-        earlyUnstakeFee3 = earlyUnstakeFee[2];
-        trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
-        trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
-        trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
-        emit StakePoolSetup(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
+        require(
+            earlyUnstakeFee_[0] < 501 && earlyUnstakeFee_[1] < 501 && earlyUnstakeFee_[2] < 501, "SP: Cannot Exceed 5%"
+        );
+        trancheBaseFee1 = trancheBaseFee_[0];
+        trancheBaseFee2 = trancheBaseFee_[1];
+        trancheBaseFee3 = trancheBaseFee_[2];
+        earlyUnstakeFee1 = earlyUnstakeFee_[0];
+        earlyUnstakeFee2 = earlyUnstakeFee_[1];
+        earlyUnstakeFee3 = earlyUnstakeFee_[2];
+        trancheStakeTimePeriod[0] = uint64(stakeTimePeriods_[0]);
+        trancheStakeTimePeriod[1] = uint64(stakeTimePeriods_[1]);
+        trancheStakeTimePeriod[2] = uint64(stakeTimePeriods_[2]);
+        emit TrancheBaseFeeUpdated(trancheBaseFee1, trancheBaseFee2, trancheBaseFee3);
+        emit TrancheEarlyUnstakeFeeUpdated(earlyUnstakeFee1, earlyUnstakeFee2, earlyUnstakeFee2);
+        emit TrancheStakeTimePeriodUpdated(
+            trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]
+        );
     }
 
     /**
@@ -189,7 +195,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             poolBalance += (nstblYield / 1e18);
 
             oldMaturityVal = newMaturityVal;
-            return (nstblYield/1e18, atvlYield);
+            return (nstblYield / 1e18, atvlYield);
         } else {
             return (0, 0);
         }
@@ -201,25 +207,27 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     function previewUpdatePool() public view returns (uint256 poolProduct_) {
         if (ILoanManager(loanManager).awaitingRedemption()) {
             poolProduct_ = poolProduct;
-        }
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        if (newMaturityVal >= oldMaturityVal) {
-            uint256 nstblYield = newMaturityVal - oldMaturityVal;
+        } else {
+            uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+            if (newMaturityVal >= oldMaturityVal) {
+                uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
-            if (nstblYield <= 1e18) {
+                if (nstblYield <= 1e18) {
+                    poolProduct_ = poolProduct;
+                } else if (poolBalance <= 1e18) {
+                    poolProduct_ = poolProduct;
+                } else {
+                    uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+                    uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
+
+                    nstblYield -= atvlYield;
+                    nstblYield *= 1e18; //to maintain precision
+
+                    poolProduct_ = ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
+                }
+            } else {
                 poolProduct_ = poolProduct;
             }
-
-            if (poolBalance <= 1e18) {
-                poolProduct_ = poolProduct;
-            }
-            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-
-            nstblYield -= atvlYield;
-            nstblYield *= 1e18; //to maintain precision
-
-            poolProduct_ = ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
         }
     }
 
@@ -280,11 +288,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_)
-        external
-        authorizedCaller
-        nonReentrant
-    {
+    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_) external authorizedCaller nonReentrant {
         require(stakeAmount_ > 0, "SP: ZERO_AMOUNT");
         require(trancheId_ < 3, "SP: INVALID_TRANCHE");
         IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount_);
@@ -319,7 +323,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         external
         authorizedCaller
         nonReentrant
-        returns (uint256 tokensUnstaked_)
+        returns (uint256 tokensReceived_)
     {
         StakerInfo storage staker = stakerInfo[trancheId_][user_];
         require(staker.amount > 0, "SP: NO STAKE");
@@ -327,36 +331,36 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
 
         if (staker.epochId != poolEpochId) {
             staker.amount = 0;
-            tokensUnstaked_ = 0;
-        }
-
-        uint256 unstakeFee;
-        uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-
-        if (!depeg_) {
-            unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            emit Unstake(user_, 0, 0);
+            tokensReceived_ = 0;
         } else {
-            unstakeFee = 0;
+            uint256 unstakeFee;
+            uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
+
+            if (!depeg_) {
+                unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            } else {
+                unstakeFee = 0;
+            }
+            staker.amount = 0;
+            poolBalance -= tokensAvailable;
+
+            //resetting system
+            if (poolBalance <= 1e18) {
+                poolProduct = 1e18;
+                poolEpochId += 1;
+                poolBalance = 0;
+            }
+
+            IERC20Helper(nstbl).mint(address(this), poolYield);
+            IERC20Helper(nstbl).mint(atvl, atvlYield);
+
+            IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+            IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
+
+            emit Unstake(user_, tokensAvailable, unstakeFee);
+            tokensReceived_ = (tokensAvailable - unstakeFee);
         }
-
-        staker.amount = 0;
-        poolBalance -= tokensAvailable;
-
-        //resetting system
-        if (poolBalance <= 1e18) {
-            poolProduct = 1e18;
-            poolEpochId += 1;
-            poolBalance = 0;
-        }
-
-        IERC20Helper(nstbl).mint(address(this), poolYield);
-        IERC20Helper(nstbl).mint(atvl, atvlYield);
-
-        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-        IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
-
-        emit Unstake(user_, tokensAvailable, unstakeFee);
-        tokensUnstaked_ = (tokensAvailable - unstakeFee);
     }
 
     /**
