@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 import "./interfaces/IERC20Helper.sol";
 import "./interfaces/ILoanManager.sol";
 import "@nstbl-acl-manager/contracts/IACLManager.sol";
-import "./IStakePool.sol";
+import "./interfaces/IStakePool.sol";
 
 contract StakePoolStorage {
     struct StakerInfo {
@@ -31,10 +31,6 @@ contract StakePoolStorage {
 
     uint256 public genesis;
 
-    uint64 public trancheFee1;
-    uint64 public trancheFee2;
-    uint64 public trancheFee3;
-
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 
     uint256 public poolProduct;
@@ -43,7 +39,7 @@ contract StakePoolStorage {
     uint256 public unclaimedRewards;
 
     uint256 public oldMaturityVal;
-    
+
     uint32 public trancheBaseFee1;
     uint32 public trancheBaseFee2;
     uint32 public trancheBaseFee3;
@@ -56,5 +52,5 @@ contract StakePoolStorage {
 
     //add new variables here to extended the storage
     //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision
-    uint256[35] __gap;
+    uint256[36] __gap;
 }

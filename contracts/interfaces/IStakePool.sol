@@ -34,13 +34,33 @@ interface IStakePool {
         uint256 version, address aclManager, address nstblToken, address loanManager, address atvl);
 
     /**
-     * @dev Emitted to setup the tranche fee, unstake fee, and stake time periods
+     * @dev Emitted to setup the tranche stake time periods
      * @param trancheStakeTimePeriod1 tranche stake time period 1
      * @param trancheStakeTimePeriod2 tranche stake time period 2
      * @param trancheStakeTimePeriod3 tranche stake time period 3
      */
-    event StakePoolSetup(
+    event TrancheStakeTimePeriodUpdated(
         uint64 trancheStakeTimePeriod1, uint64 trancheStakeTimePeriod2, uint64 trancheStakeTimePeriod3
+    );
+
+    /**
+     * @dev Emitted to setup the tranche base fee
+     * @param trancheBaseFee1 base fee for tranche 1
+     * @param trancheBaseFee2 base fee for tranche 2
+     * @param trancheBaseFee3 base fee for tranche 3
+     */
+    event TrancheBaseFeeUpdated(
+        uint64 trancheBaseFee1, uint64 trancheBaseFee2, uint64 trancheBaseFee3
+    );
+
+    /**
+     * @dev Emitted to setup the tranche early unstake fee
+     * @param earlyUnstakeFee1 early unstake fee for tranche 1
+     * @param earlyUnstakeFee2 early unstake fee for tranche 2
+     * @param earlyUnstakeFee3 early unstake fee for tranche 3
+     */
+    event TrancheEarlyUnstakeFeeUpdated(
+        uint64 earlyUnstakeFee1, uint64 earlyUnstakeFee2, uint64 earlyUnstakeFee3
     );
 
     /**

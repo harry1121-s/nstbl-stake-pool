@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BaseTest.t.sol";
-import "../../../contracts/IStakePool.sol";
+import "../../../contracts/interfaces/IStakePool.sol";
 
 contract StakePoolTest is BaseTest {
     using SafeERC20 for IERC20Helper;

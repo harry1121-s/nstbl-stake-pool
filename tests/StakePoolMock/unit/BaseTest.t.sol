@@ -10,8 +10,8 @@ import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
 import {
     ITransparentUpgradeableProxy,
     TransparentUpgradeableProxy
-} from "../../../contracts/upgradeable/TransparentUpgradeableProxy.sol";
-import { ProxyAdmin } from "../../../contracts/upgradeable/ProxyAdmin.sol";
+} from "@nstbl-loan-manager/contracts/upgradeable/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "@nstbl-loan-manager/contracts/upgradeable/ProxyAdmin.sol";
 import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LZEndpointMock } from "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";

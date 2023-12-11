@@ -2,7 +2,7 @@
 pragma solidity 0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { VersionedInitializable } from "./upgradeable/VersionedInitializable.sol";
+import { VersionedInitializable } from "@nstbl-loan-manager/contracts/upgradeable/VersionedInitializable.sol";
 import { IStakePool, IERC20Helper, ILoanManager, IACLManager, StakePoolStorage } from "./StakePoolStorage.sol";
 
 contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable {
@@ -72,7 +72,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
         trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
         trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
-        emit StakePoolSetup(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
+        emit TrancheBaseFeeUpdated(trancheBaseFee1, trancheBaseFee2, trancheBaseFee3);
+        emit TrancheEarlyUnstakeFeeUpdated(earlyUnstakeFee1, earlyUnstakeFee2, earlyUnstakeFee3);
+        emit TrancheStakeTimePeriodUpdated(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
     }
 
     /**
