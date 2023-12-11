@@ -79,8 +79,6 @@ contract BaseTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual {
-        // uint256 mainnetFork = vm.createFork("https://eth-mainnet.g.alchemy.com/v2/CFhLkcCEs1dFGgg0n7wu3idxcdcJEgbW");
-        // vm.selectFork(mainnetFork);
         // Deploy mock LZEndpoints
         LZEndpoint_src = new LZEndpointMock(chainId_src);
         LZEndpoint_dst = new LZEndpointMock(chainId_dst);
