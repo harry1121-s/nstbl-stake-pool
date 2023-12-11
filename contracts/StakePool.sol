@@ -37,18 +37,18 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl)
+    function initialize(address aclManager_, address nstbl_, address loanManager_, address atvl_)
         external
         initializer
     {
-        _zeroAddressCheck(_aclManager);
-        _zeroAddressCheck(_nstbl);
-        _zeroAddressCheck(_loanManager);
-        _zeroAddressCheck(_atvl);
-        aclManager = _aclManager;
-        nstbl = _nstbl;
-        loanManager = _loanManager;
-        atvl = _atvl;
+        _zeroAddressCheck(aclManager_);
+        _zeroAddressCheck(nstbl_);
+        _zeroAddressCheck(loanManager_);
+        _zeroAddressCheck(atvl_);
+        aclManager = aclManager_;
+        nstbl = nstbl_;
+        loanManager = loanManager_;
+        atvl = atvl_;
         _locked = 1;
         poolProduct = 1e18;
         emit StakePoolInitialized(REVISION, aclManager, nstbl, loanManager, atvl);
@@ -58,9 +58,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function setupStakePool(
-        uint16[3] memory trancheBaseFee,
-        uint16[3] memory earlyUnstakeFee,
-        uint8[3] memory stakeTimePeriods
+        uint16[3] memory trancheBaseFee_,
+        uint16[3] memory earlyUnstakeFee_,
+        uint8[3] memory stakeTimePeriods_
     ) external onlyAdmin {
         require(earlyUnstakeFee[0] <= 500 && earlyUnstakeFee[1] <= 500 && earlyUnstakeFee[2] <= 500, "SP: Cannot Exceed 5%");
         trancheBaseFee1 = trancheBaseFee[0];
@@ -72,34 +72,32 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         trancheStakeTimePeriod[0] = uint64(stakeTimePeriods[0]);
         trancheStakeTimePeriod[1] = uint64(stakeTimePeriods[1]);
         trancheStakeTimePeriod[2] = uint64(stakeTimePeriods[2]);
-        emit TrancheBaseFeeUpdated(trancheBaseFee1, trancheBaseFee2, trancheBaseFee3);
-        emit TrancheEarlyUnstakeFeeUpdated(earlyUnstakeFee1, earlyUnstakeFee2, earlyUnstakeFee3);
-        emit TrancheStakeTimePeriodUpdated(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
+        emit StakePoolSetup(trancheStakeTimePeriod[0], trancheStakeTimePeriod[1], trancheStakeTimePeriod[2]);
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function setATVL(address _atvl) external onlyAdmin {
-        _zeroAddressCheck(_atvl);
-        atvl = _atvl;
+    function setATVL(address atvl_) external onlyAdmin {
+        _zeroAddressCheck(atvl_);
+        atvl = atvl_;
         emit ATVLUpdated(atvl);
     }
 
-    function _getUnstakeFee(uint8 _trancheId, uint256 _stakeTimeStamp) public view returns (uint256 fee) {
-        uint256 timeElapsed = (block.timestamp - _stakeTimeStamp) / 1 days;
-        if (_trancheId == 0) {
-            fee = (timeElapsed > trancheStakeTimePeriod[0])
+    function _getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) public view returns (uint256 fee_) {
+        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
+        if (trancheId_ == 0) {
+            fee_ = (timeElapsed > trancheStakeTimePeriod[0])
                 ? trancheBaseFee1
                 : trancheBaseFee1
                     + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
-        } else if (_trancheId == 1) {
-            fee = (timeElapsed > trancheStakeTimePeriod[1])
+        } else if (trancheId_ == 1) {
+            fee_ = (timeElapsed > trancheStakeTimePeriod[1])
                 ? trancheBaseFee2
                 : trancheBaseFee2
                     + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
         } else {
-            fee = (timeElapsed > trancheStakeTimePeriod[2])
+            fee_ = (timeElapsed > trancheStakeTimePeriod[2])
                 ? trancheBaseFee3
                 : trancheBaseFee3
                     + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
@@ -109,35 +107,35 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount)
+    function updatePoolFromHub(bool redeem_, uint256 stablesReceived_, uint256 depositAmount_)
         external
         authorizedCaller
         nonReentrant
     {
-        if (ILoanManager(loanManager).awaitingRedemption() && !redeem) {
-            oldMaturityVal += depositAmount;
+        if (ILoanManager(loanManager).awaitingRedemption() && !redeem_) {
+            oldMaturityVal += depositAmount_;
             return;
         }
         uint256 nstblYield;
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
 
-        if (redeem) {
-            if (newMaturityVal + stablesReceived < oldMaturityVal) {
+        if (redeem_) {
+            if (newMaturityVal + stablesReceived_ < oldMaturityVal) {
                 return;
             }
-            nstblYield = newMaturityVal + stablesReceived - oldMaturityVal;
+            nstblYield = newMaturityVal + stablesReceived_ - oldMaturityVal;
             oldMaturityVal = newMaturityVal;
         } else {
             if (newMaturityVal < oldMaturityVal) {
-                oldMaturityVal += depositAmount;
+                oldMaturityVal += depositAmount_;
                 return;
             }
             nstblYield = newMaturityVal - oldMaturityVal;
             if (nstblYield <= 1e18) {
-                oldMaturityVal += depositAmount;
+                oldMaturityVal += depositAmount_;
                 return;
             }
-            oldMaturityVal = newMaturityVal + depositAmount;
+            oldMaturityVal = newMaturityVal + depositAmount_;
         }
         if (poolBalance <= 1e18) {
             IERC20Helper(nstbl).mint(address(this), nstblYield);
@@ -200,44 +198,42 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function previewUpdatePool() public view returns (uint256) {
+    function previewUpdatePool() public view returns (uint256 poolProduct_) {
         if (ILoanManager(loanManager).awaitingRedemption()) {
-            return poolProduct;
+            poolProduct_ = poolProduct;
         }
         uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
         if (newMaturityVal >= oldMaturityVal) {
             uint256 nstblYield = newMaturityVal - oldMaturityVal;
 
             if (nstblYield <= 1e18) {
-                return poolProduct;
+                poolProduct_ = poolProduct;
             }
 
             if (poolBalance <= 1e18) {
-                return poolProduct;
+                poolProduct_ = poolProduct;
             }
             uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
             uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
 
             nstblYield -= atvlYield;
-
             nstblYield *= 1e18; //to maintain precision
 
-            return ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
-
+            poolProduct_ = ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
         }
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256) {
-        StakerInfo memory staker = stakerInfo[_trancheId][_user];
+    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256 availableTokens_) {
+        StakerInfo memory staker = stakerInfo[trancheId_][user_];
         uint256 newPoolProduct = previewUpdatePool();
 
         if (staker.amount != 0 && staker.epochId == poolEpochId) {
-            return staker.amount * newPoolProduct / staker.poolDebt;
+            availableTokens_ = staker.amount * newPoolProduct / staker.poolDebt;
         } else {
-            return 0;
+            availableTokens_ = 0;
         }
     }
 
@@ -262,83 +258,83 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
-    function burnNSTBL(uint256 _amount) external authorizedCaller {
+    function burnNSTBL(uint256 amount_) external authorizedCaller {
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        require(_amount <= poolBalance, "SP: Burn > SP_BALANCE");
+        require(amount_ <= poolBalance, "SP: Burn > SP_BALANCE");
 
-        poolProduct = (poolProduct * ((poolBalance * 1e18 - _amount * 1e18))) / (poolBalance * 1e18);
+        poolProduct = (poolProduct * ((poolBalance * 1e18 - amount_ * 1e18))) / (poolBalance * 1e18);
 
-        if (poolProduct == 0 || poolBalance - _amount <= 1e18) {
+        if (poolProduct == 0 || poolBalance - amount_ <= 1e18) {
             poolProduct = 1e18;
             poolBalance = 0;
             poolEpochId += 1;
         } else {
-            poolBalance -= _amount;
+            poolBalance -= amount_;
         }
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
-        IERC20Helper(nstbl).burn(address(this), _amount);
-        emit NSTBLBurned(_amount, poolProduct, poolBalance, poolEpochId);
+        IERC20Helper(nstbl).burn(address(this), amount_);
+        emit NSTBLBurned(amount_, poolProduct, poolBalance, poolEpochId);
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function stake(address user, uint256 stakeAmount, uint8 trancheId)
+    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_)
         external
         authorizedCaller
         nonReentrant
     {
-        require(stakeAmount > 0, "SP: ZERO_AMOUNT");
-        require(trancheId < 3, "SP: INVALID_TRANCHE");
-        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount);
-        StakerInfo storage staker = stakerInfo[trancheId][user];
+        require(stakeAmount_ > 0, "SP: ZERO_AMOUNT");
+        require(trancheId_ < 3, "SP: INVALID_TRANCHE");
+        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount_);
+        StakerInfo storage staker = stakerInfo[trancheId_][user_];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
         uint256 unstakeFee;
         if (staker.amount > 0 && staker.epochId == poolEpochId) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            staker.amount = tokensAvailable - unstakeFee + stakeAmount;
+            unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            staker.amount = tokensAvailable - unstakeFee + stakeAmount_;
             poolBalance -= unstakeFee;
         } else {
-            staker.amount = stakeAmount;
+            staker.amount = stakeAmount_;
             staker.epochId = poolEpochId;
         }
         staker.poolDebt = poolProduct;
         staker.stakeTimeStamp = block.timestamp;
-        poolBalance += stakeAmount;
+        poolBalance += stakeAmount_;
 
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
 
-        emit Stake(user, staker.amount, staker.poolDebt, staker.epochId);
+        emit Stake(user_, staker.amount, staker.poolDebt, staker.epochId);
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address destAddress_)
+    function unstake(address user_, uint8 trancheId_, bool depeg_, address destAddress_)
         external
         authorizedCaller
         nonReentrant
-        returns (uint256)
+        returns (uint256 tokensUnstaked_)
     {
-        StakerInfo storage staker = stakerInfo[trancheId][user];
+        StakerInfo storage staker = stakerInfo[trancheId_][user_];
         require(staker.amount > 0, "SP: NO STAKE");
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
 
         if (staker.epochId != poolEpochId) {
             staker.amount = 0;
-            return 0;
+            tokensUnstaked_ = 0;
         }
 
         uint256 unstakeFee;
         uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
 
-        if (!depeg) {
-            unstakeFee = _getUnstakeFee(trancheId, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+        if (!depeg_) {
+            unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
         } else {
             unstakeFee = 0;
         }
@@ -359,37 +355,37 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
         IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
 
-        emit Unstake(user, tokensAvailable, unstakeFee);
-        return (tokensAvailable - unstakeFee);
+        emit Unstake(user_, tokensAvailable, unstakeFee);
+        tokensUnstaked_ = (tokensAvailable - unstakeFee);
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function getStakerInfo(address user, uint8 trancheId)
+    function getStakerInfo(address user_, uint8 trancheId_)
         external
         view
-        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _stakerTimeStamp)
+        returns (uint256 amount_, uint256 poolDebt_, uint256 epochId_, uint256 stakerTimeStamp_)
     {
-        StakerInfo memory staker = stakerInfo[trancheId][user];
-        _amount = staker.amount;
-        _poolDebt = staker.poolDebt;
-        _epochId = staker.epochId;
-        _stakerTimeStamp = staker.stakeTimeStamp;
+        StakerInfo memory staker = stakerInfo[trancheId_][user_];
+        amount_ = staker.amount;
+        poolDebt_ = staker.poolDebt;
+        epochId_ = staker.epochId;
+        stakerTimeStamp_ = staker.stakeTimeStamp;
     }
 
-    function _zeroAddressCheck(address _address) internal pure {
-        require(_address != address(0), "SP:INVALID_ADDRESS");
+    function _zeroAddressCheck(address address_) internal pure {
+        require(address_ != address(0), "SP:INVALID_ADDRESS");
     }
 
-    function getRevision() internal pure virtual override returns (uint256) {
-        return REVISION;
+    function getRevision() internal pure virtual override returns (uint256 revision_) {
+        revision_ = REVISION;
     }
 
     /**
      * @inheritdoc IStakePool
      */
-    function getVersion() public pure returns (uint256 _version) {
-        _version = getRevision();
+    function getVersion() public pure returns (uint256 version_) {
+        version_ = getRevision();
     }
 }
