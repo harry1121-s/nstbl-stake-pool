@@ -14,7 +14,7 @@ import {
 import { ProxyAdmin } from "../../../contracts/upgradeable/ProxyAdmin.sol";
 import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
-import { LZEndpointMock } from "@layerzerolabs/contracts/mocks/LZEndpointMock.sol";
+import { LZEndpointMock } from "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 import { NSTBLStakePool } from "../../../contracts/StakePool.sol";
 import { LoanManagerMock } from "../../../contracts/mocks/LoanManagerMock.sol";
 
