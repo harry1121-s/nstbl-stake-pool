@@ -123,9 +123,6 @@ contract StakePoolTestFuzz is BaseTest {
         vm.startPrank(NSTBL_HUB);
         stakePool.updateMaturityValue();
 
-        vm.expectRevert("SP: GENESIS");
-        stakePool.updateMaturityValue();
-        vm.stopPrank();
         // Action
         deal(address(nstblToken), address(stakePool), 1e24); // just to mess with the system
         _stakeNSTBL(user1, _amount1, 1);

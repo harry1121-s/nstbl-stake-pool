@@ -42,8 +42,6 @@ contract StakePoolStorage {
     /// @notice address of the ATVL
     address public atvl;
 
-    uint256 public genesis;
-
     mapping(uint8 => mapping(address => StakerInfo)) public stakerInfo;
 
     uint256 public poolProduct;
@@ -75,5 +73,5 @@ contract StakePoolStorage {
 
     //add new variables here to extended the storage
     //reduce the gap size equal the size of new variables: to maintain original layout and prevent collision
-    uint256[36] __gap;
+    uint256[37] __gap;
 }

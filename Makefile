@@ -24,8 +24,6 @@ update:
 test:
 	@forge test
 
-testToken:
-	@forge test --match-path ./tests/unit/Token.t.sol
 
 testStakePoolUnit:
 	@forge test --match-path ./tests/StakePool.unit.t.sol -vvv --gas-report

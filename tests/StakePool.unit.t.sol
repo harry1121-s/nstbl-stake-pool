@@ -69,12 +69,6 @@ contract StakePoolTestUnit is BaseTest {
 
         //postcondition
         assertEq(stakePool.oldMaturityVal(), 1e6 * 1e18);
-
-        //cannot reinitialize maturity value
-        vm.startPrank(NSTBL_HUB);
-        vm.expectRevert("SP: GENESIS");
-        stakePool.updateMaturityValue();
-        vm.stopPrank();
     }
 
     function test_setATVL() external {
@@ -488,13 +482,12 @@ contract StakePoolTestUnit is BaseTest {
         uint256 balBefore = nstblToken.balanceOf(destinationAddress);
 
         //action
-        vm.store(address(stakePool), bytes32(uint256(9)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
+        vm.store(address(stakePool), bytes32(uint256(8)), bytes32(uint256(1))); //manually overriding the storage slot 11 (poolEpochID)
         vm.startPrank(NSTBL_HUB);
         stakePool.unstake(user1, 0, true, destinationAddress);
         vm.stopPrank();
 
         //postcondition
-        console.log("Pool Balance after burn: ", poolBalanceBefore, stakePool.poolBalance());
         assertEq(poolBalanceBefore - stakePool.poolBalance(), 0, "check pool balance");
         assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
         assertEq(nstblToken.balanceOf(destinationAddress) - balBefore, 0, "check destination balance");
@@ -942,16 +935,13 @@ contract StakePoolTestUnit is BaseTest {
     //non-empty pool Tbills are devalues
     function test_preview_updatePool_case3() external {
         //precondition
-        console.log(stakePool.oldMaturityVal());
         loanManager.updateInvestedAssets(1e6 * 1e18);
         vm.prank(NSTBL_HUB);
         stakePool.updateMaturityValue();
         _stakeNSTBL(user1, 1e3 * 1e18, 0);
-        console.log(stakePool.oldMaturityVal());
 
         vm.warp(block.timestamp + 10 seconds);
         vm.store(address(stakePool), bytes32(uint256(11)), bytes32(uint256(1e32)));
-        console.log(stakePool.oldMaturityVal());
 
         assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
     }

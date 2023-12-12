@@ -227,9 +227,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
      * @inheritdoc IStakePool
      */
     function updateMaturityValue() external authorizedCaller {
-        require(genesis == 0, "SP: GENESIS");
         oldMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        genesis += 1;
     }
 
     /**
@@ -359,7 +357,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /*//////////////////////////////////////////////////////////////
     Internals
     //////////////////////////////////////////////////////////////*/
-
 
     /**
      * @dev Updates the yield in the pool
