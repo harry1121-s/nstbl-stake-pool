@@ -102,23 +102,81 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit ATVLUpdated(atvl);
     }
 
-    function _getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) internal view returns (uint256 fee_) {
-        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
-        if (trancheId_ == 0) {
-            fee_ = (timeElapsed > trancheStakeTimePeriod[0])
-                ? trancheBaseFee1
-                : trancheBaseFee1
-                    + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
-        } else if (trancheId_ == 1) {
-            fee_ = (timeElapsed > trancheStakeTimePeriod[1])
-                ? trancheBaseFee2
-                : trancheBaseFee2
-                    + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
+    /**
+     * @inheritdoc IStakePool
+     */
+    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_) external authorizedCaller nonReentrant {
+        require(stakeAmount_ > 0, "SP: ZERO_AMOUNT");
+        require(trancheId_ < 3, "SP: INVALID_TRANCHE");
+        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount_);
+        StakerInfo storage staker = stakerInfo[trancheId_][user_];
+
+        (uint256 poolYield, uint256 atvlYield) = _updatePool();
+        uint256 unstakeFee;
+        if (staker.amount > 0 && staker.epochId == poolEpochId) {
+            uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
+            unstakeFee = getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            staker.amount = tokensAvailable - unstakeFee + stakeAmount_;
+            poolBalance -= unstakeFee;
         } else {
-            fee_ = (timeElapsed > trancheStakeTimePeriod[2])
-                ? trancheBaseFee3
-                : trancheBaseFee3
-                    + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
+            staker.amount = stakeAmount_;
+            staker.epochId = poolEpochId;
+        }
+        staker.poolDebt = poolProduct;
+        staker.stakeTimeStamp = block.timestamp;
+        poolBalance += stakeAmount_;
+
+        IERC20Helper(nstbl).mint(address(this), poolYield);
+        IERC20Helper(nstbl).mint(atvl, atvlYield);
+        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+
+        emit Stake(user_, staker.amount, staker.poolDebt, staker.epochId);
+    }
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function unstake(address user_, uint8 trancheId_, bool depeg_, address destAddress_)
+        external
+        authorizedCaller
+        nonReentrant
+        returns (uint256 tokensReceived_)
+    {
+        StakerInfo storage staker = stakerInfo[trancheId_][user_];
+        require(staker.amount > 0, "SP: NO STAKE");
+        (uint256 poolYield, uint256 atvlYield) = _updatePool();
+
+        if (staker.epochId != poolEpochId) {
+            staker.amount = 0;
+            emit Unstake(user_, 0, 0);
+            tokensReceived_ = 0;
+        } else {
+            uint256 unstakeFee;
+            uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
+
+            if (!depeg_) {
+                unstakeFee = getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            } else {
+                unstakeFee = 0;
+            }
+            staker.amount = 0;
+            poolBalance -= tokensAvailable;
+
+            //resetting system
+            if (poolBalance <= 1e18) {
+                poolProduct = 1e18;
+                poolEpochId += 1;
+                poolBalance = 0;
+            }
+
+            IERC20Helper(nstbl).mint(address(this), poolYield);
+            IERC20Helper(nstbl).mint(atvl, atvlYield);
+
+            IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+            IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
+
+            emit Unstake(user_, tokensAvailable, unstakeFee);
+            tokensReceived_ = (tokensAvailable - unstakeFee);
         }
     }
 
@@ -213,87 +271,29 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit NSTBLBurned(amount_, poolProduct, poolBalance, poolEpochId);
     }
 
-    /**
-     * @inheritdoc IStakePool
-     */
-    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_) external authorizedCaller nonReentrant {
-        require(stakeAmount_ > 0, "SP: ZERO_AMOUNT");
-        require(trancheId_ < 3, "SP: INVALID_TRANCHE");
-        IERC20Helper(nstbl).safeTransferFrom(msg.sender, address(this), stakeAmount_);
-        StakerInfo storage staker = stakerInfo[trancheId_][user_];
-
-        (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        uint256 unstakeFee;
-        if (staker.amount > 0 && staker.epochId == poolEpochId) {
-            uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            staker.amount = tokensAvailable - unstakeFee + stakeAmount_;
-            poolBalance -= unstakeFee;
-        } else {
-            staker.amount = stakeAmount_;
-            staker.epochId = poolEpochId;
-        }
-        staker.poolDebt = poolProduct;
-        staker.stakeTimeStamp = block.timestamp;
-        poolBalance += stakeAmount_;
-
-        IERC20Helper(nstbl).mint(address(this), poolYield);
-        IERC20Helper(nstbl).mint(atvl, atvlYield);
-        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-
-        emit Stake(user_, staker.amount, staker.poolDebt, staker.epochId);
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function unstake(address user_, uint8 trancheId_, bool depeg_, address destAddress_)
-        external
-        authorizedCaller
-        nonReentrant
-        returns (uint256 tokensReceived_)
-    {
-        StakerInfo storage staker = stakerInfo[trancheId_][user_];
-        require(staker.amount > 0, "SP: NO STAKE");
-        (uint256 poolYield, uint256 atvlYield) = _updatePool();
-
-        if (staker.epochId != poolEpochId) {
-            staker.amount = 0;
-            emit Unstake(user_, 0, 0);
-            tokensReceived_ = 0;
-        } else {
-            uint256 unstakeFee;
-            uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-
-            if (!depeg_) {
-                unstakeFee = _getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            } else {
-                unstakeFee = 0;
-            }
-            staker.amount = 0;
-            poolBalance -= tokensAvailable;
-
-            //resetting system
-            if (poolBalance <= 1e18) {
-                poolProduct = 1e18;
-                poolEpochId += 1;
-                poolBalance = 0;
-            }
-
-            IERC20Helper(nstbl).mint(address(this), poolYield);
-            IERC20Helper(nstbl).mint(atvl, atvlYield);
-
-            IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
-            IERC20Helper(nstbl).safeTransfer(destAddress_, (tokensAvailable - unstakeFee));
-
-            emit Unstake(user_, tokensAvailable, unstakeFee);
-            tokensReceived_ = (tokensAvailable - unstakeFee);
-        }
-    }
-
     /*//////////////////////////////////////////////////////////////
     Views
     //////////////////////////////////////////////////////////////*/
+
+    function getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) public view returns (uint256 fee_) {
+        uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
+        if (trancheId_ == 0) {
+            fee_ = (timeElapsed > trancheStakeTimePeriod[0])
+                ? trancheBaseFee1
+                : trancheBaseFee1
+                    + (earlyUnstakeFee1 * (trancheStakeTimePeriod[0] - timeElapsed) / trancheStakeTimePeriod[0]);
+        } else if (trancheId_ == 1) {
+            fee_ = (timeElapsed > trancheStakeTimePeriod[1])
+                ? trancheBaseFee2
+                : trancheBaseFee2
+                    + (earlyUnstakeFee2 * (trancheStakeTimePeriod[1] - timeElapsed) / trancheStakeTimePeriod[1]);
+        } else {
+            fee_ = (timeElapsed > trancheStakeTimePeriod[2])
+                ? trancheBaseFee3
+                : trancheBaseFee3
+                    + (earlyUnstakeFee3 * (trancheStakeTimePeriod[2] - timeElapsed) / trancheStakeTimePeriod[2]);
+        }
+    }
 
     /**
      * @inheritdoc IStakePool

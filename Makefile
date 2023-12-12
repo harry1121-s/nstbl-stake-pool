@@ -28,13 +28,11 @@ testToken:
 	@forge test --match-path ./tests/unit/Token.t.sol
 
 testStakePoolUnit:
-	@forge test --match-path ./tests/StakePoolMock/unit/StakePool.unit.t.sol -vvv --gas-report
+	@forge test --match-path ./tests/StakePool.unit.t.sol -vvv --gas-report
 
 testStakePoolFuzz:
-	@forge test --match-path ./tests/StakePoolMock/unit/StakePool.fuzz.t.sol -vvv --gas-report
+	@forge test --match-path ./tests/StakePool.fuzz.t.sol -vvv --gas-report
 
-testInvariant:
-	@forge test --match-path ./tests/StakePoolMock/Invariant/StakePoolInvariant.t.sol -vvvvv
 
 debug: 
 	forge test -vvvvv

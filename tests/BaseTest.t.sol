@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20Helper } from "../../../contracts/interfaces/IERC20Helper.sol";
+import { IERC20Helper } from "../contracts/interfaces/IERC20Helper.sol";
 // import { INSTBLToken } from "../../../contracts/interfaces/INSTBLToken.sol";
 import {
     ITransparentUpgradeableProxy,
@@ -15,8 +15,8 @@ import { ProxyAdmin } from "@nstbl-loan-manager/contracts/upgradeable/ProxyAdmin
 import { ACLManager } from "@nstbl-acl-manager/contracts/ACLManager.sol";
 import { NSTBLToken } from "@nstbl-token/contracts/NSTBLToken.sol";
 import { LZEndpointMock } from "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
-import { NSTBLStakePool } from "../../../contracts/StakePool.sol";
-import { LoanManagerMock } from "../../../contracts/mocks/LoanManagerMock.sol";
+import { NSTBLStakePool } from "../contracts/StakePool.sol";
+import { LoanManagerMock } from "../contracts/mocks/LoanManagerMock.sol";
 
 contract BaseTest is Test {
     using SafeERC20 for IERC20Helper;

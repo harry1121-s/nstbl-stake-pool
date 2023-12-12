@@ -197,6 +197,14 @@ interface IStakePool {
         returns (uint256 amount_, uint256 poolDebt_, uint256 epochId_, uint256 stakerTimeStamp_);
 
     /**
+     * @dev Gets the unstake fee for the user
+     * @param trancheId_ Tranche ID of the user
+     * @param stakeTimeStamp_ timestamp when the user staked NSTBL
+     * @return fee_ calculated unstake fee based upon tranche and time-elapsed
+     */
+    function getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) external view returns (uint256 fee_);
+
+    /**
      * @dev Gets the current implementation version
      * @return version_ The current implementation version
      */
