@@ -7,124 +7,124 @@ interface IStakePool {
 
     /**
      * @dev Emitted when a user stakes tokens
-     * @param user Address of the user
-     * @param stakeAmount Amount of tokens staked
-     * @param poolDebt Amount of tokens owed to the pool
-     * @param epochId Epoch ID of the stake
+     * @param user_ Address of the user
+     * @param stakeAmount_ Amount of tokens staked
+     * @param poolDebt_ Amount of tokens owed to the pool
+     * @param epochId_ Epoch ID of the stake
      */
-    event Stake(address indexed user, uint256 stakeAmount, uint256 poolDebt, uint256 epochId);
+    event Stake(address indexed user_, uint256 stakeAmount_, uint256 poolDebt_, uint256 epochId_);
 
     /**
      * @dev Emitted when a user unstakes tokens
-     * @param user Address of the user
-     * @param maturityTokens Amount of tokens matured
-     * @param unstakeFee Total amount of fees paid
+     * @param user_ Address of the user
+     * @param maturityTokens_ Amount of tokens matured
+     * @param unstakeFee_ Total amount of fees paid
      */
-    event Unstake(address indexed user, uint256 maturityTokens, uint256 unstakeFee);
+    event Unstake(address indexed user_, uint256 maturityTokens_, uint256 unstakeFee_);
 
     /**
      * @dev Emitted to initalize the stake pool
-     * @param version Version of the stake pool
-     * @param aclManager Address of the ACL manager
-     * @param nstblToken Address of the NSTBL token
-     * @param loanManager Address of the loan manager
-     * @param atvl Address of the ATVL
+     * @param version_ Version of the stake pool
+     * @param aclManager_ Address of the ACL manager
+     * @param nstblToken_ Address of the NSTBL token
+     * @param loanManager_ Address of the loan manager
+     * @param atvl_ Address of the ATVL
      */
     event StakePoolInitialized(
-        uint256 version, address aclManager, address nstblToken, address loanManager, address atvl
+        uint256 version_, address aclManager_, address nstblToken_, address loanManager_, address atvl_
     );
 
     /**
      * @dev Emitted to setup the tranche stake time periods
-     * @param trancheStakeTimePeriod1 tranche stake time period 1
-     * @param trancheStakeTimePeriod2 tranche stake time period 2
-     * @param trancheStakeTimePeriod3 tranche stake time period 3
+     * @param trancheStakeTimePeriod1_ tranche stake time period 1
+     * @param trancheStakeTimePeriod2_ tranche stake time period 2
+     * @param trancheStakeTimePeriod3_ tranche stake time period 3
      */
     event TrancheStakeTimePeriodUpdated(
-        uint64 trancheStakeTimePeriod1, uint64 trancheStakeTimePeriod2, uint64 trancheStakeTimePeriod3
+        uint64 trancheStakeTimePeriod1_, uint64 trancheStakeTimePeriod2_, uint64 trancheStakeTimePeriod3_
     );
 
     /**
      * @dev Emitted to setup the tranche base fee
-     * @param trancheBaseFee1 base fee for tranche 1
-     * @param trancheBaseFee2 base fee for tranche 2
-     * @param trancheBaseFee3 base fee for tranche 3
+     * @param trancheBaseFee1_ base fee for tranche 1
+     * @param trancheBaseFee2_ base fee for tranche 2
+     * @param trancheBaseFee3_ base fee for tranche 3
      */
-    event TrancheBaseFeeUpdated(uint64 trancheBaseFee1, uint64 trancheBaseFee2, uint64 trancheBaseFee3);
+    event TrancheBaseFeeUpdated(uint64 trancheBaseFee1_, uint64 trancheBaseFee2_, uint64 trancheBaseFee3_);
 
     /**
      * @dev Emitted to setup the tranche early unstake fee
-     * @param earlyUnstakeFee1 early unstake fee for tranche 1
-     * @param earlyUnstakeFee2 early unstake fee for tranche 2
-     * @param earlyUnstakeFee3 early unstake fee for tranche 3
+     * @param earlyUnstakeFee1_ early unstake fee for tranche 1
+     * @param earlyUnstakeFee2_ early unstake fee for tranche 2
+     * @param earlyUnstakeFee3_ early unstake fee for tranche 3
      */
-    event TrancheEarlyUnstakeFeeUpdated(uint64 earlyUnstakeFee1, uint64 earlyUnstakeFee2, uint64 earlyUnstakeFee3);
+    event TrancheEarlyUnstakeFeeUpdated(uint64 earlyUnstakeFee1_, uint64 earlyUnstakeFee2_, uint64 earlyUnstakeFee3_);
 
     /**
      * @dev Emitted when the ATVL is updated
-     * @param atvl Address of the ATVL
+     * @param atvl_ Address of the ATVL
      */
-    event ATVLUpdated(address atvl);
+    event ATVLUpdated(address atvl_);
 
     /**
      * @dev Emitted when the pool is updated from the hub
-     * @param poolProduct Product of the pool
-     * @param poolBalance Balance of the pool
-     * @param nstblYield Total NSTBL yield
-     * @param atvlYield Total yield transferred to the ATVL
+     * @param poolProduct_ Product of the pool
+     * @param poolBalance_ Balance of the pool
+     * @param nstblYield_ Total NSTBL yield
+     * @param atvlYield_ Total yield transferred to the ATVL
      */
-    event UpdatedFromHub(uint256 poolProduct, uint256 poolBalance, uint256 nstblYield, uint256 atvlYield);
+    event UpdatedFromHub(uint256 poolProduct_, uint256 poolBalance_, uint256 nstblYield_, uint256 atvlYield_);
 
     /**
      * @dev Emitted when the unclaimed rewards are withdrawn
-     * @param user Address of the user
-     * @param amount Amount of tokens withdrawn
+     * @param user_ Address of the user
+     * @param amount_ Amount of tokens withdrawn
      */
-    event UnclaimedRewardsWithdrawn(address indexed user, uint256 amount);
+    event UnclaimedRewardsWithdrawn(address indexed user_, uint256 amount_);
 
     /**
      * @dev Emitted when the NSTBL Token is burned
-     * @param amount Amount of tokens burned
-     * @param poolProduct Product of the pool updated
-     * @param poolBalance Balance of the pool updated
-     * @param poolEpochId Epoch ID of the pool updated
+     * @param amount_ Amount of tokens burned
+     * @param poolProduct_ Product of the pool updated
+     * @param poolBalance_ Balance of the pool updated
+     * @param poolEpochId_ Epoch ID of the pool updated
      */
-    event NSTBLBurned(uint256 amount, uint256 poolProduct, uint256 poolBalance, uint256 poolEpochId);
+    event NSTBLBurned(uint256 amount_, uint256 poolProduct_, uint256 poolBalance_, uint256 poolEpochId_);
 
     /**
      * @dev Initializes the stake pool
-     * @param _aclManager Address of the ACL manager
-     * @param _nstbl Address of the NSTBL token
-     * @param _loanManager Address of the loan manager
-     * @param _atvl Address of the ATVL
+     * @param aclManager_ Address of the ACL manager
+     * @param nstbl_ Address of the NSTBL token
+     * @param loanManager_ Address of the loan manager
+     * @param atvl_ Address of the ATVL
      */
-    function initialize(address _aclManager, address _nstbl, address _loanManager, address _atvl) external;
+    function initialize(address aclManager_, address nstbl_, address loanManager_, address atvl_) external;
 
     /**
      * @dev Sets up the tranche fee, unstake fee, and stake time periods
-     * @param trancheBaseFee Base fee for each tranche
-     * @param earlyUnstakeFee Early unstake fee for each tranche
-     * @param stakeTimePeriods Stake time period for each tranche
+     * @param trancheBaseFee_ Base fee for each tranche
+     * @param earlyUnstakeFee_ Early unstake fee for each tranche
+     * @param stakeTimePeriods_ Stake time period for each tranche
      */
     function setupStakePool(
-        uint16[3] memory trancheBaseFee,
-        uint16[3] memory earlyUnstakeFee,
-        uint8[3] memory stakeTimePeriods
+        uint16[3] memory trancheBaseFee_,
+        uint16[3] memory earlyUnstakeFee_,
+        uint8[3] memory stakeTimePeriods_
     ) external;
 
     /**
      * @dev Sets the ATVL address
-     * @param _atvl Address of the ATVL
+     * @param atvl_ Address of the ATVL
      */
-    function setATVL(address _atvl) external;
+    function setATVL(address atvl_) external;
 
     /**
      * @dev Updates the pool from the hub
-     * @param redeem Whether or not to redeem the nSTBL tokens
-     * @param stablesReceived Amount of stables received
-     * @param depositAmount Amount of tokens deposited
+     * @param redeem_ Whether or not to redeem the nSTBL tokens
+     * @param stablesReceived_ Amount of stables received
+     * @param depositAmount_ Amount of tokens deposited
      */
-    function updatePoolFromHub(bool redeem, uint256 stablesReceived, uint256 depositAmount) external;
+    function updatePoolFromHub(bool redeem_, uint256 stablesReceived_, uint256 depositAmount_) external;
 
     /**
      * @dev Preview the updated pool
@@ -134,11 +134,11 @@ interface IStakePool {
 
     /**
      * @dev Gets the user's available tokens
-     * @param _user Address of the user
-     * @param _trancheId Tranche ID of the user
+     * @param user_ Address of the user
+     * @param trancheId_ Tranche ID of the user
      * @return The user's available tokens
      */
-    function getUserAvailableTokens(address _user, uint8 _trancheId) external view returns (uint256);
+    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256);
 
     /**
      * @dev Updates the old maturity value
@@ -153,47 +153,47 @@ interface IStakePool {
 
     /**
      * @dev Burns the nSTBL tokens
-     * @param _amount Amount of tokens to burn
+     * @param amount_ Amount of tokens to burn
      */
-    function burnNSTBL(uint256 _amount) external;
+    function burnNSTBL(uint256 amount_) external;
 
     /**
      * @dev Stakes the user's tokens
-     * @param user Address of the user
-     * @param stakeAmount Amount of tokens to stake
-     * @param trancheId Tranche ID of the user
+     * @param user_ Address of the user
+     * @param stakeAmount_ Amount of tokens to stake
+     * @param trancheId_ Tranche ID of the user
      */
-    function stake(address user, uint256 stakeAmount, uint8 trancheId) external;
+    function stake(address user_, uint256 stakeAmount_, uint8 trancheId_) external;
 
     /**
      * @dev Unstakes the user's tokens
-     * @param user Address of the user
-     * @param trancheId Tranche ID of the user
-     * @param depeg Whether the tokens are depeg or not
-     * @param destinationAddress receiver address
-     * @return _tokensUnstaked Amount of tokens unstaked
+     * @param user_ Address of the user
+     * @param trancheId_ Tranche ID of the user
+     * @param depeg_ Whether the tokens are depeg or not
+     * @param destinationAddress_ receiver address
+     * @return tokensUnstaked_ Amount of tokens unstaked
      */
-    function unstake(address user, uint8 trancheId, bool depeg, address destinationAddress)
+    function unstake(address user_, uint8 trancheId_, bool depeg_, address destinationAddress_)
         external
-        returns (uint256 _tokensUnstaked);
+        returns (uint256 tokensUnstaked_);
 
     /**
      * @dev Gets the user's staker info
-     * @param user Address of the user
-     * @param trancheId Tranche ID of the user
-     * @return _amount Amount of tokens staked by the user
-     * @return _poolDebt Amount of tokens owed to the pool
-     * @return _epochId Epoch ID of the stake
-     * @return _stakerTimeStamp Timestamp of the stake
+     * @param user_ Address of the user
+     * @param trancheId_ Tranche ID of the user
+     * @return amount_ Amount of tokens staked by the user
+     * @return poolDebt_ Amount of tokens owed to the pool
+     * @return epochId_ Epoch ID of the stake
+     * @return stakerTimeStamp_ Timestamp of the stake
      */
-    function getStakerInfo(address user, uint8 trancheId)
+    function getStakerInfo(address user_, uint8 trancheId_)
         external
         view
-        returns (uint256 _amount, uint256 _poolDebt, uint256 _epochId, uint256 _stakerTimeStamp);
+        returns (uint256 amount_, uint256 poolDebt_, uint256 epochId_, uint256 stakerTimeStamp_);
 
     /**
      * @dev Gets the current implementation version
-     * @return _version The current implementation version
+     * @return version_ The current implementation version
      */
-    function getVersion() external pure returns (uint256 _version);
+    function getVersion() external pure returns (uint256 version_);
 }
