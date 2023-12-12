@@ -1,8 +1,9 @@
 pragma solidity 0.8.21;
 
 interface IStakePool {
+
     /*//////////////////////////////////////////////////////////////
-    EVENTS
+    Events
     //////////////////////////////////////////////////////////////*/
 
     /**
@@ -90,6 +91,10 @@ interface IStakePool {
      * @param poolEpochId_ Epoch ID of the pool updated
      */
     event NSTBLBurned(uint256 amount_, uint256 poolProduct_, uint256 poolBalance_, uint256 poolEpochId_);
+
+    /*//////////////////////////////////////////////////////////////
+    Functions
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @dev Initializes the stake pool
