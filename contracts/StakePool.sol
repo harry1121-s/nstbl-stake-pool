@@ -267,6 +267,9 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     Views
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @inheritdoc IStakePool
+     */
     function getUnstakeFee(uint8 trancheId_, uint256 stakeTimeStamp_) public view returns (uint256 fee_) {
         uint256 timeElapsed = (block.timestamp - stakeTimeStamp_) / 1 days;
         if (trancheId_ == 0) {
@@ -357,6 +360,11 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     Internals
     //////////////////////////////////////////////////////////////*/
 
+
+    /**
+     * @dev Updates the yield in the pool
+     * @notice returns the pool yield and atvl yield
+     */
     function _updatePool() internal returns (uint256, uint256) {
         //returns nstblYield for the pool and atvl
         if (ILoanManager(loanManager).awaitingRedemption()) {
