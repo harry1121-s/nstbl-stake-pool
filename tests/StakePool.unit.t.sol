@@ -126,13 +126,11 @@ contract StakePoolTestUnit is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
 
         //postcondition
-        (uint256 _amount, uint256 _poolDebt,,uint256 stakerTimeStamp) = stakePool.getStakerInfo(user1, 0);
+        (uint256 _amount, uint256 _poolDebt,, uint256 stakerTimeStamp) = stakePool.getStakerInfo(user1, 0);
         assertEq(stakePool.poolBalance() - poolBalanceBefore, 1e6 * 1e18);
         assertEq(_amount, 1e6 * 1e18);
         assertEq(_poolDebt, 1e18);
         assertEq(stakePool.getUnstakeFee(0, stakerTimeStamp), 1000);
-
-        
     }
 
     //single user, 1st staking event post 100 days of genesis state

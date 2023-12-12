@@ -14,6 +14,7 @@ contract StakePoolTestFuzz is BaseTest {
     function setUp() public override {
         super.setUp();
     }
+
     function test_stake_fuzz(uint256 _amount1, uint256 _amount2, uint256 _amount3, uint256 _investAmount, uint256 _time)
         external
     {
@@ -41,7 +42,9 @@ contract StakePoolTestFuzz is BaseTest {
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
         _stakeNSTBL(user1, _amount1, 0);
-        assertApproxEqRel(stakePool.getUserAvailableTokens(user1, 0), (tokensUser1 + _amount1), 1e17, "check user1 available tokens");
+        assertApproxEqRel(
+            stakePool.getUserAvailableTokens(user1, 0), (tokensUser1 + _amount1), 1e17, "check user1 available tokens"
+        );
         uint256 poolBalAfter = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
         if ((loanManager.getMaturedAssets() - _investAmount) > 1e18) {
@@ -100,7 +103,7 @@ contract StakePoolTestFuzz is BaseTest {
         vm.stopPrank();
         vm.warp(block.timestamp + 100 days);
         assertEq(stakePool.previewUpdatePool(), stakePool.poolProduct());
-        _stakeNSTBL(user4, 1e3*1e18, 1);
+        _stakeNSTBL(user4, 1e3 * 1e18, 1);
     }
 
     function test_stake_unstake_updatePool_fuzz(
@@ -133,13 +136,11 @@ contract StakePoolTestFuzz is BaseTest {
         stakePool.stake(user1, 0, 1);
         vm.stopPrank();
 
-        
         // Should revert if trancheId is invalid
         vm.startPrank(NSTBL_HUB);
         vm.expectRevert("SP: INVALID_TRANCHE");
-        stakePool.stake(user1, 1e3*1e18, 3);
+        stakePool.stake(user1, 1e3 * 1e18, 3);
         vm.stopPrank();
-
 
         // Post-condition
         assertEq(stakePool.poolBalance(), _amount1, "check poolBalance");
@@ -166,10 +167,9 @@ contract StakePoolTestFuzz is BaseTest {
         (amount, poolDebt,,) = stakePool.getStakerInfo(user2, 2);
         assertEq(amount, _amount2, "check stakerInfo.amount");
 
-        
         uint256 poolBalBefore = nstblToken.balanceOf(address(stakePool));
         uint256 atvlBalBefore = nstblToken.balanceOf(atvl);
-     
+
         vm.startPrank(NSTBL_HUB);
         uint256 balBefore = nstblToken.balanceOf(destinationAddress);
 
@@ -204,7 +204,6 @@ contract StakePoolTestFuzz is BaseTest {
             nstblToken.balanceOf(address(stakePool)) >= 0 && nstblToken.balanceOf(address(stakePool)) - 1e24 <= 1e18,
             "check available tokens"
         );
-       
     }
 
     function test_stake_unstake_burn_noYield_fuzz(
@@ -237,7 +236,7 @@ contract StakePoolTestFuzz is BaseTest {
         _burnAmount = bound(_burnAmount, 0, stakePool.poolBalance());
         uint256 epochIdBefore = stakePool.poolEpochId();
         uint256 poolBalanceBefore = stakePool.poolBalance();
-        
+
         vm.startPrank(NSTBL_HUB);
 
         stakePool.burnNSTBL(_burnAmount);
@@ -267,9 +266,7 @@ contract StakePoolTestFuzz is BaseTest {
         balAfter = nstblToken.balanceOf(destinationAddress);
         // uint256 atvlBalAfter = nstblToken.balanceOf(atvl);
         //user 2 should receive all his tokens
-        assertEq(
-            balAfter - balBefore + (nstblToken.balanceOf(atvl) - atvlBalBefore), _amount2, "no tokens transferred"
-        );
+        assertEq(balAfter - balBefore + (nstblToken.balanceOf(atvl) - atvlBalBefore), _amount2, "no tokens transferred");
 
         //checking for pool empty state
         assertEq(stakePool.poolBalance(), 0, "check poolBalance");
@@ -280,6 +277,4 @@ contract StakePoolTestFuzz is BaseTest {
             "check available tokens"
         );
     }
-
-
 }

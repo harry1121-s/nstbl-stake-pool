@@ -341,6 +341,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     /**
      * @inheritdoc IStakePool
      */
+
     function getStakerInfo(address user_, uint8 trancheId_)
         external
         view
@@ -403,7 +404,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
             return (0, 0);
         }
     }
-    
+
     function _zeroAddressCheck(address address_) internal pure {
         require(address_ != address(0), "SP:INVALID_ADDRESS");
     }
@@ -411,5 +412,4 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     function getRevision() internal pure virtual override returns (uint256 revision_) {
         revision_ = REVISION;
     }
-
 }
