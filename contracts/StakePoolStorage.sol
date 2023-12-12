@@ -21,8 +21,6 @@ contract StakePoolStorage {
     Immutables
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice address of USDC token
-    address public immutable usdc;
     uint256 internal immutable REVISION = 1;
 
     /*//////////////////////////////////////////////////////////////
