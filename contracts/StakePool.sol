@@ -10,6 +10,10 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
 
     uint256 private _locked;
 
+    /*//////////////////////////////////////////////////////////////
+    Modifiers
+    //////////////////////////////////////////////////////////////*/
+
     modifier nonReentrant() {
         require(_locked == 1, "P:LOCKED");
 
@@ -30,9 +34,17 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         _;
     }
 
+    /*//////////////////////////////////////////////////////////////
+    Constructor
+    //////////////////////////////////////////////////////////////*/
+
     constructor() {
         usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
+
+    /*//////////////////////////////////////////////////////////////
+    Externals
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @inheritdoc IStakePool
@@ -161,90 +173,6 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         emit UpdatedFromHub(poolProduct, poolBalance, nstblYield, atvlYield);
     }
 
-    function _updatePool() internal returns (uint256, uint256) {
-        //returns nstblYield for the pool and atvl
-        if (ILoanManager(loanManager).awaitingRedemption()) {
-            return (0, 0);
-        }
-
-        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-        if (newMaturityVal > oldMaturityVal) {
-            // in case Maple devalues T-bills
-            uint256 nstblYield = newMaturityVal - oldMaturityVal;
-
-            if (nstblYield <= 1e18) {
-                return (0, 0);
-            }
-
-            if (poolBalance <= 1e18) {
-                // IERC20Helper(nstbl).mint(atvl, nstblYield);
-                oldMaturityVal = newMaturityVal;
-                return (0, nstblYield);
-            }
-            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-
-            nstblYield -= atvlYield;
-
-            // IERC20Helper(nstbl).mint(address(this), nstblYield);
-            // IERC20Helper(nstbl).mint(atvl, atvlYield);
-
-            nstblYield *= 1e18; //to maintain precision
-
-            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
-            poolBalance += (nstblYield / 1e18);
-
-            oldMaturityVal = newMaturityVal;
-            return (nstblYield / 1e18, atvlYield);
-        } else {
-            return (0, 0);
-        }
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function previewUpdatePool() public view returns (uint256 poolProduct_) {
-        if (ILoanManager(loanManager).awaitingRedemption()) {
-            poolProduct_ = poolProduct;
-        } else {
-            uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
-            if (newMaturityVal > oldMaturityVal) {
-                uint256 nstblYield = newMaturityVal - oldMaturityVal;
-
-                if (nstblYield <= 1e18) {
-                    poolProduct_ = poolProduct;
-                } else if (poolBalance <= 1e18) {
-                    poolProduct_ = poolProduct;
-                } else {
-                    uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
-                    uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
-
-                    nstblYield -= atvlYield;
-                    nstblYield *= 1e18; //to maintain precision
-
-                    poolProduct_ = ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
-                }
-            } else {
-                poolProduct_ = poolProduct;
-            }
-        }
-    }
-
-    /**
-     * @inheritdoc IStakePool
-     */
-    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256 availableTokens_) {
-        StakerInfo memory staker = stakerInfo[trancheId_][user_];
-        uint256 newPoolProduct = previewUpdatePool();
-
-        if (staker.amount != 0 && staker.epochId == poolEpochId) {
-            availableTokens_ = staker.amount * newPoolProduct / staker.poolDebt;
-        } else {
-            availableTokens_ = 0;
-        }
-    }
-
     /**
      * @inheritdoc IStakePool
      */
@@ -363,6 +291,53 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         }
     }
 
+    /*//////////////////////////////////////////////////////////////
+    Views
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function previewUpdatePool() public view returns (uint256 poolProduct_) {
+        if (ILoanManager(loanManager).awaitingRedemption()) {
+            poolProduct_ = poolProduct;
+        } else {
+            uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+            if (newMaturityVal > oldMaturityVal) {
+                uint256 nstblYield = newMaturityVal - oldMaturityVal;
+
+                if (nstblYield <= 1e18) {
+                    poolProduct_ = poolProduct;
+                } else if (poolBalance <= 1e18) {
+                    poolProduct_ = poolProduct;
+                } else {
+                    uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+                    uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
+
+                    nstblYield -= atvlYield;
+                    nstblYield *= 1e18; //to maintain precision
+
+                    poolProduct_ = ((poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18));
+                }
+            } else {
+                poolProduct_ = poolProduct;
+            }
+        }
+    }
+
+    /**
+     * @inheritdoc IStakePool
+     */
+    function getUserAvailableTokens(address user_, uint8 trancheId_) external view returns (uint256 availableTokens_) {
+        StakerInfo memory staker = stakerInfo[trancheId_][user_];
+        uint256 newPoolProduct = previewUpdatePool();
+
+        if (staker.amount != 0 && staker.epochId == poolEpochId) {
+            availableTokens_ = staker.amount * newPoolProduct / staker.poolDebt;
+        } else {
+            availableTokens_ = 0;
+        }
+    }
     /**
      * @inheritdoc IStakePool
      */
@@ -378,6 +353,57 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         stakerTimeStamp_ = staker.stakeTimeStamp;
     }
 
+    /**
+     * @inheritdoc IStakePool
+     */
+    function getVersion() public pure returns (uint256 version_) {
+        version_ = getRevision();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+    Internals
+    //////////////////////////////////////////////////////////////*/
+
+    function _updatePool() internal returns (uint256, uint256) {
+        //returns nstblYield for the pool and atvl
+        if (ILoanManager(loanManager).awaitingRedemption()) {
+            return (0, 0);
+        }
+
+        uint256 newMaturityVal = ILoanManager(loanManager).getMaturedAssets();
+        if (newMaturityVal > oldMaturityVal) {
+            // in case Maple devalues T-bills
+            uint256 nstblYield = newMaturityVal - oldMaturityVal;
+
+            if (nstblYield <= 1e18) {
+                return (0, 0);
+            }
+
+            if (poolBalance <= 1e18) {
+                // IERC20Helper(nstbl).mint(atvl, nstblYield);
+                oldMaturityVal = newMaturityVal;
+                return (0, nstblYield);
+            }
+            uint256 atvlBal = IERC20Helper(nstbl).balanceOf(atvl);
+            uint256 atvlYield = nstblYield * atvlBal / (poolBalance + atvlBal);
+
+            nstblYield -= atvlYield;
+
+            // IERC20Helper(nstbl).mint(address(this), nstblYield);
+            // IERC20Helper(nstbl).mint(atvl, atvlYield);
+
+            nstblYield *= 1e18; //to maintain precision
+
+            poolProduct = (poolProduct * ((poolBalance * 1e18 + nstblYield))) / (poolBalance * 1e18);
+            poolBalance += (nstblYield / 1e18);
+
+            oldMaturityVal = newMaturityVal;
+            return (nstblYield / 1e18, atvlYield);
+        } else {
+            return (0, 0);
+        }
+    }
+    
     function _zeroAddressCheck(address address_) internal pure {
         require(address_ != address(0), "SP:INVALID_ADDRESS");
     }
@@ -386,10 +412,4 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         revision_ = REVISION;
     }
 
-    /**
-     * @inheritdoc IStakePool
-     */
-    function getVersion() public pure returns (uint256 version_) {
-        version_ = getRevision();
-    }
 }
