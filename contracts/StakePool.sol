@@ -104,12 +104,12 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         StakerInfo storage staker = stakerInfo[trancheId_][user_];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        uint256 unstakeFee;
+        // uint256 unstakeFee;
         if (staker.amount > 0 && staker.epochId == poolEpochId) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            unstakeFee = getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            staker.amount = tokensAvailable - unstakeFee + stakeAmount_;
-            poolBalance -= unstakeFee;
+            // unstakeFee = getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
+            staker.amount = tokensAvailable + stakeAmount_;
+            // poolBalance -= unstakeFee;
         } else {
             staker.amount = stakeAmount_;
             staker.epochId = poolEpochId;
@@ -120,7 +120,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
 
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
-        IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+        // IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
 
         emit Stake(user_, staker.amount, staker.poolDebt, staker.epochId);
     }

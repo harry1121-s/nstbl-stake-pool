@@ -211,7 +211,7 @@ contract StakePoolTestUnit is BaseTest {
     }
 
     //single user, no yield
-    //restaking in tranche 0, fee of 10% applied
+    //restaking in tranche 0, no fee applied
     //fee is transferred to atvl
     function test_restake_case1() external {
         //precondition
@@ -225,15 +225,14 @@ contract StakePoolTestUnit is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
 
         //postcondition
-        assertEq(stakePool.poolBalance() - poolBalanceBefore, 19e5 * 1e18);
-        assertEq(nstblToken.balanceOf(atvl), 1e5 * 1e18);
+        assertEq(stakePool.poolBalance() - poolBalanceBefore, 2e6 * 1e18);
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, 19e5 * 1e18);
+        assertEq(_amount, 2e6 * 1e18);
         assertEq(_poolDebt, 1e18);
     }
 
     //single user, with yield, awaiting redemption active - no yield given to the pool
-    //restaking in tranche 0 after 100 days, base fee of 5% applied
+    //restaking in tranche 0 after 100 days, no fee applied
     //fee is transferred to atvl
     function test_restake_case3() external {
         //precondition
@@ -249,15 +248,15 @@ contract StakePoolTestUnit is BaseTest {
         _stakeNSTBL(user1, 1e6 * 1e18, 0);
 
         //postcondition
-        assertEq(stakePool.poolBalance() - poolBalanceBefore, 195e4 * 1e18, "check pool balance");
-        assertEq(nstblToken.balanceOf(atvl), 5e4 * 1e18, "check atvl balance");
+        assertEq(stakePool.poolBalance() - poolBalanceBefore, 2e6 * 1e18, "check pool balance");
+        assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, 195e4 * 1e18, "check user1 staked amount");
+        assertEq(_amount, 2e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, 1e18, "check user1 pool debt");
     }
 
     //single user, with yield less than 1e18 => 0, awaiting redemption inactive
-    //restaking in tranche 0 after 1 second, fee of 10% applied
+    //restaking in tranche 0 after 1 second, 0 fee applied
     //fee is transferred to atvl
     function test_restake_case4() external {
         //precondition
@@ -273,17 +272,17 @@ contract StakePoolTestUnit is BaseTest {
 
         //postcondition
         assertEq(
-            stakePool.poolBalance() - poolBalanceBefore, (1e6 * 1e18) * 90 / 100 + 1e6 * 1e18, "check pool balance"
+            stakePool.poolBalance() - poolBalanceBefore, 2e6 * 1e18, "check pool balance"
         );
-        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18) * 10 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, (1e6 * 1e18) * 90 / 100 + 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_amount, 2e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
     }
 
     //single user, with yield, awaiting redemption inactive - yield given to the pool
     //all the yield is given to the pool since atvl balance is 0
-    //restaking in tranche 0 after 100 days, base fee of 5% applied
+    //restaking in tranche 0 after 100 days, no applied
     //fee is transferred to atvl
     function test_restake_case5() external {
         //precondition
@@ -302,12 +301,12 @@ contract StakePoolTestUnit is BaseTest {
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(
             stakePool.poolBalance() - poolBalanceBefore,
-            (1e6 * 1e18 + yield) * 95 / 100 + 1e6 * 1e18,
+            (1e6 * 1e18 + yield) + 1e6 * 1e18,
             "check pool balance"
         );
-        assertEq(nstblToken.balanceOf(atvl), (1e6 * 1e18 + yield) * 5 / 100, "check atvl balance");
+        assertEq(nstblToken.balanceOf(atvl), 0, "check atvl balance");
         (uint256 _amount, uint256 _poolDebt,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, (1e6 * 1e18 + yield) * 95 / 100 + 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield) + 1e6 * 1e18, "check user1 staked amount");
         assertEq(_poolDebt, stakePool.poolProduct(), "check user1 pool debt");
     }
 
@@ -335,18 +334,18 @@ contract StakePoolTestUnit is BaseTest {
         //postcondition
         uint256 yield = loanManager.getMaturedAssets() - oldMaturityValue;
         assertEq(
-            stakePool.poolBalance() - poolBalanceBefore + nstblToken.balanceOf(atvl),
+            stakePool.poolBalance() - poolBalanceBefore,
             (6e6 * 1e18 + yield),
             "check pool balance and atvl balance"
         );
         (uint256 _amount,,,) = stakePool.getStakerInfo(user1, 0);
-        assertEq(_amount, (1e6 * 1e18 + yield / 3) * 95 / 100 + 1e6 * 1e18, "check user1 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield / 3) + 1e6 * 1e18, "check user1 staked amount");
 
         (_amount,,,) = stakePool.getStakerInfo(user2, 1);
-        assertEq(_amount, (1e6 * 1e18 + yield / 3) * 98 / 100 + 1e6 * 1e18, "check user2 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield / 3) + 1e6 * 1e18, "check user2 staked amount");
 
         (_amount,,,) = stakePool.getStakerInfo(user3, 2);
-        assertEq(_amount, (1e6 * 1e18 + yield / 3) * 9767 / 10_000 + 1e6 * 1e18, "check user3 staked amount");
+        assertEq(_amount, (1e6 * 1e18 + yield / 3) + 1e6 * 1e18, "check user3 staked amount");
     }
 
     //multiple stakers; pool resetted; then restake again
