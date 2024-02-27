@@ -104,12 +104,13 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
         StakerInfo storage staker = stakerInfo[trancheId_][user_];
 
         (uint256 poolYield, uint256 atvlYield) = _updatePool();
-        // uint256 unstakeFee;
+        uint256 restakeFee;
         if (staker.amount > 0 && staker.epochId == poolEpochId) {
             uint256 tokensAvailable = (staker.amount * poolProduct) / staker.poolDebt;
-            // unstakeFee = getUnstakeFee(trancheId_, staker.stakeTimeStamp) * tokensAvailable / 10_000;
-            staker.amount = tokensAvailable + stakeAmount_;
-            // poolBalance -= unstakeFee;
+            uint256 yield = tokensAvailable > staker.amount ? tokensAvailable-staker.amount : 0;
+            restakeFee = _getRestakeFee(trancheId_) * yield / 10_000;
+            staker.amount = tokensAvailable + stakeAmount_ - restakeFee;
+            poolBalance -= restakeFee;
         } else {
             staker.amount = stakeAmount_;
             staker.epochId = poolEpochId;
@@ -120,7 +121,7 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
 
         IERC20Helper(nstbl).mint(address(this), poolYield);
         IERC20Helper(nstbl).mint(atvl, atvlYield);
-        // IERC20Helper(nstbl).safeTransfer(atvl, unstakeFee);
+        IERC20Helper(nstbl).safeTransfer(atvl, restakeFee);
 
         emit Stake(user_, staker.amount, staker.poolDebt, staker.epochId);
     }
@@ -358,6 +359,15 @@ contract NSTBLStakePool is IStakePool, StakePoolStorage, VersionedInitializable 
     Internals
     //////////////////////////////////////////////////////////////*/
 
+    function _getRestakeFee(uint8 trancheId_) internal returns (uint256 fee_){
+        if (trancheId_ == 0) {
+            fee_ = trancheBaseFee1;
+        } else if (trancheId_ == 1) {
+            fee_ = trancheBaseFee2;
+        } else {
+            fee_ = trancheBaseFee3;
+        }
+    }
     /**
      * @dev Updates the yield in the pool
      * @notice returns the pool yield and atvl yield
